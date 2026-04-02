@@ -2,7 +2,7 @@
   "name": "cli-skill-release-automation",
   "version": "0.0.0-development",
   "private": true,
-  "description": "Portable release automation asset pack for target CLI skill repositories generated with cli-forge.",
+  "description": "Portable repo-native GitHub Release automation asset pack for target CLI skill repositories generated with cli-forge.",
   "license": "UNLICENSED",
   "engines": {
     "node": "22.x",
@@ -13,6 +13,7 @@
     "release:build-artifact": "node scripts/release/build-cli-artifact.mjs",
     "release:verify-config": "node scripts/release/verify-release-config.mjs",
     "release:ci": "node scripts/release/run-semantic-release.mjs",
-    "release:dry-run": "node scripts/release/run-semantic-release.mjs --dry-run --no-ci"
+    "release:dry-run": "node scripts/release/run-semantic-release.mjs --dry-run --no-ci",
+    "release:install-current": "./scripts/install-current-release.sh"
   }
 }

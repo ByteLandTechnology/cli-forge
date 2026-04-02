@@ -1,15 +1,31 @@
 {
   "sourceSkillId": "REPLACE_WITH_SKILL_ID",
-  "destinationRepository": "REPLACE_WITH_OWNER/REPO",
-  "destinationRepositoryEnv": "SKILL_RELEASE_DESTINATION_REPOSITORY",
-  "destinationBranch": "main",
-  "destinationTokenEnv": "DESTINATION_REPOSITORY_TOKEN",
+  "sourceRepository": "REPLACE_WITH_OWNER/REPO",
+  "sourceRepositoryEnv": "GITHUB_REPOSITORY",
   "metadataFilename": ".release-manifest.json",
-  "sharedRepository": {
-    "catalogPath": "catalog.json",
-    "skillRootPrefix": "skills",
-    "retentionPolicy": "current_only",
-    "updateMode": "merged_tree_publish"
+  "githubRelease": {
+    "ownerRepository": "REPLACE_WITH_OWNER/REPO",
+    "ownerRepositoryEnv": "GITHUB_REPOSITORY",
+    "releaseEvidenceFilename": "release-evidence.json",
+    "releaseAssetsDir": ".work/release/github-release",
+    "installScriptPath": "scripts/install-current-release.sh",
+    "installCommandExample": "./scripts/install-current-release.sh",
+    "assetGlobPatterns": [
+      ".work/release/github-release/*"
+    ]
+  },
+  "optionalSecondaryPublication": {
+    "enabled": false,
+    "destinationRepository": "REPLACE_WITH_OWNER/REPO",
+    "destinationRepositoryEnv": "SKILL_RELEASE_DESTINATION_REPOSITORY",
+    "destinationBranch": "main",
+    "destinationTokenEnv": "DESTINATION_REPOSITORY_TOKEN",
+    "sharedRepository": {
+      "catalogPath": "catalog.json",
+      "skillRootPrefix": "skills",
+      "retentionPolicy": "current_only",
+      "updateMode": "merged_tree_publish"
+    }
   },
   "generatedSkill": {
     "skillName": "REPLACE_WITH_SKILL_ID",
@@ -26,7 +42,8 @@
       "templates/context.rs.tpl": "src/context.rs",
       "templates/SKILL.md.tpl": "SKILL.md",
       "templates/cli_test.rs.tpl": "tests/cli_test.rs",
-      "templates/README.md.tpl": "README.md"
+      "templates/README.md.tpl": "README.md",
+      "templates/install-current-release.sh.tpl": "scripts/install-current-release.sh"
     }
   },
   "artifactBuild": {
@@ -53,7 +70,8 @@
     "packageLocalSupportExamples": [
       "packaging-ready metadata",
       "support fixtures",
-      "artifact manifests"
+      "artifact manifests",
+      "repo-native install helper"
     ],
     "repositoryOwnedAutomation": [
       ".github/workflows/release.yml",

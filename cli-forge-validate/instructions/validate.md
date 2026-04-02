@@ -9,7 +9,9 @@ structure/build rules and the runtime-conventions surface introduced by feature
 `002-cli-runtime-conventions`. It also verifies the generated package boundary:
 baseline files must exist, enabled capability overlays may add package-local
 support files, and repository-owned CI/release automation must not be treated
-as required generated output.
+as required generated output. When a target repository has adopted the publish
+asset pack, validate repo-native release/install surfaces as repository
+automation rather than generated package files.
 
 ## Inputs
 
@@ -117,6 +119,8 @@ Also classify package-boundary expectations while reviewing structure:
   when the enabled capability requires them
 - repository-owned CI workflows, release scripts, and release automation are
   not required generated outputs and should not be treated as missing files
+- repository-owned install helpers such as `scripts/install-current-release.sh`
+  are not required generated outputs inside the generated skill package
 
 ### Step 3: Run Naming Checks
 
@@ -193,6 +197,19 @@ record the following:
    - Confirm REPL history and tab completion are available.
    - Confirm default REPL output favors readability while any explicit
      structured result modes stay documented and consistent.
+
+### Step 8: Run Repo-Native Publish Checks When Present
+
+If the repository being validated has adopted repo-owned publish automation,
+inspect and record the following in the validation narrative:
+
+1. `scripts/install-current-release.sh` exists at repository root and resolves
+   version-matched installation from the same repository's GitHub Release.
+2. Release docs mention clone `->` checkout released tag `->`
+   `scripts/install-current-release.sh`.
+3. Release docs mention release evidence and checksum expectations together.
+4. Optional shared-destination publication, if present, is described as a
+   secondary follow-up rather than the default path.
 
 ## Output Format
 

@@ -47,6 +47,9 @@ planning stage.
   `Cargo.toml`, `SKILL.md`, `README.md`, and help summaries.
 - Repository-owned automation and release plumbing must stay outside generated
   skill packages unless a stage explicitly handles publish concerns.
+- When publish concerns are in scope, plans must keep repo-native GitHub
+  Release publication primary and treat clone-first installation and release
+  evidence as repository-owned surfaces.
 
 ## Output, Stream, REPL, And Help
 
@@ -98,3 +101,5 @@ evidence:
 - accidental leakage of repository-owned automation into generated packages
 - release credentials, target artifacts, and destination configuration when
   publish work is in scope
+- repo version, git tag, release page, binary assets, and release evidence
+  drifting apart when publish work is in scope

@@ -14,7 +14,7 @@ for a generated Rust CLI Skill before later stages proceed.
 - The requested change alters the generated skill's purpose, positioning, or
   user-facing contract.
 - A later stage detects drift between Cargo metadata, `SKILL.md`, README, help
-  text, or release-facing summaries.
+  text, release-facing summaries, or clone-first install guidance.
 
 ## Stage Goal
 
@@ -59,6 +59,7 @@ description contract is consumed during scaffold or feature work.
    - `README.md`
    - help text / structured help summaries
    - packaging or publish-facing summaries
+   - repo-native release/install guidance when publish support is in scope
 4. Confirm the next stage that is allowed to consume the approved description
    contract.
 5. Hand the approved contract forward without letting downstream stages invent
@@ -72,6 +73,9 @@ description contract is consumed during scaffold or feature work.
   contract; they do not redefine it.
 - `publish` may summarize the contract for release readiness, but it must not
   overwrite the approved description surfaces.
+- When publish support is later adopted, repo-native GitHub Release and
+  install-helper wording must reuse the approved summary instead of inventing a
+  different product description.
 
 ## Done Condition
 

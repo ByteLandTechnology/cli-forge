@@ -56,7 +56,9 @@ file layout, required commands, and verification checks.
 6. Confirm the generated package layout stays within the documented boundary:
    baseline generated files plus any package-local support files that a
    supported capability requires. Repository-owned CI workflows, release
-   scripts, and release automation stay outside the generated project.
+   scripts, release automation, and clone-first install helpers stay outside
+   the generated project until a target repo explicitly adopts the publish
+   asset pack.
 
 ## Guardrails
 

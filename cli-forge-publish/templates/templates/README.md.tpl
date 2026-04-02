@@ -25,6 +25,23 @@ The generated CLI uses three different invocation contexts. Keep them distinct:
 This README may also show the development and release-binary forms for local
 verification.
 
+## Install From A Cloned Release
+
+Users clone the whole repository, check out a released tag, and install the
+matching CLI binary from that same GitHub Release:
+
+```sh
+git clone https://github.com/OWNER/{{SKILL_NAME}}.git
+cd {{SKILL_NAME}}
+git checkout v{{VERSION}}
+./scripts/install-current-release.sh {{VERSION}}
+```
+
+The install helper resolves the version-matched archive from the repository's
+GitHub Release page instead of downloading an unrelated latest build. The
+release also publishes `release-evidence.json` so operators can confirm the
+release tag, commit, and checksums match the installed binary.
+
 ## Runtime Conventions
 
 This scaffold follows the shared cli-forge runtime contract:
@@ -42,8 +59,8 @@ The generated package includes the baseline skill files plus any package-local
 support files required by enabled capabilities. Repository-owned CI workflows,
 release scripts, and release automation are not scaffolded into the generated
 project by default. If a target repository later adopts the
-`cli-forge-publish/templates/` asset pack, those files live at the
-target repository root rather than inside the shipped CLI skill package.
+`cli-forge-publish/templates/` asset pack, those files live at the target
+repository root rather than inside the shipped CLI skill package.
 
 Package-local packaging-ready metadata or support fixtures should appear only
 when a supported capability or packaging path explicitly requires them.

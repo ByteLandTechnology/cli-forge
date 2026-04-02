@@ -7,9 +7,16 @@ work for a generated CLI skill repository.
 
 - Treat `cli-forge-publish` as a publish-stage skill, not as the repository
   that is itself being released.
-- Plan how a target CLI skill repository adopts and uses the
-  `templates/` asset pack.
+- Plan how a target CLI skill repository adopts and uses the `templates/`
+  asset pack.
 - Keep release work anchored to the target repository's shipped CLI contract.
+- Treat repo-native GitHub Release publication as the primary distribution
+  surface.
+- Include the generated install helper template
+  `templates/templates/install-current-release.sh.tpl` and any repo-facing
+  guidance that downstream stages need, including
+  `cli-forge-description/instructions/add-feature.md`, when those surfaces are
+  touched by release expectations.
 
 ## Publish-Stage Contract
 
@@ -17,11 +24,14 @@ Every publish-stage plan must lock these decisions:
 
 - which release mode is in scope: `report_only`, `dry_run`, `rehearsal`, or
   `live_release`
-- whether the target repository has already adopted the `templates/`
-  asset pack or must do so first
+- whether the target repository has already adopted the `templates/` asset pack
+  or must do so first
 - which target repository path or repository identity is being prepared
 - whether validation is current or must be re-run before publish work
-- how destination repository configuration and credentials will be supplied
+- how the repo-native GitHub Release, evidence file, and install helper are
+  configured
+- whether optional secondary destination publication is in scope after the
+  repo-native release path
 
 If a plan cannot answer those items, it should route back through
 `cli-forge-intake` before continuing.
@@ -34,6 +44,7 @@ target skill:
 1. final shipped skill contract: `<skill-name> ...`
 2. local development from repository root: `cargo run -- ...`
 3. built release binary: `./target/release/<skill-name> ...`
+4. cloned release install path: `./scripts/install-current-release.sh <version>`
 
 `SKILL.md` must treat the bare command name as the canonical agent-facing
 surface. README may document development and built-binary forms, but it must
@@ -47,12 +58,14 @@ Plans must keep this boundary explicit:
 - target skill deliverable:
   - the compiled CLI binary
   - shipped skill docs and runtime behavior
+  - repo-native GitHub Release assets and release evidence
 - repository-owned release automation:
   - `package.json`
   - `.releaserc.json`
   - `.github/workflows/release.yml`
   - `release/`
   - `scripts/release/`
+  - `scripts/install-current-release.sh`
   - `templates/` used by release quality gates and rehearsal flows
 
 The asset pack supports the target repository. It is not the runtime surface of
@@ -63,7 +76,9 @@ the shipped CLI skill itself.
 - release config placeholders were not replaced in the target repository
 - validation is stale but publish work is being attempted anyway
 - semantic-release dry-run output is being mistaken for a real release
-- destination repository settings or tokens are missing
-- target artifact declarations are incomplete
+- repo version, tag, release page, release assets, and release evidence drift
+  apart
+- cloned released checkouts cannot install the matching binary
+- optional secondary publication is being treated like the default path
 - `SKILL.md`, README, tests, and actual binary invocation drift from the final
   shipped command surface

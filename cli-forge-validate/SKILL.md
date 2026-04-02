@@ -47,6 +47,8 @@ the output table format, build checks, and runtime-convention checks.
    - `SKILL.md` contract checks
    - build checks
    - runtime convention checks
+   - repo-native release/install checks when the target repository adopts the
+     publish asset pack
    - generated package boundary checks so package-local support assets are
      allowed only when enabled and repository-owned CI automation is not
      misclassified as generated output

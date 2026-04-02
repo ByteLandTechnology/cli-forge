@@ -1,6 +1,7 @@
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import {
+  chmodSync,
   copyFileSync,
   cpSync,
   existsSync,
@@ -34,6 +35,16 @@ export function ensureDir(directoryPath) {
 export function ensureCleanDir(directoryPath) {
   rmSync(directoryPath, { recursive: true, force: true });
   ensureDir(directoryPath);
+}
+
+export function assertDirectory(directoryPath, description) {
+  if (!existsSync(directoryPath)) {
+    throw new Error(`${description} does not exist: ${directoryPath}.`);
+  }
+
+  if (!statSync(directoryPath).isDirectory()) {
+    throw new Error(`${description} is not a directory: ${directoryPath}.`);
+  }
 }
 
 export function loadReleaseConfig() {
@@ -94,51 +105,12 @@ export function copyFile(sourcePath, destinationPath) {
   copyFileSync(sourcePath, destinationPath);
 }
 
+export function isPlaceholderValue(value) {
+  return typeof value === "string" && value.includes("REPLACE_WITH_");
+}
+
 export function isPlaceholderRepository(value) {
   return !value || value.includes("REPLACE_WITH_OWNER/REPO");
-}
-
-export function isLocalRepositoryTarget(target) {
-  if (!target) {
-    return false;
-  }
-
-  const resolvedPath = path.resolve(rootDir, target);
-  if (existsSync(resolvedPath)) {
-    return true;
-  }
-
-  if (target.startsWith("file://")) {
-    return true;
-  }
-
-  return (
-    path.isAbsolute(target) ||
-    target === "." ||
-    target === ".." ||
-    target.startsWith("./") ||
-    target.startsWith("../")
-  );
-}
-
-export function resolveDestinationRepository(config) {
-  const override = process.env[config.destinationRepositoryEnv];
-  const resolved = override || config.destinationRepository;
-
-  if (isPlaceholderRepository(resolved)) {
-    throw new Error(
-      [
-        "Missing release destination repository.",
-        `Set workflow_dispatch input "destination_repository", define ${config.destinationRepositoryEnv} as a repository variable or secret, or update release/skill-release.config.json.`,
-      ].join(" "),
-    );
-  }
-
-  return resolved;
-}
-
-export function resolveDestinationBranch(config) {
-  return config.destinationBranch || "main";
 }
 
 export function releaseArtifactsDir(config) {
@@ -151,6 +123,27 @@ export function targetArtifactsDir(config, target) {
 
 export function targetBuildMetadataPath(config, target) {
   return path.join(targetArtifactsDir(config, target), "build-metadata.json");
+}
+
+export function releaseBuildBinaryPath(config, target) {
+  const extension = target.includes("windows") ? ".exe" : "";
+  return path.join(
+    targetArtifactsDir(config, target),
+    "binary",
+    `${config.artifactBuild.binaryName}${extension}`,
+  );
+}
+
+export function buildBinaryFromProjectPath(config, target) {
+  const extension = target.includes("windows") ? ".exe" : "";
+  return path.join(
+    rootDir,
+    config.generatedSkill.projectPath,
+    "target",
+    target,
+    "release",
+    `${config.artifactBuild.binaryName}${extension}`,
+  );
 }
 
 export function getArtifactTarget(config, target) {
@@ -167,20 +160,6 @@ export function requiredArtifactTargets(config) {
   return config.artifactTargets.filter((entry) => entry.required);
 }
 
-export function sharedSkillHomeRelativePath(config) {
-  return path.posix.join(
-    config.sharedRepository.skillRootPrefix,
-    config.sourceSkillId,
-  );
-}
-
-export function sharedSkillReleaseMetadataRelativePath(config) {
-  return path.posix.join(
-    sharedSkillHomeRelativePath(config),
-    config.artifactBuild.releaseMetadataFilename,
-  );
-}
-
 export function archiveFilenameForTarget(config, version, target) {
   const targetConfig = getArtifactTarget(config, target);
   const archiveFormat = targetConfig.archiveFormat || "tar.gz";
@@ -189,6 +168,71 @@ export function archiveFilenameForTarget(config, version, target) {
 
 export function checksumFilenameForArchive(archiveFilename) {
   return `${archiveFilename}.sha256`;
+}
+
+export function releaseAssetsDir(config) {
+  return path.join(rootDir, config.githubRelease.releaseAssetsDir);
+}
+
+export function releaseEvidenceFilename(config) {
+  return config.githubRelease.releaseEvidenceFilename;
+}
+
+export function releaseEvidencePath(config) {
+  return path.join(releaseAssetsDir(config), releaseEvidenceFilename(config));
+}
+
+export function installScriptRelativePath(config) {
+  return config.githubRelease.installScriptPath;
+}
+
+export function installScriptAbsolutePath(config) {
+  return path.join(rootDir, installScriptRelativePath(config));
+}
+
+export function resolveOwnerRepository(config) {
+  const resolved =
+    process.env[config.githubRelease.ownerRepositoryEnv] ||
+    config.githubRelease.ownerRepository;
+
+  if (isPlaceholderRepository(resolved)) {
+    throw new Error(
+      [
+        "Missing source repository identity.",
+        `Set ${config.githubRelease.ownerRepositoryEnv} or update release/skill-release.config.json.`,
+      ].join(" "),
+    );
+  }
+
+  return resolved;
+}
+
+export function resolveSourceRepository(config) {
+  const configured =
+    process.env[config.sourceRepositoryEnv || "GITHUB_REPOSITORY"] ||
+    config.sourceRepository;
+
+  if (!configured || isPlaceholderRepository(configured)) {
+    return resolveOwnerRepository(config);
+  }
+
+  return configured;
+}
+
+export function sourceReleaseUrl(ownerRepository, gitTag) {
+  return `https://github.com/${ownerRepository}/releases/tag/${gitTag}`;
+}
+
+export function detectPublicationMode(config) {
+  if (process.env.SKILL_RELEASE_PUBLICATION_MODE) {
+    return process.env.SKILL_RELEASE_PUBLICATION_MODE;
+  }
+
+  if (process.env.GITHUB_ACTIONS === "true") {
+    return "live_release";
+  }
+
+  return "dry_run";
 }
 
 function skillNameToSnake(skillName) {
@@ -253,80 +297,22 @@ export function prepareGeneratedSkillProject(config) {
 
     let rendered = renderTemplate(templatePath, tokens);
 
-    if (!tokens.AUTHOR) {
-      if (outputRelativePath === "Cargo.toml") {
-        rendered = rendered.replace(/^authors = \[""\]\n/m, "");
-      }
+    if (!tokens.AUTHOR && outputRelativePath === "Cargo.toml") {
+      rendered = rendered.replace(/^authors = \[""\]\n/m, "");
+    }
 
-      if (outputRelativePath === "README.md") {
-        rendered = rendered.replace(
-          /\n## Author\n\n[\s\S]*?\n---\n/m,
-          "\n---\n",
-        );
-      }
+    if (!tokens.AUTHOR && outputRelativePath === "README.md") {
+      rendered = rendered.replace(/\n## Author\n\n[\s\S]*?\n---\n/m, "\n---\n");
     }
 
     const outputPath = path.join(projectDir, outputRelativePath);
     ensureDir(path.dirname(outputPath));
     writeFileSync(outputPath, rendered, "utf8");
+
+    if (outputRelativePath.endsWith(".sh")) {
+      chmodSync(outputPath, 0o755);
+    }
   }
 
   return projectDir;
-}
-
-export function releaseBuildBinaryPath(config, target) {
-  const binaryName = config.artifactBuild.binaryName;
-  const extension = target.includes("windows") ? ".exe" : "";
-  return path.join(
-    targetArtifactsDir(config, target),
-    "binary",
-    `${binaryName}${extension}`,
-  );
-}
-
-export function buildBinaryFromProjectPath(config, target) {
-  const binaryName = config.artifactBuild.binaryName;
-  const extension = target.includes("windows") ? ".exe" : "";
-  return path.join(
-    rootDir,
-    config.generatedSkill.projectPath,
-    "target",
-    target,
-    "release",
-    `${binaryName}${extension}`,
-  );
-}
-
-export function detectPublicationMode(destinationRepository) {
-  if (process.env.SKILL_RELEASE_PUBLICATION_MODE) {
-    return process.env.SKILL_RELEASE_PUBLICATION_MODE;
-  }
-
-  if (isLocalRepositoryTarget(destinationRepository)) {
-    return "rehearsal";
-  }
-
-  if (process.env.GITHUB_ACTIONS === "true") {
-    return "live_release";
-  }
-
-  return "rehearsal";
-}
-
-export function resolveLocalRepositoryPath(target) {
-  if (target.startsWith("file://")) {
-    return fileURLToPath(target);
-  }
-
-  return path.resolve(rootDir, target);
-}
-
-export function assertDirectory(directoryPath, description) {
-  if (!existsSync(directoryPath)) {
-    throw new Error(`${description} does not exist: ${directoryPath}.`);
-  }
-
-  if (!statSync(directoryPath).isDirectory()) {
-    throw new Error(`${description} is not a directory: ${directoryPath}.`);
-  }
 }

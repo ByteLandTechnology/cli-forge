@@ -10,7 +10,8 @@ description: '{{DESCRIPTION}}'
 {{DESCRIPTION}}
 
 This generated Skill reuses the approved description contract across Cargo
-metadata, `SKILL.md`, README, and help text.
+metadata, `SKILL.md`, README, help text, and the repository's GitHub Release
+surface.
 
 ## Prerequisites
 
@@ -18,6 +19,9 @@ metadata, `SKILL.md`, README, and help text.
 - No additional system dependencies are required for the default scaffold.
 - The optional REPL feature adds interactive history and completion using the
   Rust crate ecosystem only.
+- Cloned release installs use the repository's `scripts/install-current-release.sh`
+  helper to fetch the matching GitHub Release binary for the checked out
+  version.
 
 ## Invocation
 
@@ -117,6 +121,14 @@ override_mechanisms:
 - Explicit per-invocation selectors on `run` override the persisted Active
   Context for that invocation only.
 
+### Release Install Surface
+
+- Repository releases publish version-matched archives to GitHub Releases.
+- `scripts/install-current-release.sh` installs the archive for the checked out
+  release tag instead of following an unrelated latest pointer.
+- The repository also publishes `release-evidence.json`, which links the repo
+  version, git tag, release page, archive filenames, and checksums.
+
 ### Optional Features
 
 - Streaming may be added later with `--stream`.
@@ -165,6 +177,13 @@ Structured help:
 
 ```text
 $ {{SKILL_NAME}} help run --format yaml
+```
+
+Install the matching released binary from a cloned checkout:
+
+```text
+$ git checkout v{{VERSION}}
+$ ./scripts/install-current-release.sh {{VERSION}}
 ```
 
 Persist Active Context:

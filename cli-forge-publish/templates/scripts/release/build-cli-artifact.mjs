@@ -32,7 +32,7 @@ runCommand("mkdir", ["-p", `${outputDir}/binary`]);
 if (synthetic) {
   const stubContents = [
     "#!/usr/bin/env sh",
-    `echo "${config.generatedSkill.skillName} synthetic rehearsal artifact for ${target}"`,
+    `echo \"${config.generatedSkill.skillName} synthetic rehearsal artifact for ${target}\"`,
     "",
   ].join("\n");
 
@@ -46,11 +46,13 @@ if (synthetic) {
 }
 
 const metadata = {
+  archiveBasenamePrefix: `${config.sourceSkillId}-<version>-${target}`,
   artifactOrigin: synthetic ? "synthetic_rehearsal" : "cargo_build",
   binaryName: config.artifactBuild.binaryName,
   binaryPath: relativeToRoot(binaryPath),
   builtAt: new Date().toISOString(),
   generatedSkillProjectPath: relativeToRoot(projectDir),
+  releaseSurface: "github_release_asset",
   required: targetConfig.required !== false,
   runner: targetConfig.runner,
   target,

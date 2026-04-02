@@ -106,6 +106,9 @@ The expanded files must also preserve the invocation contract:
   `cargo run -- ...` as the primary verification path.
 - Do not present `cargo run -- ...` as the canonical installed skill
   interface.
+- If the repository later adopts the publish asset pack, the clone-first
+  install instructions and repo-native GitHub Release wording must reuse the
+  same approved description contract.
 
 If `author` was omitted:
 
@@ -149,6 +152,9 @@ After writing all files, verify:
      any package-local support files required by enabled capabilities.
    - Repository-owned CI workflows, release scripts, and release automation are
      not copied into the generated project by default.
+   - If a later publish flow is adopted, `scripts/install-current-release.sh`
+     lives at repository root and is documented as repo-owned automation, not
+     as a generated package runtime file.
 
 If any check fails, fix the generated files and re-verify.
 

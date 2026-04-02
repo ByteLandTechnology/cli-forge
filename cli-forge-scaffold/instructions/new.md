@@ -106,6 +106,9 @@ The expanded files must also preserve the invocation contract:
   `cargo run -- ...` as the primary verification path.
 - Do not present `cargo run -- ...` as the canonical installed skill
   interface.
+- If the target repo later adopts repo-native release automation, its clone
+  `->` checkout `->` install helper flow must remain a repository-owned concern
+  that reuses this same description contract.
 
 If `author` was omitted:
 
@@ -149,6 +152,8 @@ After writing all files, verify:
      any package-local support files required by enabled capabilities.
    - Repository-owned CI workflows, release scripts, and release automation are
      not copied into the generated project by default.
+   - Repository-owned install helpers such as `scripts/install-current-release.sh`
+     are likewise not copied into the generated project by default.
 
 If any check fails, fix the generated files and re-verify.
 

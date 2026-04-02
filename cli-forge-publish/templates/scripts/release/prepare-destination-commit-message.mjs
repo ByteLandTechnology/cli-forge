@@ -14,7 +14,7 @@ const changelogPath = path.join(rootDir, "CHANGELOG.md");
 
 if (!existsSync(receiptPath)) {
   throw new Error(
-    "Missing destination publication receipt. Run semantic-release before preparing the destination commit message.",
+    "Missing release receipt. Run semantic-release before preparing the optional secondary publication message.",
   );
 }
 
@@ -24,7 +24,7 @@ if (!existsSync(changelogPath)) {
 
 const receipt = JSON.parse(readFileSync(receiptPath, "utf8"));
 if (!receipt.sourceVersion) {
-  throw new Error("Publication receipt is missing sourceVersion.");
+  throw new Error("Release receipt is missing sourceVersion.");
 }
 
 function escapeRegex(value) {
@@ -62,14 +62,14 @@ function extractChangelogBody(changelog, version) {
 const changelog = readFileSync(changelogPath, "utf8");
 const body = extractChangelogBody(changelog, receipt.sourceVersion);
 const fullCommitMessage = [
-  `${receipt.sourceSkillId} ${receipt.sourceVersion}`,
+  `chore(release): mirror ${receipt.sourceSkillId} ${receipt.sourceVersion}`,
   "",
   body,
   "",
-  "Shared artifact publication:",
-  `- skill home: ${receipt.updatedSkillPath}`,
-  `- release metadata: ${receipt.releaseMetadataPath}`,
-  `- catalog refresh: ${receipt.catalogUpdated ? "catalog.json updated" : "catalog.json unchanged"}`,
+  "Optional secondary publication evidence:",
+  `- release url: ${receipt.githubReleaseUrl || "not available"}`,
+  `- install helper: ${receipt.installScriptPath || "not available"}`,
+  `- release evidence: ${receipt.releaseEvidencePath || "not available"}`,
 ].join("\n");
 
 if (process.env.GITHUB_OUTPUT) {
@@ -82,5 +82,5 @@ if (process.env.GITHUB_OUTPUT) {
 }
 
 process.stdout.write(
-  `Prepared destination commit message for ${receipt.sourceSkillId} ${receipt.sourceVersion}.\n`,
+  `Prepared optional secondary publication commit message for ${receipt.sourceSkillId} ${receipt.sourceVersion}.\n`,
 );

@@ -61,6 +61,9 @@ Before making any edits:
    - Keep capability-specific support files package-local to the generated
      project. Repository-owned CI workflows, release scripts, and release
      automation stay outside generated skill outputs.
+   - If the repository also uses repo-native release automation, keep any
+     release/install docs aligned with the same skill description and do not
+     make feature docs depend on a parent repository layout.
 5. Run validation commands after the edits:
    - `cargo build`
    - `cargo test`

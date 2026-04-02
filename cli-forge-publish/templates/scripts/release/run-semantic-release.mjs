@@ -2,10 +2,11 @@ import { existsSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import {
   loadReleaseConfig,
-  resolveDestinationBranch,
-  resolveDestinationRepository,
+  releaseEvidencePath,
+  resolveOwnerRepository,
   rootDir,
   runCommand,
+  sourceReleaseUrl,
   writeJson,
 } from "./release-helpers.mjs";
 
@@ -19,6 +20,8 @@ const semanticReleaseArgs = [
   "@semantic-release/commit-analyzer@13",
   "-p",
   "@semantic-release/exec@7",
+  "-p",
+  "@semantic-release/git@10",
   "-p",
   "@semantic-release/github@12",
   "-p",
@@ -55,13 +58,13 @@ if (!existsSync(receiptPath)) {
       "There are no relevant changes, so no new version is released.",
     ) || combinedOutput.includes("Found 0 commits since last release");
 
-  const destinationRepository = (() => {
+  const ownerRepository = (() => {
     try {
-      return resolveDestinationRepository(config);
+      return resolveOwnerRepository(config);
     } catch {
       return (
-        process.env[config.destinationRepositoryEnv] ||
-        config.destinationRepository
+        process.env[config.githubRelease.ownerRepositoryEnv] ||
+        config.githubRelease.ownerRepository
       );
     }
   })();
@@ -72,21 +75,24 @@ if (!existsSync(receiptPath)) {
       result.status === 0
         ? noReleaseDetected
           ? "semantic-release found no releasable changes"
-          : "semantic-release completed without preparing a destination publication receipt"
-        : "semantic-release failed before destination publication preparation",
-    catalogPath: config.sharedRepository.catalogPath,
-    catalogUpdated: false,
-    destinationBranch: resolveDestinationBranch(config),
-    destinationRepository,
+          : "semantic-release completed without generating a release receipt"
+        : "semantic-release failed before release evidence was generated",
+    githubReleaseUrl: null,
+    installScriptPath: config.githubRelease.installScriptPath,
+    optionalSecondaryPublicationEnabled: Boolean(
+      config.optionalSecondaryPublication?.enabled,
+    ),
     publicationMode: process.argv.includes("--dry-run")
       ? "dry_run"
       : process.env.GITHUB_ACTIONS === "true"
         ? "live_release"
         : "report_only",
     publicationResult: result.status === 0 ? "skipped" : "failed",
+    publishRoot: ".work/release/github-release",
     publishedAt: new Date().toISOString(),
-    publishRoot: ".work/release/publish",
-    releaseMetadataPath: null,
+    releaseEvidencePath: existsSync(releaseEvidencePath(config))
+      ? ".work/release/github-release/release-evidence.json"
+      : null,
     runResult:
       result.status === 0
         ? noReleaseDetected
@@ -99,10 +105,17 @@ if (!existsSync(receiptPath)) {
       stdio: ["ignore", "pipe", "pipe"],
     }).trim(),
     sourceGitTag: null,
+    sourceRepository: ownerRepository,
     sourceSkillId: config.sourceSkillId,
     sourceVersion: null,
-    updatedSkillPath: null,
   };
+
+  if (receipt.sourceGitTag) {
+    receipt.githubReleaseUrl = sourceReleaseUrl(
+      ownerRepository,
+      receipt.sourceGitTag,
+    );
+  }
 
   writeJson(receiptPath, receipt);
 }
