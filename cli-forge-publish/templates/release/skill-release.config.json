@@ -1,0 +1,67 @@
+{
+  "sourceSkillId": "REPLACE_WITH_SKILL_ID",
+  "destinationRepository": "REPLACE_WITH_OWNER/REPO",
+  "destinationRepositoryEnv": "SKILL_RELEASE_DESTINATION_REPOSITORY",
+  "destinationBranch": "main",
+  "destinationTokenEnv": "DESTINATION_REPOSITORY_TOKEN",
+  "metadataFilename": ".release-manifest.json",
+  "sharedRepository": {
+    "catalogPath": "catalog.json",
+    "skillRootPrefix": "skills",
+    "retentionPolicy": "current_only",
+    "updateMode": "merged_tree_publish"
+  },
+  "generatedSkill": {
+    "skillName": "REPLACE_WITH_SKILL_ID",
+    "description": "REPLACE_WITH_DESCRIPTION",
+    "author": "REPLACE_WITH_AUTHOR_OR_TEAM",
+    "version": "0.1.0",
+    "rustEdition": "2024",
+    "projectPath": ".work/release/generated-skill/REPLACE_WITH_SKILL_ID",
+    "templates": {
+      "templates/Cargo.toml.tpl": "Cargo.toml",
+      "templates/main.rs.tpl": "src/main.rs",
+      "templates/lib.rs.tpl": "src/lib.rs",
+      "templates/help.rs.tpl": "src/help.rs",
+      "templates/context.rs.tpl": "src/context.rs",
+      "templates/SKILL.md.tpl": "SKILL.md",
+      "templates/cli_test.rs.tpl": "tests/cli_test.rs",
+      "templates/README.md.tpl": "README.md"
+    }
+  },
+  "artifactBuild": {
+    "artifactsDir": ".work/release/artifacts",
+    "binaryName": "REPLACE_WITH_SKILL_ID",
+    "releaseMetadataFilename": "release.json",
+    "syntheticRehearsalNotice": "Rehearsal archives may contain synthetic executable stubs when CI-built binaries are unavailable locally."
+  },
+  "artifactTargets": [
+    {
+      "target": "x86_64-unknown-linux-gnu",
+      "required": true,
+      "runner": "ubuntu-latest",
+      "archiveFormat": "tar.gz"
+    },
+    {
+      "target": "aarch64-apple-darwin",
+      "required": true,
+      "runner": "macos-14",
+      "archiveFormat": "tar.gz"
+    }
+  ],
+  "generatedPackageBoundary": {
+    "packageLocalSupportExamples": [
+      "packaging-ready metadata",
+      "support fixtures",
+      "artifact manifests"
+    ],
+    "repositoryOwnedAutomation": [
+      ".github/workflows/release.yml",
+      "release/skill-release.config.json",
+      "scripts/release",
+      ".releaserc.json",
+      "package.json",
+      "package-lock.json"
+    ]
+  }
+}

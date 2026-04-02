@@ -1,0 +1,339 @@
+name: release-skill
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      destination_repository:
+        description: Optional owner/repo override for this release run
+        required: false
+        type: string
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  quality_gates:
+    if: github.event_name != 'push' || !contains(github.event.head_commit.message, '[skip ci]')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+
+      - name: Set up Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Install release tooling
+        run: npm ci
+
+      - name: Run release quality gates
+        shell: bash
+        run: |
+          set +e
+          npm run release:quality-gates
+          quality_status=$?
+          mkdir -p .work/release/status
+          QUALITY_STATUS="$quality_status" node - <<'NODE'
+          const fs = require('node:fs');
+          const qualityPassed = process.env.QUALITY_STATUS === '0';
+          fs.writeFileSync(
+            '.work/release/status/quality-gates.json',
+            `${JSON.stringify(
+              {
+                target_project_quality_gates: qualityPassed ? 'passed' : 'failed',
+                passed: qualityPassed,
+              },
+              null,
+              2,
+            )}\n`,
+            'utf8',
+          );
+          NODE
+          exit 0
+
+      - name: Upload quality gate status
+        uses: actions/upload-artifact@v4
+        with:
+          name: quality-gates-status
+          path: .work/release/status/quality-gates.json
+
+  build_artifacts:
+    if: github.event_name != 'push' || !contains(github.event.head_commit.message, '[skip ci]')
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+          - os: macos-14
+            target: aarch64-apple-darwin
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+
+      - name: Set up Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Build target artifact
+        shell: bash
+        run: |
+          set +e
+          npm run release:build-artifact -- "${{ matrix.target }}"
+          build_status=$?
+          mkdir -p ".work/release/artifacts/${{ matrix.target }}"
+          TARGET_NAME="${{ matrix.target }}" BUILD_STATUS="$build_status" node - <<'NODE'
+          const fs = require('node:fs');
+          const path = require('node:path');
+          const target = process.env.TARGET_NAME;
+          const passed = process.env.BUILD_STATUS === '0';
+          const statusPath = path.join(
+            '.work/release/artifacts',
+            target,
+            'build-status.json',
+          );
+          fs.writeFileSync(
+            statusPath,
+            `${JSON.stringify(
+              {
+                passed,
+                target,
+              },
+              null,
+              2,
+            )}\n`,
+            'utf8',
+          );
+          NODE
+          exit 0
+
+      - name: Upload target artifact evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.target }}
+          path: .work/release/artifacts/${{ matrix.target }}
+
+  release:
+    if: ${{ always() && (github.event_name != 'push' || !contains(github.event.head_commit.message, '[skip ci]')) }}
+    needs:
+      - quality_gates
+      - build_artifacts
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      DESTINATION_REPOSITORY_TOKEN: ${{ secrets.DESTINATION_REPOSITORY_TOKEN }}
+      SKILL_RELEASE_DESTINATION_REPOSITORY: ${{ github.event.inputs.destination_repository || vars.SKILL_RELEASE_DESTINATION_REPOSITORY || secrets.SKILL_RELEASE_DESTINATION_REPOSITORY }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+
+      - name: Install release tooling
+        run: npm ci
+
+      - name: Download quality gate status
+        uses: actions/download-artifact@v4
+        with:
+          name: quality-gates-status
+          path: .work/release/status
+
+      - name: Download linux target evidence
+        uses: actions/download-artifact@v4
+        with:
+          name: x86_64-unknown-linux-gnu
+          path: .work/release/artifacts/x86_64-unknown-linux-gnu
+
+      - name: Download macOS target evidence
+        uses: actions/download-artifact@v4
+        with:
+          name: aarch64-apple-darwin
+          path: .work/release/artifacts/aarch64-apple-darwin
+
+      - name: Verify repository-owned packaging prerequisites
+        id: verify_release_config
+        run: node scripts/release/verify-release-config.mjs
+
+      - name: Assess artifact publication readiness
+        id: assess_readiness
+        run: |
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const path = require('node:path');
+          const requiredTargets = (process.env.REQUIRED_TARGETS || '')
+            .split(',')
+            .map((entry) => entry.trim())
+            .filter(Boolean);
+          const qualityStatusPath = '.work/release/status/quality-gates.json';
+          const messages = [];
+          let ready = true;
+
+          if (!fs.existsSync(qualityStatusPath)) {
+            ready = false;
+            messages.push('missing quality gate status artifact');
+          } else {
+            const qualityStatus = JSON.parse(
+              fs.readFileSync(qualityStatusPath, 'utf8'),
+            );
+            if (!qualityStatus.passed) {
+              ready = false;
+              messages.push('target-project quality gates failed');
+            }
+          }
+
+          for (const target of requiredTargets) {
+            const targetDir = path.join('.work/release/artifacts', target);
+            const buildStatusPath = path.join(targetDir, 'build-status.json');
+            const buildMetadataPath = path.join(targetDir, 'build-metadata.json');
+
+            if (!fs.existsSync(buildStatusPath)) {
+              ready = false;
+              messages.push(`missing build status for ${target}`);
+              continue;
+            }
+
+            const buildStatus = JSON.parse(
+              fs.readFileSync(buildStatusPath, 'utf8'),
+            );
+            if (!buildStatus.passed || !fs.existsSync(buildMetadataPath)) {
+              ready = false;
+              messages.push(`missing build output for ${target}`);
+            }
+          }
+
+          fs.appendFileSync(
+            process.env.GITHUB_OUTPUT,
+            `blocking_reason=${messages.join('; ')}\nready=${ready}\n`,
+            'utf8',
+          );
+          NODE
+        env:
+          REQUIRED_TARGETS: ${{ steps.verify_release_config.outputs.required_targets }}
+
+      - name: Record blocked publication receipt
+        if: ${{ steps.assess_readiness.outputs.ready != 'true' }}
+        run: |
+          BLOCKING_REASON="${{ steps.assess_readiness.outputs.blocking_reason }}" node - <<'NODE'
+          const fs = require('node:fs');
+          const { execFileSync } = require('node:child_process');
+          const config = JSON.parse(
+            fs.readFileSync('release/skill-release.config.json', 'utf8'),
+          );
+          const destinationRepository =
+            process.env.SKILL_RELEASE_DESTINATION_REPOSITORY ||
+            config.destinationRepository;
+          const receipt = {
+            artifactResults: [],
+            blockingReason: process.env.BLOCKING_REASON,
+            catalogPath: config.sharedRepository.catalogPath,
+            catalogUpdated: false,
+            catalog_updated: false,
+            destinationBranch: config.destinationBranch || 'main',
+            destinationRepository,
+            publicationMode: 'live_release',
+            publicationResult: 'failed',
+            publishRoot: '.work/release/publish',
+            publishedAt: new Date().toISOString(),
+            releaseMetadataPath: null,
+            runResult: 'blocked',
+            sourceCommitSha: execFileSync('git', ['rev-parse', 'HEAD'], {
+              encoding: 'utf8',
+            }).trim(),
+            sourceGitTag: null,
+            sourceSkillId: config.sourceSkillId,
+            sourceVersion: null,
+            updatedSkillPath: `${config.sharedRepository.skillRootPrefix}/${config.sourceSkillId}`,
+            preservedSkillPaths: [],
+          };
+          fs.mkdirSync('.work/release', { recursive: true });
+          fs.writeFileSync(
+            '.work/release/last-publication-receipt.json',
+            `${JSON.stringify(receipt, null, 2)}\n`,
+            'utf8',
+          );
+          NODE
+
+      - name: Run repository-owned packaging and semantic-release flow
+        id: run_release
+        if: ${{ steps.assess_readiness.outputs.ready == 'true' }}
+        continue-on-error: true
+        run: npm run release:ci
+
+      - name: Inspect release receipt
+        id: inspect_release_receipt
+        if: ${{ always() && hashFiles('.work/release/last-publication-receipt.json') != '' }}
+        run: |
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const receipt = JSON.parse(
+            fs.readFileSync('.work/release/last-publication-receipt.json', 'utf8'),
+          );
+          const runResult = receipt.runResult || '';
+          const publicationResult = receipt.publicationResult || '';
+          const shouldPublish =
+            ['prepared', 'published'].includes(publicationResult) &&
+            !['blocked', 'failed', 'no_release'].includes(runResult);
+          const isFailure = ['blocked', 'failed'].includes(runResult);
+          fs.appendFileSync(
+            process.env.GITHUB_OUTPUT,
+            [
+              `is_failure=${isFailure}`,
+              `publication_result=${publicationResult}`,
+              `run_result=${runResult}`,
+              `should_publish=${shouldPublish}`,
+            ].join('\n') + '\n',
+            'utf8',
+          );
+          NODE
+
+      - name: Prepare destination packaging evidence commit message
+        if: ${{ steps.inspect_release_receipt.outputs.should_publish == 'true' }}
+        id: prepare_destination_commit_message
+        run: node scripts/release/prepare-destination-commit-message.mjs
+
+      - name: Publish prepared repository-owned packaging tree
+        if: ${{ steps.inspect_release_receipt.outputs.should_publish == 'true' }}
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          personal_token: ${{ secrets.DESTINATION_REPOSITORY_TOKEN }}
+          external_repository: ${{ steps.verify_release_config.outputs.destination_repository }}
+          publish_branch: ${{ steps.verify_release_config.outputs.destination_branch }}
+          publish_dir: ${{ steps.verify_release_config.outputs.publish_dir }}
+          full_commit_message: ${{ steps.prepare_destination_commit_message.outputs.full_commit_message }}
+
+      - name: Fail workflow when release preparation was blocked
+        if: ${{ always() && steps.inspect_release_receipt.outputs.is_failure == 'true' }}
+        run: exit 1
+
+      - name: Fail workflow when release receipt is unexpectedly missing
+        if: ${{ always() && steps.assess_readiness.outputs.ready == 'true' && hashFiles('.work/release/last-publication-receipt.json') == '' }}
+        run: |
+          echo "Expected .work/release/last-publication-receipt.json after release flow."
+          exit 1
