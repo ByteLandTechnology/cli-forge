@@ -35,6 +35,11 @@ This scaffold follows the shared cli-forge runtime contract:
   and optional `logs`
 - `Active Context` is inspectable and can be persisted or overridden per
   invocation
+- daemon-capable skills expose managed background control through
+  `daemon start`, `daemon stop`, `daemon restart`, and `daemon status`
+- attached foreground execution is out of scope for the daemon contract
+- the default daemon model is one managed instance unless the generated skill
+  explicitly documents a bounded multi-instance model
 
 ## Package Boundary
 
@@ -101,6 +106,30 @@ Per-invocation context override:
 {{SKILL_NAME}} run demo-input --selector provider=preview
 ```
 
+### Managed Daemon Lifecycle
+
+Daemon-capable generated skills use one shared CLI-first contract:
+
+- only managed background daemon mode is standardized
+- recovery stays inside `daemon start|stop|restart|status`
+- lifecycle commands return after `running`, `stopped`, `failed`, or an
+  explicit timeout
+- unsupported runtimes are out of scope rather than treated as fallback
+  foreground modes
+
+Examples:
+
+```sh
+{{SKILL_NAME}} daemon start
+{{SKILL_NAME}} daemon status --format json
+{{SKILL_NAME}} daemon restart
+{{SKILL_NAME}} daemon stop
+```
+
+If a lifecycle command times out or reports failure, use `daemon status` to
+inspect the observable state and then continue with `daemon start`,
+`daemon stop`, or `daemon restart`.
+
 ### Local Development
 
 Use `cargo run -- ...` while iterating without a release build:
@@ -124,7 +153,9 @@ After `cargo build --release`, you can verify the compiled binary directly:
 Streaming and REPL support are not enabled in the default scaffold, but they
 can be added later with this Skill package's `add-feature` workflow. When REPL
 is enabled, REPL help remains plain text only and the default session view
-prioritizes readability over raw YAML.
+prioritizes readability over raw YAML. These optional features do not replace
+the daemon contract: daemon control still belongs to the dedicated `daemon`
+subcommands.
 
 ## Development
 

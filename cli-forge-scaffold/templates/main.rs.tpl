@@ -6,12 +6,16 @@ use clap::{ArgAction, Args, Parser, Subcommand, ValueEnum};
 use std::path::PathBuf;
 
 use {{SKILL_NAME_SNAKE}}::context::{
-    build_context_state, inspect_context, parse_selectors, persist_active_context,
-    resolve_effective_context, resolve_runtime_locations, InvocationContextOverrides,
-    RuntimeOverrides,
+    InvocationContextOverrides, PersistedDaemonState, RuntimeOverrides, build_context_state,
+    daemon_simulation_flags, inspect_context, load_daemon_state, parse_selectors,
+    persist_active_context, persist_daemon_state, resolve_effective_context,
+    resolve_runtime_locations,
 };
 use {{SKILL_NAME_SNAKE}}::help::{plain_text_help, structured_help};
-use {{SKILL_NAME_SNAKE}}::{run, serialize_value, write_structured_error, Format, StructuredError};
+use {{SKILL_NAME_SNAKE}}::{
+    DaemonCommandOutput, DaemonLifecycleState, DaemonStatusOutput, Format, StructuredError, run,
+    serialize_value, write_structured_error,
+};
 
 #[derive(Debug)]
 enum AppExit {
@@ -90,6 +94,8 @@ enum Command {
     Help(HelpCommand),
     /// Execute the generated leaf command
     Run(RunCommand),
+    /// Control the managed background daemon lifecycle
+    Daemon(DaemonCommand),
     /// Inspect runtime directory defaults and overrides
     Paths(PathsCommand),
     /// Inspect or persist the Active Context
@@ -119,6 +125,24 @@ struct RunCommand {
     /// Include the optional log directory in the resolved runtime paths
     #[arg(long)]
     log_enabled: bool,
+}
+
+#[derive(Debug, Args)]
+struct DaemonCommand {
+    #[command(subcommand)]
+    command: Option<DaemonSubcommand>,
+}
+
+#[derive(Debug, Subcommand)]
+enum DaemonSubcommand {
+    /// Start the managed background daemon
+    Start,
+    /// Stop the managed background daemon
+    Stop,
+    /// Restart the managed background daemon
+    Restart,
+    /// Inspect the current daemon lifecycle state
+    Status,
 }
 
 #[derive(Debug, Args)]
@@ -199,6 +223,7 @@ fn run_cli() -> std::result::Result<(), AppExit> {
         None => render_plain_text_help_for_path(&[]),
         Some(Command::Help(command)) => render_structured_help(&command.path, format),
         Some(Command::Run(command)) => execute_run(runtime_overrides, command, format),
+        Some(Command::Daemon(command)) => execute_daemon(runtime_overrides, command, format),
         Some(Command::Paths(command)) => execute_paths(runtime_overrides, command, format),
         Some(Command::Context(command)) => execute_context(runtime_overrides, command, format),
     }
@@ -233,7 +258,9 @@ fn detect_requested_format(args: &[String]) -> Format {
         if let Some(value) = arg.strip_prefix("--format=") {
             return parse_format_token(value).unwrap_or(Format::Yaml);
         }
-        if (arg == "--format" || arg == "-f") && let Some(value) = args.peek() {
+        if (arg == "--format" || arg == "-f")
+            && let Some(value) = args.peek()
+        {
             return parse_format_token(value).unwrap_or(Format::Yaml);
         }
     }
@@ -254,6 +281,19 @@ fn render_plain_text_help_for_cli(cli: &Cli) -> std::result::Result<(), AppExit>
         None => Vec::new(),
         Some(Command::Help(_)) => vec!["help".to_string()],
         Some(Command::Run(_)) => vec!["run".to_string()],
+        Some(Command::Daemon(DaemonCommand { command: None })) => vec!["daemon".to_string()],
+        Some(Command::Daemon(DaemonCommand {
+            command: Some(DaemonSubcommand::Start),
+        })) => vec!["daemon".to_string(), "start".to_string()],
+        Some(Command::Daemon(DaemonCommand {
+            command: Some(DaemonSubcommand::Stop),
+        })) => vec!["daemon".to_string(), "stop".to_string()],
+        Some(Command::Daemon(DaemonCommand {
+            command: Some(DaemonSubcommand::Restart),
+        })) => vec!["daemon".to_string(), "restart".to_string()],
+        Some(Command::Daemon(DaemonCommand {
+            command: Some(DaemonSubcommand::Status),
+        })) => vec!["daemon".to_string(), "status".to_string()],
         Some(Command::Paths(_)) => vec!["paths".to_string()],
         Some(Command::Context(ContextCommand { command: None })) => vec!["context".to_string()],
         Some(Command::Context(ContextCommand {
@@ -356,6 +396,317 @@ fn execute_context(
             Ok(())
         }
     }
+}
+
+fn execute_daemon(
+    overrides: RuntimeOverrides,
+    command: DaemonCommand,
+    format: Format,
+) -> std::result::Result<(), AppExit> {
+    match command.command {
+        None => render_plain_text_help_for_path(&["daemon".to_string()]),
+        Some(DaemonSubcommand::Status) => {
+            let runtime = resolve_runtime_locations(&overrides, false).map_err(AppExit::from)?;
+            let mut state = load_daemon_state(&runtime).map_err(AppExit::from)?;
+            if daemon_simulation_flags().unexpected_exit
+                && matches!(state.state, DaemonLifecycleState::Running)
+            {
+                state.state = DaemonLifecycleState::Failed;
+                state.readiness = "not_ready".to_string();
+                state.reason = Some("the managed daemon exited unexpectedly".to_string());
+                state.recommended_next_action = "restart".to_string();
+                state.last_action = "status".to_string();
+                persist_daemon_state(&runtime, &state).map_err(AppExit::from)?;
+            }
+
+            let status = DaemonStatusOutput {
+                state: state.state,
+                readiness: state.readiness,
+                reason: state.reason,
+                recommended_next_action: state.recommended_next_action,
+                instance_model: state.instance_model,
+                instance_id: state.instance_id,
+            };
+
+            let stdout = std::io::stdout();
+            let mut stdout = stdout.lock();
+            serialize_value(&mut stdout, &status, format).map_err(AppExit::from)?;
+            Ok(())
+        }
+        Some(subcommand) => execute_daemon_lifecycle(overrides, subcommand, format),
+    }
+}
+
+fn execute_daemon_lifecycle(
+    overrides: RuntimeOverrides,
+    subcommand: DaemonSubcommand,
+    format: Format,
+) -> std::result::Result<(), AppExit> {
+    let runtime = resolve_runtime_locations(&overrides, false).map_err(AppExit::from)?;
+    let flags = daemon_simulation_flags();
+    let mut state = load_daemon_state(&runtime).map_err(AppExit::from)?;
+    let action = match subcommand {
+        DaemonSubcommand::Start => "start",
+        DaemonSubcommand::Stop => "stop",
+        DaemonSubcommand::Restart => "restart",
+        DaemonSubcommand::Status => unreachable!("status handled separately"),
+    };
+
+    if flags.block_control {
+        return render_daemon_command_output(
+            DaemonCommandOutput {
+                action: action.to_string(),
+                result: "blocked".to_string(),
+                state: state.state,
+                message: "another daemon control action is already in progress".to_string(),
+                recommended_next_action: "status".to_string(),
+                instance_model: state.instance_model,
+                instance_id: state.instance_id,
+            },
+            format,
+        );
+    }
+
+    let output = match subcommand {
+        DaemonSubcommand::Start => {
+            daemon_start_output(&runtime, &mut state, flags.fail_start, flags.timeout_start)
+        }
+        DaemonSubcommand::Stop => {
+            daemon_stop_output(&runtime, &mut state, flags.fail_stop, flags.timeout_stop)
+        }
+        DaemonSubcommand::Restart => daemon_restart_output(
+            &runtime,
+            &mut state,
+            flags.fail_restart,
+            flags.timeout_restart,
+        ),
+        DaemonSubcommand::Status => unreachable!("status handled separately"),
+    }
+    .map_err(AppExit::from)?;
+
+    render_daemon_command_output(output, format)
+}
+
+fn daemon_start_output(
+    runtime: &{{SKILL_NAME_SNAKE}}::context::RuntimeLocations,
+    state: &mut PersistedDaemonState,
+    fail: bool,
+    timeout: bool,
+) -> anyhow::Result<DaemonCommandOutput> {
+    if matches!(state.state, DaemonLifecycleState::Running) {
+        return Ok(daemon_command_output(
+            "start",
+            "no_op",
+            state.clone(),
+            "the managed daemon is already running",
+            "status",
+        ));
+    }
+
+    if timeout {
+        state.state = DaemonLifecycleState::Starting;
+        state.readiness = "pending".to_string();
+        state.reason = Some(
+            "the daemon did not report a terminal outcome before the timeout expired".to_string(),
+        );
+        state.recommended_next_action = "status".to_string();
+        state.last_action = "start".to_string();
+        persist_daemon_state(runtime, state)?;
+        return Ok(daemon_command_output(
+            "start",
+            "timed_out",
+            state.clone(),
+            "the managed daemon is still transitioning; inspect status for the current observable state",
+            "status",
+        ));
+    }
+
+    if fail {
+        state.state = DaemonLifecycleState::Failed;
+        state.readiness = "not_ready".to_string();
+        state.reason = Some("the managed daemon failed to start".to_string());
+        state.recommended_next_action = "restart".to_string();
+        state.last_action = "start".to_string();
+        persist_daemon_state(runtime, state)?;
+        return Ok(daemon_command_output(
+            "start",
+            "failed",
+            state.clone(),
+            "the managed daemon failed to start",
+            "restart",
+        ));
+    }
+
+    state.state = DaemonLifecycleState::Running;
+    state.readiness = "ready".to_string();
+    state.reason = None;
+    state.recommended_next_action = "status".to_string();
+    state.last_action = "start".to_string();
+    persist_daemon_state(runtime, state)?;
+    Ok(daemon_command_output(
+        "start",
+        "running",
+        state.clone(),
+        "the managed daemon is now running",
+        "status",
+    ))
+}
+
+fn daemon_stop_output(
+    runtime: &{{SKILL_NAME_SNAKE}}::context::RuntimeLocations,
+    state: &mut PersistedDaemonState,
+    fail: bool,
+    timeout: bool,
+) -> anyhow::Result<DaemonCommandOutput> {
+    if matches!(state.state, DaemonLifecycleState::Stopped) {
+        return Ok(daemon_command_output(
+            "stop",
+            "no_op",
+            state.clone(),
+            "the managed daemon is already stopped",
+            "start",
+        ));
+    }
+
+    if timeout {
+        state.state = DaemonLifecycleState::Stopping;
+        state.readiness = "pending".to_string();
+        state.reason = Some("the daemon did not stop before the timeout expired".to_string());
+        state.recommended_next_action = "status".to_string();
+        state.last_action = "stop".to_string();
+        persist_daemon_state(runtime, state)?;
+        return Ok(daemon_command_output(
+            "stop",
+            "timed_out",
+            state.clone(),
+            "the managed daemon is still stopping; inspect status for the current observable state",
+            "status",
+        ));
+    }
+
+    if fail {
+        state.state = DaemonLifecycleState::Failed;
+        state.readiness = "not_ready".to_string();
+        state.reason = Some("the managed daemon failed to stop cleanly".to_string());
+        state.recommended_next_action = "status".to_string();
+        state.last_action = "stop".to_string();
+        persist_daemon_state(runtime, state)?;
+        return Ok(daemon_command_output(
+            "stop",
+            "failed",
+            state.clone(),
+            "the managed daemon failed to stop cleanly",
+            "status",
+        ));
+    }
+
+    state.state = DaemonLifecycleState::Stopped;
+    state.readiness = "inactive".to_string();
+    state.reason = None;
+    state.recommended_next_action = "start".to_string();
+    state.last_action = "stop".to_string();
+    persist_daemon_state(runtime, state)?;
+    Ok(daemon_command_output(
+        "stop",
+        "stopped",
+        state.clone(),
+        "the managed daemon is now stopped",
+        "start",
+    ))
+}
+
+fn daemon_restart_output(
+    runtime: &{{SKILL_NAME_SNAKE}}::context::RuntimeLocations,
+    state: &mut PersistedDaemonState,
+    fail: bool,
+    timeout: bool,
+) -> anyhow::Result<DaemonCommandOutput> {
+    if matches!(state.state, DaemonLifecycleState::Stopped) {
+        return Ok(daemon_command_output(
+            "restart",
+            "blocked",
+            state.clone(),
+            "restart is unavailable while the managed daemon is stopped; use start instead",
+            "start",
+        ));
+    }
+
+    if timeout {
+        state.state = DaemonLifecycleState::Starting;
+        state.readiness = "pending".to_string();
+        state.reason = Some(
+            "the daemon restart did not reach a terminal outcome before the timeout expired"
+                .to_string(),
+        );
+        state.recommended_next_action = "status".to_string();
+        state.last_action = "restart".to_string();
+        persist_daemon_state(runtime, state)?;
+        return Ok(daemon_command_output(
+            "restart",
+            "timed_out",
+            state.clone(),
+            "the managed daemon restart is still in progress; inspect status for the current observable state",
+            "status",
+        ));
+    }
+
+    if fail {
+        state.state = DaemonLifecycleState::Failed;
+        state.readiness = "not_ready".to_string();
+        state.reason = Some("the managed daemon failed to restart".to_string());
+        state.recommended_next_action = "restart".to_string();
+        state.last_action = "restart".to_string();
+        persist_daemon_state(runtime, state)?;
+        return Ok(daemon_command_output(
+            "restart",
+            "failed",
+            state.clone(),
+            "the managed daemon failed to restart",
+            "restart",
+        ));
+    }
+
+    state.state = DaemonLifecycleState::Running;
+    state.readiness = "ready".to_string();
+    state.reason = None;
+    state.recommended_next_action = "status".to_string();
+    state.last_action = "restart".to_string();
+    persist_daemon_state(runtime, state)?;
+    Ok(daemon_command_output(
+        "restart",
+        "running",
+        state.clone(),
+        "the managed daemon completed a controlled restart",
+        "status",
+    ))
+}
+
+fn daemon_command_output(
+    action: &str,
+    result: &str,
+    state: PersistedDaemonState,
+    message: &str,
+    recommended_next_action: &str,
+) -> DaemonCommandOutput {
+    DaemonCommandOutput {
+        action: action.to_string(),
+        result: result.to_string(),
+        state: state.state,
+        message: message.to_string(),
+        recommended_next_action: recommended_next_action.to_string(),
+        instance_model: state.instance_model,
+        instance_id: state.instance_id,
+    }
+}
+
+fn render_daemon_command_output(
+    output: DaemonCommandOutput,
+    format: Format,
+) -> std::result::Result<(), AppExit> {
+    let stdout = std::io::stdout();
+    let mut stdout = stdout.lock();
+    serialize_value(&mut stdout, &output, format).map_err(AppExit::from)?;
+    Ok(())
 }
 
 fn execute_run(

@@ -11,7 +11,12 @@ baseline files must exist, enabled capability overlays may add package-local
 support files, and repository-owned CI/release automation must not be treated
 as required generated output. When a target repository has adopted the publish
 asset pack, validate repo-native release/install surfaces as repository
-automation rather than generated package files.
+automation rather than generated package files. If the project exposes daemon
+behavior, validate the shared managed-background daemon contract as well:
+`daemon start|stop|restart|status`, default single-instance control, lifecycle
+commands that wait for a terminal outcome or explicit timeout, CLI-only
+recovery, attached foreground execution out of scope, and unsupported runtimes
+excluded from the supported surface.
 
 ## Inputs
 
@@ -179,6 +184,9 @@ record the following:
    - Confirm `help --format yaml|json|toml` returns structured help.
    - Confirm top-level or non-leaf invocation without a leaf command returns
      plain-text help with subcommands and exit `0`.
+   - If daemon behavior is present, confirm help documents only managed
+     background daemon control and names `daemon start`, `daemon stop`,
+     `daemon restart`, and `daemon status`.
 2. **Runtime directories**
    - Confirm config/data/state/cache are documented separately.
    - Confirm user-scoped defaults are documented.
@@ -192,6 +200,8 @@ record the following:
    - Confirm missing leaf-command inputs return a structured error in the
      selected output format rather than raw help text.
    - Confirm structured errors include at least `code` and `message`.
+   - If daemon behavior is present, confirm failure and timeout messaging keeps
+     recovery inside `start`, `stop`, `restart`, and `status`.
 5. **REPL**
    - If REPL mode is present, confirm REPL help is plain text only.
    - Confirm REPL history and tab completion are available.
@@ -210,6 +220,18 @@ inspect and record the following in the validation narrative:
 3. Release docs mention release evidence and checksum expectations together.
 4. Optional shared-destination publication, if present, is described as a
    secondary follow-up rather than the default path.
+
+### Daemon-Specific Validation Overlay
+
+When the project includes daemon behavior, extend the report narrative with:
+
+1. whether the docs and help surfaces explicitly scope daemon behavior to
+   managed background mode only
+2. whether the default instance model is documented as single-instance
+3. whether lifecycle commands wait for a terminal outcome or explicit timeout
+4. whether recovery guidance stays inside `daemon start|stop|restart|status`
+5. whether unsupported runtimes are treated as out of scope rather than as a
+   fallback execution mode
 
 ## Output Format
 

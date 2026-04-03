@@ -110,6 +110,19 @@ The expanded files must also preserve the invocation contract:
   install instructions and repo-native GitHub Release wording must reuse the
   same approved description contract.
 
+If the generated skill includes daemon behavior, the expanded files must keep
+the daemon contract synchronized everywhere it appears:
+
+- daemon control is CLI-only and uses `daemon start|stop|restart|status`
+- only managed background daemon mode is standardized
+- attached foreground execution is out of scope
+- the default instance model is one managed daemon
+- recovery stays inside the same four daemon commands
+- `start`, `stop`, and `restart` wait for a terminal outcome or explicit
+  timeout before returning
+- unsupported runtimes are out of scope and should not be described as
+  fallback modes
+
 If `author` was omitted:
 
 - Delete the `authors = [""]` line from `Cargo.toml`.
@@ -142,6 +155,9 @@ After writing all files, verify:
    - `help run --format yaml` should return structured help.
    - `paths` should document user-scoped runtime directories.
    - `context show` should expose the generated Active Context surface.
+   - If daemon behavior is present, help, README, and `SKILL.md` should agree
+     on the managed-background-only daemon contract and the default
+     single-instance model.
    - `SKILL.md` should document the bare command contract, while `README.md`
      distinguishes canonical invocation from local development and
      release-binary invocation.

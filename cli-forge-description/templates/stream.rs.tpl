@@ -1,12 +1,16 @@
 //! Optional streaming overlay for the generated package layout. This module is
 //! package-local to generated skills when streaming is enabled.
+//! It does not replace the shared daemon contract: daemon control remains in
+//! the dedicated `daemon start|stop|restart|status` command family, and
+//! attached foreground daemon execution stays out of scope.
 
 use crate::Format;
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result, bail};
 use serde::Serialize;
-use std::io::{stdout, Write};
+use std::io::{Write, stdout};
 
 /// Streaming serializer for incremental output in {{SKILL_NAME}}.
+/// Daemon lifecycle recovery still belongs to the dedicated daemon commands.
 pub struct StreamWriter<W: Write> {
     writer: W,
     format: Format,

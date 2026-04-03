@@ -160,6 +160,10 @@ fn top_level_help() -> HelpDocument {
                 summary: "Execute the primary leaf command".to_string(),
             },
             HelpSubcommand {
+                name: "daemon".to_string(),
+                summary: "Control the managed background daemon lifecycle".to_string(),
+            },
+            HelpSubcommand {
                 name: "paths".to_string(),
                 summary: "Inspect runtime directory defaults and overrides".to_string(),
             },
@@ -192,13 +196,18 @@ fn top_level_help() -> HelpDocument {
         description: vec![
             "{{DESCRIPTION}}".to_string(),
             "This command surface reuses the approved description contract across Cargo metadata, SKILL.md, README, and help text.".to_string(),
+            "Managed background daemon control is exposed through daemon start, stop, restart, and status. Attached foreground execution is out of scope.".to_string(),
             "Package-local packaging-ready support may appear only when enabled capabilities require it; repository-owned CI automation remains outside generated skill packages.".to_string(),
-            "Available subcommands: run, paths, context, help.".to_string(),
+            "Available subcommands: run, daemon, paths, context, help.".to_string(),
         ],
         examples: vec![
             HelpExample {
                 command: "{{SKILL_NAME}} help run --format yaml".to_string(),
                 description: "Inspect structured help for the run command".to_string(),
+            },
+            HelpExample {
+                command: "{{SKILL_NAME}} daemon status --format json".to_string(),
+                description: "Inspect the current managed daemon state".to_string(),
             },
             HelpExample {
                 command: "{{SKILL_NAME}} context use --selector workspace=demo".to_string(),
@@ -299,11 +308,16 @@ fn help_subcommand_help() -> HelpDocument {
         },
         description: vec![
             "Use this subcommand when you need machine-readable command metadata.".to_string(),
+            "Daemon help paths include daemon, daemon start, daemon stop, daemon restart, and daemon status.".to_string(),
         ],
         examples: vec![
             HelpExample {
                 command: "{{SKILL_NAME}} help run --format yaml".to_string(),
                 description: "Inspect the run command as structured YAML".to_string(),
+            },
+            HelpExample {
+                command: "{{SKILL_NAME}} help daemon status --format json".to_string(),
+                description: "Inspect the daemon status contract as structured JSON".to_string(),
             },
             HelpExample {
                 command: "{{SKILL_NAME}} help context use --format json".to_string(),
@@ -351,6 +365,205 @@ fn paths_help() -> HelpDocument {
                 description: "Inspect the optional log directory as well".to_string(),
             },
         ],
+    }
+}
+
+fn daemon_help() -> HelpDocument {
+    HelpDocument {
+        command_path: vec!["daemon".to_string()],
+        purpose: "Control the managed background daemon lifecycle".to_string(),
+        usage: "{{SKILL_NAME}} daemon <start|stop|restart|status>".to_string(),
+        arguments: Vec::new(),
+        options: Vec::new(),
+        subcommands: vec![
+            HelpSubcommand {
+                name: "start".to_string(),
+                summary: "Start the managed background daemon and wait for a terminal outcome".to_string(),
+            },
+            HelpSubcommand {
+                name: "stop".to_string(),
+                summary: "Stop the managed background daemon and wait for a terminal outcome".to_string(),
+            },
+            HelpSubcommand {
+                name: "restart".to_string(),
+                summary: "Restart the managed background daemon and wait for a terminal outcome".to_string(),
+            },
+            HelpSubcommand {
+                name: "status".to_string(),
+                summary: "Inspect the current daemon lifecycle state and next action".to_string(),
+            },
+        ],
+        output_formats: vec!["yaml".to_string(), "json".to_string(), "toml".to_string()],
+        exit_behavior: vec![
+            ExitCodeSpec {
+                code: 0,
+                meaning: "The daemon command completed successfully or returned a structured state".to_string(),
+            },
+            ExitCodeSpec {
+                code: 2,
+                meaning: "The requested daemon help path or lifecycle request was invalid".to_string(),
+            },
+        ],
+        runtime_directories: runtime_directory_help(),
+        active_context: active_context_help(),
+        feature_availability: FeatureAvailability {
+            streaming: "optional add-on".to_string(),
+            repl: "optional add-on".to_string(),
+        },
+        description: vec![
+            "The shared daemon contract covers only managed background daemon mode.".to_string(),
+            "The default daemon model is a single managed instance; bounded multi-instance support must be declared explicitly by generated projects.".to_string(),
+            "Recovery stays inside daemon start, stop, restart, and status. Attached foreground execution is out of scope.".to_string(),
+        ],
+        examples: vec![
+            HelpExample {
+                command: "{{SKILL_NAME}} daemon start".to_string(),
+                description: "Start the managed daemon and wait for running, failed, or timed out".to_string(),
+            },
+            HelpExample {
+                command: "{{SKILL_NAME}} daemon status --format json".to_string(),
+                description: "Inspect readiness, state, and the next recommended action".to_string(),
+            },
+        ],
+    }
+}
+
+fn daemon_start_help() -> HelpDocument {
+    HelpDocument {
+        command_path: vec!["daemon".to_string(), "start".to_string()],
+        purpose: "Start the managed background daemon".to_string(),
+        usage: "{{SKILL_NAME}} daemon start".to_string(),
+        arguments: Vec::new(),
+        options: Vec::new(),
+        subcommands: Vec::new(),
+        output_formats: vec!["yaml".to_string(), "json".to_string(), "toml".to_string()],
+        exit_behavior: vec![
+            ExitCodeSpec {
+                code: 0,
+                meaning: "The daemon reached running, failed, timed out, or reported a no-op".to_string(),
+            },
+            ExitCodeSpec {
+                code: 2,
+                meaning: "Reserved for invalid command usage".to_string(),
+            },
+        ],
+        runtime_directories: runtime_directory_help(),
+        active_context: active_context_help(),
+        feature_availability: FeatureAvailability {
+            streaming: "optional add-on".to_string(),
+            repl: "optional add-on".to_string(),
+        },
+        description: vec![
+            "Starts the default managed daemon instance.".to_string(),
+            "The command returns only after running, failed, a documented no-op, or an explicit timeout.".to_string(),
+        ],
+        examples: vec![HelpExample {
+            command: "{{SKILL_NAME}} daemon start".to_string(),
+            description: "Start the managed daemon".to_string(),
+        }],
+    }
+}
+
+fn daemon_stop_help() -> HelpDocument {
+    HelpDocument {
+        command_path: vec!["daemon".to_string(), "stop".to_string()],
+        purpose: "Stop the managed background daemon".to_string(),
+        usage: "{{SKILL_NAME}} daemon stop".to_string(),
+        arguments: Vec::new(),
+        options: Vec::new(),
+        subcommands: Vec::new(),
+        output_formats: vec!["yaml".to_string(), "json".to_string(), "toml".to_string()],
+        exit_behavior: vec![
+            ExitCodeSpec {
+                code: 0,
+                meaning: "The daemon reached stopped, failed, timed out, or reported a no-op"
+                    .to_string(),
+            },
+            ExitCodeSpec {
+                code: 2,
+                meaning: "Reserved for invalid command usage".to_string(),
+            },
+        ],
+        runtime_directories: runtime_directory_help(),
+        active_context: active_context_help(),
+        feature_availability: FeatureAvailability {
+            streaming: "optional add-on".to_string(),
+            repl: "optional add-on".to_string(),
+        },
+        description: vec![
+            "Stops the default managed daemon instance.".to_string(),
+            "If the command times out, daemon status remains the authoritative follow-up command."
+                .to_string(),
+        ],
+        examples: vec![HelpExample {
+            command: "{{SKILL_NAME}} daemon stop".to_string(),
+            description: "Stop the managed daemon".to_string(),
+        }],
+    }
+}
+
+fn daemon_restart_help() -> HelpDocument {
+    HelpDocument {
+        command_path: vec!["daemon".to_string(), "restart".to_string()],
+        purpose: "Restart the managed background daemon".to_string(),
+        usage: "{{SKILL_NAME}} daemon restart".to_string(),
+        arguments: Vec::new(),
+        options: Vec::new(),
+        subcommands: Vec::new(),
+        output_formats: vec!["yaml".to_string(), "json".to_string(), "toml".to_string()],
+        exit_behavior: vec![
+            ExitCodeSpec {
+                code: 0,
+                meaning: "The daemon reached running, failed, timed out, or reported a blocked state".to_string(),
+            },
+            ExitCodeSpec {
+                code: 2,
+                meaning: "Reserved for invalid command usage".to_string(),
+            },
+        ],
+        runtime_directories: runtime_directory_help(),
+        active_context: active_context_help(),
+        feature_availability: FeatureAvailability {
+            streaming: "optional add-on".to_string(),
+            repl: "optional add-on".to_string(),
+        },
+        description: vec![
+            "Restarts the managed daemon through the shared four-command contract.".to_string(),
+            "When restart cannot proceed, the output recommends start or status as the next action.".to_string(),
+        ],
+        examples: vec![HelpExample {
+            command: "{{SKILL_NAME}} daemon restart".to_string(),
+            description: "Restart the managed daemon".to_string(),
+        }],
+    }
+}
+
+fn daemon_status_help() -> HelpDocument {
+    HelpDocument {
+        command_path: vec!["daemon".to_string(), "status".to_string()],
+        purpose: "Inspect the current managed daemon state".to_string(),
+        usage: "{{SKILL_NAME}} daemon status".to_string(),
+        arguments: Vec::new(),
+        options: Vec::new(),
+        subcommands: Vec::new(),
+        output_formats: vec!["yaml".to_string(), "json".to_string(), "toml".to_string()],
+        exit_behavior: vec![ExitCodeSpec {
+            code: 0,
+            meaning: "The current daemon state and next action were returned".to_string(),
+        }],
+        runtime_directories: runtime_directory_help(),
+        active_context: active_context_help(),
+        feature_availability: FeatureAvailability {
+            streaming: "optional add-on".to_string(),
+            repl: "optional add-on".to_string(),
+        },
+        description: vec![
+            "Status is the authoritative inspection surface after failures, explicit timeouts, or conflicting control attempts.".to_string(),
+        ],
+        examples: vec![HelpExample {
+            command: "{{SKILL_NAME}} daemon status --format json".to_string(),
+            description: "Inspect the current daemon state as structured JSON".to_string(),
+        }],
     }
 }
 
@@ -480,12 +693,15 @@ fn context_use_help() -> HelpDocument {
             streaming: "optional add-on".to_string(),
             repl: "optional add-on".to_string(),
         },
-        description: vec!["Persists one or more reusable selectors or ambient cues for future invocations."
-            .to_string()],
+        description: vec![
+            "Persists one or more reusable selectors or ambient cues for future invocations."
+                .to_string(),
+        ],
         examples: vec![
             HelpExample {
-                command: "{{SKILL_NAME}} context use --selector workspace=demo --selector provider=staging"
-                    .to_string(),
+                command:
+                    "{{SKILL_NAME}} context use --selector workspace=demo --selector provider=staging"
+                        .to_string(),
                 description: "Persist multiple selectors together".to_string(),
             },
             HelpExample {
@@ -501,8 +717,13 @@ pub fn structured_help(path: &[String]) -> Option<HelpDocument> {
         [] => Some(top_level_help()),
         [one] if one == "help" => Some(help_subcommand_help()),
         [one] if one == "run" => Some(run_help()),
+        [one] if one == "daemon" => Some(daemon_help()),
         [one] if one == "paths" => Some(paths_help()),
         [one] if one == "context" => Some(context_help()),
+        [first, second] if first == "daemon" && second == "start" => Some(daemon_start_help()),
+        [first, second] if first == "daemon" && second == "stop" => Some(daemon_stop_help()),
+        [first, second] if first == "daemon" && second == "restart" => Some(daemon_restart_help()),
+        [first, second] if first == "daemon" && second == "status" => Some(daemon_status_help()),
         [first, second] if first == "context" && second == "show" => Some(context_show_help()),
         [first, second] if first == "context" && second == "use" => Some(context_use_help()),
         _ => None,

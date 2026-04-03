@@ -184,6 +184,24 @@ The generated package is intentionally narrower than a repository-level release
 setup. Repository-owned CI and release automation are not copied into the
 generated skill by default.
 
+## Shared Daemon Contract
+
+When a generated CLI includes daemon behavior, cli-forge now treats that
+surface as one strict shared contract:
+
+- managed background daemon mode only
+- attached foreground execution is out of scope
+- one managed daemon instance by default unless the CLI explicitly declares a
+  bounded multi-instance model
+- recovery stays inside `daemon start`, `daemon stop`, `daemon restart`, and
+  `daemon status`
+- lifecycle commands return only after `running`, `stopped`, `failed`, or an
+  explicit timeout
+- runtimes that cannot support managed background daemon mode are out of scope
+
+This contract must stay aligned across templates, README examples, `SKILL.md`,
+help text, extension guidance, validation instructions, and generated tests.
+
 ## Validation Requirements
 
 The validate stage checks the generated project against the cli-forge planning
@@ -203,6 +221,10 @@ brief and runtime conventions. The ruleset covers:
 
 The current validation instructions define 28 concrete checks and return a
 markdown report table with `PASS` / `FAIL` status.
+
+Daemon-capable projects are also expected to document and validate the shared
+managed-background daemon contract, including the single-instance default and
+the four-command recovery path.
 
 ## Publish Modes and Asset Pack
 
@@ -252,6 +274,28 @@ cargo clippy -- -D warnings
 cargo fmt --check
 cargo test
 ```
+
+### 2.5 Validate the daemon contract in a generated project
+
+For daemon-capable generated skills, walk the shared contract in this order:
+
+```bash
+<skill-name> help daemon --format yaml
+<skill-name> daemon start
+<skill-name> daemon status --format json
+<skill-name> daemon start
+<skill-name> daemon restart
+<skill-name> daemon stop
+```
+
+Expected results:
+
+- help documents only managed background daemon control
+- the default instance model is one managed daemon
+- `start`, `stop`, and `restart` return only after a terminal outcome or
+  explicit timeout
+- no-op, failure, and timeout cases keep recovery inside `daemon start`,
+  `daemon stop`, `daemon restart`, and `daemon status`
 
 ### 3. Run publish-stage quality gates in a target repository
 

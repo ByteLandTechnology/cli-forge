@@ -25,6 +25,8 @@ Every plan must explicitly lock these decisions:
 - `SKILL.md` contract surfaces that must stay aligned with code and help text
 - output formats supported by each command
 - runtime-directory and Active Context behavior when those surfaces exist
+- daemon lifecycle command surfaces and recovery rules when daemon mode is in
+  scope
 - which optional capabilities are in scope: base only, `stream`, `repl`, or
   publish/release follow-through
 
@@ -45,6 +47,10 @@ planning stage.
   the required sections and call out any user-visible changes.
 - The approved description contract must stay synchronized across
   `Cargo.toml`, `SKILL.md`, `README.md`, and help summaries.
+- When daemon behavior is in scope, plans must lock the shared managed
+  background contract: `daemon start|stop|restart|status`, default
+  single-instance control, terminal outcome or explicit timeout, CLI-only
+  recovery, and attached foreground execution out of scope.
 - Repository-owned automation and release plumbing must stay outside generated
   skill packages unless a stage explicitly handles publish concerns.
 - When publish concerns are in scope, plans must keep repo-native GitHub
@@ -59,6 +65,8 @@ Plans must state the intended behavior for:
 - explicit `--format yaml|json|toml` support
 - structured errors on `stderr` with stable machine-readable fields
 - plain-text `--help` vs structured `help` behavior
+- daemon lifecycle states, timeout semantics, and recovery messaging when
+  daemon control is in scope
 - `--stream` framing rules if streaming is in scope
 - `--repl` interaction model if REPL is in scope
 
@@ -94,6 +102,8 @@ evidence:
 ## Risks To Check Explicitly In Every Plan
 
 - drift between `SKILL.md`, help text, and actual CLI behavior
+- daemon wording drifting between scaffold, description, extend, and validate
+  surfaces
 - unclear default output vs explicit `--format` behavior
 - unsupported `--stream --format toml` paths when streaming is enabled
 - REPL usability vs machine-readable output expectations
