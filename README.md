@@ -113,8 +113,9 @@ Typical result:
 
 Supported extensions:
 
-- `stream`
-- `repl`
+- `stream` - Streaming output support for long-running commands
+- `repl` - Interactive REPL mode
+- `daemon` - Daemon app server mode with JSON-RPC over stdio, TCP, or Unix socket
 
 ### Description-Led Change
 
@@ -199,6 +200,65 @@ surface as one strict shared contract:
   explicit timeout
 - runtimes that cannot support managed background daemon mode are out of scope
 
+### Daemon Transport Modes
+
+The daemon supports multiple transport modes for different use cases:
+
+| Mode | Flag | Description |
+|------|------|-------------|
+| Stdio | `--transport stdio` | JSON-RPC over stdin/stdout for subprocess integration |
+| TCP | `--transport tcp --port N` | TCP socket for remote connections |
+| Unix Socket | `--transport unix --socket PATH` | Unix domain socket for local connections |
+
+### Daemon App Server Mode
+
+The daemon can operate as an app server with the following capabilities:
+
+- **JSON-RPC 2.0 Protocol**: All communication uses JSON-RPC 2.0 over the selected transport
+- **WebSocket Support**: TCP and Unix socket transports use WebSocket framing
+- **TLS Encryption**: wss:// support with `--cert-file` and `--key-file` flags
+- **Authentication**: Two auth modes supported:
+  - `capability-token`: File-based secret token authentication
+  - `signed-bearer-token`: JWT bearer token with issuer/audience validation
+
+### CLI Commands for Daemon
+
+```bash
+# Start daemon (uses default transport from generated CLI)
+<skill-name> daemon start
+
+# Run daemon in specific mode
+<skill-name> daemon run --transport tcp --port 9000
+<skill-name> daemon run --transport unix --socket /tmp/daemon.sock
+<skill-name> daemon run --transport stdio
+
+# With TLS and authentication
+<skill-name> daemon run --transport tcp --port 9000 \
+    --cert-file /path/to/cert.pem \
+    --key-file /path/to/key.pem \
+    --ws-auth capability-token \
+    --ws-token-file /path/to/token.txt
+
+# Status and control
+<skill-name> daemon status
+<skill-name> daemon stop
+<skill-name> daemon restart
+```
+
+### WebSocket Client Integration
+
+Remote clients can connect via WebSocket:
+
+```python
+import websocket
+
+ws = websocket.WebSocket()
+ws.connect("ws://localhost:9000")
+ws.send('{"id": "1", "method": "initialize", "params": {}}')
+resp = ws.recv()
+ws.close()
+```
+
 This contract must stay aligned across templates, README examples, `SKILL.md`,
 help text, extension guidance, validation instructions, and generated tests.
 
@@ -225,6 +285,15 @@ markdown report table with `PASS` / `FAIL` status.
 Daemon-capable projects are also expected to document and validate the shared
 managed-background daemon contract, including the single-instance default and
 the four-command recovery path.
+
+For daemon app server mode, additional validation includes:
+
+- Transport mode selection via `--transport` flag
+- TLS certificate and key file handling
+- Authentication mode selection via `--ws-auth` flag
+- JWT validation with issuer and audience claims when using signed-bearer-token
+- WebSocket connection acceptance and message framing
+- JSON-RPC request/response cycle over WebSocket
 
 ## Publish Modes and Asset Pack
 

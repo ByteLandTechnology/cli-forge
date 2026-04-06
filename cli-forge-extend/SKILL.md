@@ -1,12 +1,12 @@
 ---
 name: cli-forge-extend
-description: "Extension stage for the cli-forge skill family: add the supported stream or repl feature to an existing scaffolded project while preserving the shared runtime contract."
+description: "Extension stage for the cli-forge skill family: add the supported stream, repl, or daemon feature to an existing scaffolded project while preserving the shared runtime contract."
 ---
 
 # cli-forge Extend
 
 Use this stage when an existing scaffolded Rust CLI Skill project needs one of
-the supported optional features: `stream` or `repl`, or when a
+the supported optional features: `stream`, `repl`, or `daemon`, or when a
 description-impacting change must continue into feature work after the
 description stage refreshed the contract.
 
@@ -16,7 +16,7 @@ description stage refreshed the contract.
 - The description stage already ran when the request changed the skill's
   purpose, positioning, or other user-facing contract.
 - The target project already has the scaffold baseline.
-- The requested feature is exactly `stream` or `repl`.
+- The requested feature is exactly `stream`, `repl`, or `daemon`.
 
 ## Stage Goal
 
@@ -35,7 +35,7 @@ file patches, required touched files, and post-edit verification.
 ## Required Inputs
 
 - `project_path`
-- `feature` where `feature` is exactly `stream` or `repl`
+- `feature` where `feature` is exactly `stream`, `repl`, or `daemon`
 
 ## Workflow
 
@@ -46,6 +46,7 @@ file patches, required touched files, and post-edit verification.
 2. Expand the matching template into the target project:
    - `stream` -> `src/stream.rs`
    - `repl` -> `src/repl.rs`
+   - `daemon` -> `templates/daemon/` (full daemon template)
 3. Apply the required source, help, and documentation updates described in the
    instruction file.
 4. Preserve the shared runtime contract while editing:
@@ -59,11 +60,19 @@ file patches, required touched files, and post-edit verification.
    `cargo build`, `cargo test`, `cargo clippy -- -D warnings`, and
    `cargo fmt --check`.
 
+## Supported Extensions
+
+| Feature | Description | Template |
+|---------|-------------|----------|
+| `stream` | Streaming output for long-running commands | `src/stream.rs` |
+| `repl` | Interactive REPL mode | `src/repl.rs` |
+| `daemon` | Daemon app server with JSON-RPC | `templates/daemon/` |
+
 ## Guardrails
 
 - Do not use this stage on a project that is missing the scaffolded baseline.
   Return to the earlier scaffold phase instead.
-- Do not add unsupported features beyond `stream` and `repl`.
+- Do not add unsupported features beyond `stream`, `repl`, and `daemon`.
 - Keep feature-specific changes scoped to the files and behaviors described by
   the instruction file.
 - If the request changes the generated skill's public description and feature
