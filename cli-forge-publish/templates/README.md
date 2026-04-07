@@ -17,6 +17,13 @@ The default distribution path is the target repository's own GitHub Release:
 Shared-destination publication is optional secondary follow-up only. It is not
 the default user-facing distribution path.
 
+Optional npm publication, when a target repository chooses to add it, is a
+separate secondary channel for the shipped CLI command. The npm path uses one
+coordinating package plus one platform package per supported target, and every
+package in that set must use the same version as the target repository's
+released skill version sourced from the released tag and matching
+`release-evidence.json`.
+
 ## How To Use It
 
 1. Copy the contents of this directory into the root of the target CLI skill
@@ -62,3 +69,13 @@ git checkout v<version>
 The `templates/` directory is part of the release support bundle. It exists for
 fixture generation and validation support; it is not the final shipped CLI
 binary interface.
+
+If a target repository later documents optional npm installation, keep that
+guidance subordinate to the default repo-native release path and explain the
+package-set boundary clearly:
+
+- users install `npm install -g <coordinating-package>@<version>`
+- users install the coordinating package
+- the coordinating package resolves the matching platform package
+- the coordinating package version and every required platform-package version
+  must match the released repository version

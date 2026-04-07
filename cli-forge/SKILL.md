@@ -20,6 +20,7 @@ route work to the matching child skill.
 - [`../cli-forge-extend/SKILL.md`](../cli-forge-extend/SKILL.md)
 - [`../cli-forge-validate/SKILL.md`](../cli-forge-validate/SKILL.md)
 - [`../cli-forge-publish/SKILL.md`](../cli-forge-publish/SKILL.md)
+- [`../cli-forge-publish-npm/SKILL.md`](../cli-forge-publish-npm/SKILL.md)
 
 Read this file first, then move into the child skill that owns the current
 phase.
@@ -29,7 +30,7 @@ phase.
 The parent skill is responsible for:
 
 - classifying the request as `intake`, `description`, `scaffold`, `extend`,
-  `validate`, or `publish`
+  `validate`, `publish`, or `publish-npm`
 - inspecting the current filesystem state when the request is ambiguous
 - selecting the earliest incomplete stage instead of skipping ahead
 - routing into the child skill that should do the actual work
@@ -55,8 +56,12 @@ Choose the child skill using the request plus the current project state:
 5. Route to `validate` when the user explicitly wants an audit or when freshly
    scaffolded or extended work needs verification.
 6. Route to `publish` when validation is current and the workflow needs final
-   closure, dry-run review, rehearsal, destination-config checks, or the
-   documented release path.
+   closure, repo-native dry-run review, rehearsal, destination-config checks,
+   or the documented GitHub Release path.
+7. Route to `publish-npm` when validation is current and the workflow is
+   explicitly about publishing the shipped CLI command to npm, including npm
+   readiness review, package-set alignment, or combined-channel follow-through
+   after the repo-native release path is clear.
 
 If more than one stage seems plausible, inspect the filesystem and route to the
 earliest stage that is not clearly complete.
@@ -73,6 +78,9 @@ earliest stage that is not clearly complete.
   before treating the workflow as done.
 - If the user wants release work but validation is stale or missing, route back
   to `validate` first.
+- If the user asks to publish the CLI command to npm, route to
+  `publish-npm` only after validation is current and the target-repository
+  context is explicit.
 - If validation is current and the user did not explicitly ask for a release
   side effect, still continue into `publish` so the flow ends with
   `report_only` closure instead of stopping half-finished.
@@ -85,6 +93,8 @@ earliest stage that is not clearly complete.
 4. Validation request: `intake` -> `validate` -> `publish`
 5. Release-oriented request: `intake` -> `validate` -> `publish`, unless
    validation is already current
+6. npm publication request: `intake` -> `validate` -> `publish-npm`, unless
+   validation is already current
 
 ## Routing Examples
 
@@ -94,6 +104,8 @@ earliest stage that is not clearly complete.
 - "Check whether this skill is compliant" -> route to `validate`.
 - "Do a release dry run" -> route to `publish` only after confirming validation
   is current.
+- "Publish the shipped CLI to npm" -> route to `publish-npm` only after
+  confirming validation is current and the target repository is explicit.
 - "Continue cli-forge" -> inspect the repo and resume from the earliest
   incomplete stage.
 

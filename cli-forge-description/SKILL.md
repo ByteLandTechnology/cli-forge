@@ -46,6 +46,8 @@ description contract is consumed during scaffold or feature work.
 - approved one-line purpose summary
 - approved positioning statement
 - inventory of description surfaces that must reuse the same contract
+- channel-aware release summary guidance so repo-native release stays primary
+  and any optional npm publication remains an explicit secondary CLI-only path
 - explicit next-stage handoff and done criteria
 
 ## Workflow
@@ -60,6 +62,8 @@ description contract is consumed during scaffold or feature work.
    - help text / structured help summaries
    - packaging or publish-facing summaries
    - repo-native release/install guidance when publish support is in scope
+   - optional npm publication guidance when the repository will expose that
+     secondary CLI distribution path
 4. Confirm the next stage that is allowed to consume the approved description
    contract.
 5. Hand the approved contract forward without letting downstream stages invent
@@ -76,6 +80,9 @@ description contract is consumed during scaffold or feature work.
 - When publish support is later adopted, repo-native GitHub Release and
   install-helper wording must reuse the approved summary instead of inventing a
   different product description.
+- If optional npm publication is later adopted, its coordinating-package and
+  platform-package guidance must reuse the same approved description contract
+  without presenting npm as the default release channel.
 
 ## Done Condition
 

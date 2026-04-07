@@ -12,6 +12,8 @@ work for a generated CLI skill repository.
 - Keep release work anchored to the target repository's shipped CLI contract.
 - Treat repo-native GitHub Release publication as the primary distribution
   surface.
+- Keep optional npm publication out of this stage's default flow; the
+  `cli-forge-publish-npm` child skill owns the npm package-set boundary.
 - Include the generated install helper template
   `templates/templates/install-current-release.sh.tpl` and any repo-facing
   guidance that downstream stages need, including
@@ -30,8 +32,9 @@ Every publish-stage plan must lock these decisions:
 - whether validation is current or must be re-run before publish work
 - how the repo-native GitHub Release, evidence file, and install helper are
   configured
-- whether optional secondary destination publication is in scope after the
-  repo-native release path
+- whether optional secondary distribution is in scope after the repo-native
+  release path and, if it is npm publication, that it is routed to the
+  dedicated npm child skill
 
 If a plan cannot answer those items, it should route back through
 `cli-forge-intake` before continuing.
@@ -71,6 +74,10 @@ Plans must keep this boundary explicit:
 The asset pack supports the target repository. It is not the runtime surface of
 the shipped CLI skill itself.
 
+Optional npm package governance is not part of this child skill's automation
+boundary. If the same shipped CLI version will also be distributed through npm,
+that package-set work belongs in `cli-forge-publish-npm`.
+
 ## Risks To Check Explicitly
 
 - release config placeholders were not replaced in the target repository
@@ -80,5 +87,7 @@ the shipped CLI skill itself.
   apart
 - cloned released checkouts cannot install the matching binary
 - optional secondary publication is being treated like the default path
+- npm publication is being mixed into repo-native release guidance without a
+  separate child-skill handoff
 - `SKILL.md`, README, tests, and actual binary invocation drift from the final
   shipped command surface

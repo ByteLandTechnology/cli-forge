@@ -12,9 +12,11 @@ resume the cli-forge workflow from the earliest safe phase.
 
 Finish this stage with:
 
-- the work classified as `scaffold`, `extend`, `validate`, or `publish`
 - the work classified as `description`, `scaffold`, `extend`, `validate`, or
   `publish`
+- publish-intent requests narrowed to the correct child skill:
+  `cli-forge-publish` for repo-native release work or
+  `cli-forge-publish-npm` for optional npm publication
 - the required user inputs identified and, when available, assembled
 - the shared constraints loaded from the planning brief and the relevant
   instruction document
@@ -29,6 +31,9 @@ Finish this stage with:
 - [`../cli-forge-publish/SKILL.md`](../cli-forge-publish/SKILL.md)
 - [`../cli-forge-publish/planning-brief.md`](../cli-forge-publish/planning-brief.md)
 - [`../cli-forge-publish/instructions/release/skill-release-runbook.md`](../cli-forge-publish/instructions/release/skill-release-runbook.md)
+- [`../cli-forge-publish-npm/SKILL.md`](../cli-forge-publish-npm/SKILL.md)
+- [`../cli-forge-publish-npm/planning-brief.md`](../cli-forge-publish-npm/planning-brief.md)
+- [`../cli-forge-publish-npm/instructions/release/npm-publish-runbook.md`](../cli-forge-publish-npm/instructions/release/npm-publish-runbook.md)
 - [`../cli-forge-publish/templates/README.md`](../cli-forge-publish/templates/README.md)
 
 ## When To Use This Stage
@@ -46,8 +51,9 @@ Finish this stage with:
 - The user wants validation, but the target project path still needs to be
   resolved.
 - The user wants to publish, do a release dry run, rehearse the destination
-  mirror, check destination configuration, or adopt the release automation
-  asset pack into a target CLI skill project.
+  mirror, check destination configuration, adopt the release automation asset
+  pack into a target CLI skill project, or publish the shipped CLI command to
+  npm.
 
 ## Required Inputs By Outcome
 
@@ -58,8 +64,10 @@ Finish this stage with:
 - `extend`: `project_path` and `feature` where `feature` is `stream` or `repl`
 - `validate`: `project_path`
 - `publish`: release mode (`report_only`, `dry_run`, `rehearsal`, or
-  `live_release`), current validation status, and any required destination
-  configuration or credential context
+  `live_release`), requested publication channel (`repo_native`, `npm`, or
+  `both`), explicit target-repository context, current validation status, and
+  any required destination configuration, npm package-set context, or
+  credential context
 
 ## Workflow
 
@@ -78,11 +86,14 @@ Finish this stage with:
      project.
    - For `extend`, verify both `project_path` and `feature`.
    - For `validate`, verify `project_path`.
-   - For `publish`, load
-     [`../cli-forge-publish/planning-brief.md`](../cli-forge-publish/planning-brief.md),
-     verify whether the user wants `report_only`, `dry_run`, `rehearsal`, or
-     `live_release`, and whether the work should start with validation or can
-     proceed directly to the publish stage.
+   - For `publish`, determine whether the requested channel is `repo_native`,
+     `npm`, or `both`. Load
+     [`../cli-forge-publish/planning-brief.md`](../cli-forge-publish/planning-brief.md)
+     for repo-native work and
+     [`../cli-forge-publish-npm/planning-brief.md`](../cli-forge-publish-npm/planning-brief.md)
+     for npm work, verify whether the user wants readiness review, dry-run, or
+     live side effects, and whether the work should start with validation or
+     can proceed directly to the matching publish child skill.
 5. Inspect the filesystem when it helps disambiguate the stage:
    - missing target directory usually means `description` followed by
      `scaffold`
@@ -90,8 +101,11 @@ Finish this stage with:
    - existing generated skill plus description-impacting request means
      `description` followed by `extend` or `validate`
    - explicit audit or post-change verification means `validate`
-   - release, dry-run, rehearsal, destination-config work, or final
-     post-validation closure means `publish`
+   - release, repo-native dry-run, rehearsal, destination-config work, or
+     final post-validation closure means `publish`
+   - npm publication, npm package-set review, or combined repo-native plus npm
+     distribution still begins as `publish`, but the downstream child skill
+     must be selected explicitly
 6. Route to the next stage skill and carry forward the resolved inputs.
 
 ## Classification Examples
@@ -104,6 +118,8 @@ Finish this stage with:
 - Audit or post-change verification request -> route to `validate`.
 - Successful validation with no explicit release action -> route to `publish`
   in `report_only` mode.
+- Publish the shipped CLI to npm -> route to `publish-npm` after confirming
+  validation status and target-repository context.
 - Mixed implementation and release request with unresolved project state ->
   return to the earliest incomplete stage instead of skipping ahead to
   `publish`.
@@ -124,4 +140,7 @@ the next stage has the inputs it needs.
 - Route to [`../cli-forge-validate/SKILL.md`](../cli-forge-validate/SKILL.md) for
   compliance checking.
 - Route to [`../cli-forge-publish/SKILL.md`](../cli-forge-publish/SKILL.md) for
-  release, dry-run, rehearsal, or destination-config work.
+  repo-native release, dry-run, rehearsal, or destination-config work.
+- Route to
+  [`../cli-forge-publish-npm/SKILL.md`](../cli-forge-publish-npm/SKILL.md) for
+  optional npm publication of the shipped CLI command.

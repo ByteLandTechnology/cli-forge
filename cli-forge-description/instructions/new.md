@@ -109,6 +109,9 @@ The expanded files must also preserve the invocation contract:
 - If the repository later adopts the publish asset pack, the clone-first
   install instructions and repo-native GitHub Release wording must reuse the
   same approved description contract.
+- If the repository later adopts optional npm publication, that npm guidance
+  must also reuse the same approved description contract while keeping
+  repo-native release as the default distribution path.
 
 If the generated skill includes daemon behavior, the expanded files must keep
 the daemon contract synchronized everywhere it appears:
@@ -171,6 +174,9 @@ After writing all files, verify:
    - If a later publish flow is adopted, `scripts/install-current-release.sh`
      lives at repository root and is documented as repo-owned automation, not
      as a generated package runtime file.
+   - If optional npm publication is documented later, it must stay clearly
+     secondary to repo-native release and must not rewrite the generated
+     package boundary as though npm were the default release channel.
 
 If any check fails, fix the generated files and re-verify.
 

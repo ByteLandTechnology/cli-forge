@@ -23,8 +23,10 @@ Finish this stage with one of these outcomes:
 
 The default release path is always repo-native GitHub Release publication:
 version, tag, release page, CLI binaries, and release evidence must all align.
-Shared-destination publication may be discussed only as an optional secondary
-follow-up after the repo-native contract is healthy.
+Optional npm publication belongs in the dedicated
+[`../cli-forge-publish-npm/SKILL.md`](../cli-forge-publish-npm/SKILL.md)
+child skill and may be discussed only as an explicit secondary follow-up after
+the repo-native contract is healthy.
 
 ## Canonical References
 
@@ -52,7 +54,7 @@ skill repository root.
 - confirmation that the target repo owns its own GitHub Release publication
 - credentials appropriate to the chosen mode
 - optional secondary publication settings only if that follow-up is explicitly
-  requested
+  requested and routed to the correct child skill
 
 ## Prerequisites
 
@@ -72,31 +74,38 @@ skill repository root.
    contract, then read
    [`./instructions/release/skill-release-runbook.md`](./instructions/release/skill-release-runbook.md)
    and confirm which release mode the user wants.
-2. Confirm whether the target repository has already adopted the `templates/`
+2. Confirm the request is actually about the target repository's repo-native
+   release path. If the user explicitly wants npm publication for the shipped
+   CLI command, route to
+   [`../cli-forge-publish-npm/SKILL.md`](../cli-forge-publish-npm/SKILL.md)
+   instead of continuing here.
+3. Confirm whether the target repository has already adopted the `templates/`
    asset pack. If not, provide or apply that adoption step first.
-3. Verify the target project's placeholders and release config are set
+4. Verify the target project's placeholders and release config are set
    correctly, especially skill id, source repository, install-helper path,
    required artifact targets, and release-evidence settings.
-4. If no explicit release action was requested, default to `report_only`:
+5. If no explicit release action was requested, default to `report_only`:
    summarize readiness, blockers, next actions, and which commands should be
    run from the target repository root.
-5. For `dry_run`, run the documented package script from the target repository
+6. For `dry_run`, run the documented package script from the target repository
    root and review the semantic-release outcome without claiming a production
    publish occurred.
-6. For `rehearsal`, run the documented rehearsal commands from the target
+7. For `rehearsal`, run the documented rehearsal commands from the target
    repository root and inspect the staged GitHub Release assets,
    `release-evidence.json`, and the publication receipt.
-7. For `live_release`, follow the target project's GitHub Actions workflow
+8. For `live_release`, follow the target project's GitHub Actions workflow
    after confirming validation, config, and credentials are current.
-8. Keep the final skill contract clean:
+9. Keep the final skill contract clean:
    - `SKILL.md` documents the bare command-name invocation
    - README distinguishes local development from the shipped skill surface
    - README and release docs explain clone `->` checkout tag `->`
      `scripts/install-current-release.sh`
    - release evidence points back to the same repo version and GitHub Release
-9. If a user explicitly wants secondary shared-destination publication, treat
-   it as an optional post-release mirror and keep its wording subordinate to
-   the repo-native release path.
+10. If a user explicitly wants optional npm distribution for the same shipped
+    CLI version, keep that request subordinate to the repo-native release path
+    and hand it off to
+    [`../cli-forge-publish-npm/SKILL.md`](../cli-forge-publish-npm/SKILL.md)
+    as a distinct follow-up workflow.
 
 ## Guardrails
 
@@ -105,6 +114,7 @@ skill repository root.
 - Do not tell users to run release commands from `cli-forge-publish/`; the
   commands run from the target CLI skill repository root after the asset pack
   is adopted there.
+- Do not describe npm publication as part of this stage's default behavior.
 - Do not describe `cargo run -- ...` as the final agent-facing invocation
   contract.
 - Do not skip validation when the latest substantive change in the target
@@ -130,3 +140,6 @@ performed or reviewed and the target project has:
   for readiness or review.
 - After `live_release`, monitor the resulting GitHub Release assets and confirm
   the published release evidence matches the same repo version and install path.
+- If the user also wants npm publication, route to
+  [`../cli-forge-publish-npm/SKILL.md`](../cli-forge-publish-npm/SKILL.md)
+  only after the repo-native release contract is explicit.

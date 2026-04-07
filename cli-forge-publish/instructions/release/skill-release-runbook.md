@@ -7,6 +7,8 @@ repositories that adopt the `cli-forge-publish` release automation asset pack.
 
 The current `cli-forge` skill-family repository is the source of this release
 pattern. It is not the thing being published by these instructions.
+This runbook covers the target repository's repo-native GitHub Release path,
+not optional npm publication of the shipped CLI command.
 
 ## Asset Pack Model
 
@@ -58,6 +60,24 @@ Every supported release should align these surfaces to the same version:
 6. `scripts/install-current-release.sh` for clone-first installation
 
 Shared-destination publication remains optional secondary follow-up only.
+Optional npm publication is handled separately through
+`cli-forge-publish-npm`, using the same released CLI version as the
+repo-native release surfaces.
+
+## Release Evidence And Authoritative Version
+
+The repo-native release chain identifies the authoritative released skill
+version for any optional npm follow-through:
+
+1. semantic-release selects the repository version
+2. the target repository publishes tag `v<version>`
+3. the GitHub Release assets and checksums attach to that same tag
+4. `release-evidence.json` and `.release-manifest.json` record that same
+   released version
+
+If a later npm publication path is used, it must read the authoritative
+released skill version from the released tag and matching release evidence
+instead of inventing a separate package-set version.
 
 ## Required Configuration
 
@@ -148,6 +168,9 @@ git checkout v<version>
 This helper must resolve the archive for the checked out release version instead
 of downloading an arbitrary latest asset.
 
+This flow is for the repo-native release channel only. It does not describe the
+optional npm install surface.
+
 ## Quality Gates
 
 From the target repository root:
@@ -165,6 +188,8 @@ These checks should confirm:
 - the target CLI invocation contract is coherent with the shipped skill docs
 - `scripts/install-current-release.sh` exists and the generated docs mention it
 - the generated docs mention `release-evidence.json`
+- any optional npm wording remains clearly secondary to the repo-native release
+  path
 
 ## Package Boundary
 
@@ -197,3 +222,6 @@ When release work fails, check these categories first:
 - the target project's CLI contract or docs drifted from the expected release
   surface
 - optional secondary publication assumptions leaked into the default workflow
+- npm package names, platform coverage, or package-set alignment checks were
+  mixed into the repo-native runbook instead of being handled by
+  `cli-forge-publish-npm`

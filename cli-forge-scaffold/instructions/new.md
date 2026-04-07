@@ -109,6 +109,9 @@ The expanded files must also preserve the invocation contract:
 - If the target repo later adopts repo-native release automation, its clone
   `->` checkout `->` install helper flow must remain a repository-owned concern
   that reuses this same description contract.
+- If the target repo later adds optional npm publication, that wording must
+  stay secondary to the repo-native release path and must keep the same
+  approved description contract.
 
 If the generated skill includes daemon behavior, the expanded files must keep
 the daemon contract synchronized everywhere it appears:
@@ -170,6 +173,9 @@ After writing all files, verify:
      not copied into the generated project by default.
    - Repository-owned install helpers such as `scripts/install-current-release.sh`
      are likewise not copied into the generated project by default.
+   - Optional npm publication references, if later added in repository docs,
+     remain repository-owned release guidance rather than generated package
+     runtime files.
 
 If any check fails, fix the generated files and re-verify.
 

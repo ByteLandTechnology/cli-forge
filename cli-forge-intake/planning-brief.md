@@ -27,6 +27,8 @@ Every plan must explicitly lock these decisions:
 - runtime-directory and Active Context behavior when those surfaces exist
 - which optional capabilities are in scope: base only, `stream`, `repl`, or
   publish/release follow-through
+- whether publish-oriented work is about the default repo-native release path,
+  the optional npm channel, or both with repo-native release remaining primary
 
 If a plan cannot answer one of those items, it is not ready to move past the
 planning stage.
@@ -98,3 +100,5 @@ evidence:
 - accidental leakage of repository-owned automation into generated packages
 - release credentials, target artifacts, and destination configuration when
   publish work is in scope
+- publish-channel confusion where repo-native release and npm publication are
+  mixed into one undefined path

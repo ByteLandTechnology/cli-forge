@@ -12,8 +12,8 @@ on. It is not itself the generated CLI project, and it is not a single
 
 - A parent entrypoint, `cli-forge`, that routes work to the earliest safe
   stage.
-- Six workflow stages: `intake`, `description`, `scaffold`, `extend`,
-  `validate`, and `publish`.
+- Seven workflow stages: `intake`, `description`, `scaffold`, `extend`,
+  `validate`, `publish`, and `publish-npm`.
 - The source of truth for stage instructions, template files, validation
   rules, and release-automation guidance.
 
@@ -94,6 +94,18 @@ Use it when:
 - you need release automation guidance or asset-pack adoption
 - you want `report_only`, `dry_run`, `rehearsal`, or `live_release`
 
+### `cli-forge-publish-npm`
+
+Handles the optional npm distribution path for the shipped CLI command without
+replacing the target repository's repo-native GitHub Release workflow.
+
+Use it when:
+
+- validation is current
+- the request is explicitly about npm publication of the shipped CLI command
+- you need coordinating-package and platform-package readiness guidance
+- you want npm `report_only`, `dry_run`, or `live_publish` follow-through
+
 ## Main Workflows
 
 ### New Project
@@ -134,12 +146,20 @@ when no release side effect is requested.
 ### Publish / Release Follow-Through
 
 If validation is already current, the workflow can continue directly into the
-publish stage. Supported publish modes are:
+repo-native publish stage. Supported repo-native publish modes are:
 
 - `report_only`
 - `dry_run`
 - `rehearsal`
 - `live_release`
+
+Optional npm publication is a separate child skill for the same shipped CLI
+version. Repo-native GitHub Release stays the default release path; npm is an
+explicit secondary distribution channel through `cli-forge-publish-npm`.
+
+If the request is npm-only and validation is already current, the workflow can
+continue directly into `cli-forge-publish-npm` instead of the repo-native
+publish stage.
 
 ## Repository Layout
 
@@ -151,7 +171,8 @@ publish stage. Supported publish modes are:
 ├── cli-forge-scaffold/
 ├── cli-forge-extend/
 ├── cli-forge-validate/
-└── cli-forge-publish/
+├── cli-forge-publish/
+└── cli-forge-publish-npm/
 ```
 
 Each stage directory typically contains:

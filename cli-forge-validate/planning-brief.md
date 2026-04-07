@@ -56,6 +56,9 @@ planning stage.
 - When publish concerns are in scope, plans must keep repo-native GitHub
   Release publication primary and treat clone-first installation and release
   evidence as repository-owned surfaces.
+- Validation should confirm publish-channel context is explicit, but the choice
+  between repo-native and npm publication still belongs to intake plus the
+  relevant publish child skill.
 
 ## Output, Stream, REPL, And Help
 
@@ -113,3 +116,5 @@ evidence:
   publish work is in scope
 - repo version, git tag, release page, binary assets, and release evidence
   drifting apart when publish work is in scope
+- validation reporting failing to distinguish repo-native release checks from
+  optional npm package-set checks

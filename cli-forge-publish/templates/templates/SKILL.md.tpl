@@ -11,7 +11,8 @@ description: '{{DESCRIPTION}}'
 
 This generated Skill reuses the approved description contract across Cargo
 metadata, `SKILL.md`, README, help text, and the repository's GitHub Release
-surface.
+surface. Optional npm publication, when adopted, must reuse the same
+description contract without replacing the repo-native release path.
 
 ## Prerequisites
 
@@ -128,12 +129,23 @@ override_mechanisms:
   release tag instead of following an unrelated latest pointer.
 - The repository also publishes `release-evidence.json`, which links the repo
   version, git tag, release page, archive filenames, and checksums.
+- If the repository later adds npm publication for the shipped CLI command, the
+  npm path remains secondary to the repo-native release path.
+- The npm path uses one coordinating package plus one platform package per
+  supported target.
+- Users install the coordinating package, and it resolves the correct
+  platform-specific package for the supported target.
+- The coordinating package version and every required platform-package version
+  must match the released repository version identified by the released tag and
+  matching `release-evidence.json`.
 
 ### Optional Features
 
 - Streaming may be added later with `--stream`.
 - REPL mode may be added later with `--repl`. When enabled, REPL help remains
   plain text only and the default REPL presentation is human-oriented.
+- Optional npm publication may be added later for the shipped CLI command, but
+  it does not replace the repository's default GitHub Release install surface.
 - Package-local packaging-ready metadata or support fixtures may be added by a
   supported capability later, but repository-owned CI workflows and release
   automation are not copied into generated skill packages by default. If the

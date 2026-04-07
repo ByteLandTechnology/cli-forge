@@ -106,6 +106,9 @@ The expanded files must also preserve the invocation contract:
   `cargo run -- ...` as the primary verification path.
 - Do not present `cargo run -- ...` as the canonical installed skill
   interface.
+- If publish guidance is later introduced, keep repo-native release and any
+  optional npm publication wording channel-distinct while reusing the same
+  approved description contract.
 
 If `author` was omitted:
 
@@ -149,6 +152,8 @@ After writing all files, verify:
      any package-local support files required by enabled capabilities.
    - Repository-owned CI workflows, release scripts, and release automation are
      not copied into the generated project by default.
+   - If repository docs later mention optional npm publication, that wording
+     must remain clearly secondary to the repo-native release path.
 
 If any check fails, fix the generated files and re-verify.
 

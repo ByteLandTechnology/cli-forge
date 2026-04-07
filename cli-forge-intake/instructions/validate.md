@@ -9,7 +9,9 @@ structure/build rules and the runtime-conventions surface introduced by feature
 `002-cli-runtime-conventions`. It also verifies the generated package boundary:
 baseline files must exist, enabled capability overlays may add package-local
 support files, and repository-owned CI/release automation must not be treated
-as required generated output.
+as required generated output. If repository docs mention release channels, keep
+repo-native release and any optional npm publication wording distinct and
+description-aligned.
 
 ## Inputs
 

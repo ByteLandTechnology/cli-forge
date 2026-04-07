@@ -42,6 +42,20 @@ GitHub Release page instead of downloading an unrelated latest build. The
 release also publishes `release-evidence.json` so operators can confirm the
 release tag, commit, and checksums match the installed binary.
 
+## Optional npm Distribution
+
+The default release path remains the repository's own GitHub Release. If the
+repository later adds npm publication for the shipped CLI command, keep it as a
+secondary install surface:
+
+- users install `npm install -g <coordinating-package>@{{VERSION}}`
+- users install one coordinating npm package
+- the coordinating package resolves the correct platform-specific package for
+  the supported target
+- the coordinating package version and every required platform-package version
+  must match the released repository version from the released tag and matching
+  `release-evidence.json`
+
 ## Runtime Conventions
 
 This scaffold follows the shared cli-forge runtime contract:
@@ -61,6 +75,10 @@ release scripts, and release automation are not scaffolded into the generated
 project by default. If a target repository later adopts the
 `cli-forge-publish/templates/` asset pack, those files live at the target
 repository root rather than inside the shipped CLI skill package.
+
+If that repository also adopts optional npm publication, the coordinating
+package and platform-package set remain repository-owned release guidance, not
+generated package runtime files.
 
 Package-local packaging-ready metadata or support fixtures should appear only
 when a supported capability or packaging path explicitly requires them.

@@ -61,6 +61,9 @@ Before making any edits:
    - Keep capability-specific support files package-local to the generated
      project. Repository-owned CI workflows, release scripts, and release
      automation stay outside generated skill outputs.
+   - If publish-facing docs are touched while adding the feature, preserve
+     wording parity across repo-native and optional npm guidance instead of
+     letting one channel redefine the product description on its own.
 5. Run validation commands after the edits:
    - `cargo build`
    - `cargo test`

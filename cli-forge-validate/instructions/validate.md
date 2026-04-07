@@ -11,7 +11,8 @@ baseline files must exist, enabled capability overlays may add package-local
 support files, and repository-owned CI/release automation must not be treated
 as required generated output. When a target repository has adopted the publish
 asset pack, validate repo-native release/install surfaces as repository
-automation rather than generated package files. If the project exposes daemon
+automation rather than generated package files, and keep any optional npm
+publication wording clearly secondary. If the project exposes daemon
 behavior, validate the shared managed-background daemon contract as well:
 `daemon start|stop|restart|status`, default single-instance control, lifecycle
 commands that wait for a terminal outcome or explicit timeout, CLI-only
@@ -218,8 +219,12 @@ inspect and record the following in the validation narrative:
 2. Release docs mention clone `->` checkout released tag `->`
    `scripts/install-current-release.sh`.
 3. Release docs mention release evidence and checksum expectations together.
-4. Optional shared-destination publication, if present, is described as a
-   secondary follow-up rather than the default path.
+4. The released tag and matching release evidence identify one coherent
+   repo-native released version.
+5. Optional npm publication, if present, is described as a secondary follow-up
+   rather than the default path, and the validation narrative points package-set
+   alignment work to `cli-forge-publish-npm` instead of trying to complete that
+   check here.
 
 ### Daemon-Specific Validation Overlay
 

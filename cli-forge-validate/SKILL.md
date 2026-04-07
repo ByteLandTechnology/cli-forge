@@ -27,6 +27,8 @@ the next action obvious.
 
 - [`./instructions/validate.md`](./instructions/validate.md)
 - [`./planning-brief.md`](./planning-brief.md)
+- [`../cli-forge-publish/SKILL.md`](../cli-forge-publish/SKILL.md)
+- [`../cli-forge-publish-npm/SKILL.md`](../cli-forge-publish-npm/SKILL.md)
 
 Read `instructions/validate.md` as the exact source of truth for the ruleset,
 the output table format, build checks, and runtime-convention checks.
@@ -49,6 +51,8 @@ the output table format, build checks, and runtime-convention checks.
    - runtime convention checks
    - repo-native release/install checks when the target repository adopts the
      publish asset pack
+   - publish-channel checks that keep repo-native release and optional npm
+     publication distinct
    - generated package boundary checks so package-local support assets are
      allowed only when enabled and repository-owned CI automation is not
      misclassified as generated output
@@ -59,8 +63,9 @@ the output table format, build checks, and runtime-convention checks.
    - usable with warnings when only warning-level gaps fail
    - non-compliant when any error-level check fails
 5. Prepare the handoff:
-   - compliant or reviewable-with-warnings results continue into `publish`
-     so the workflow ends with final release-readiness or no-publish closure
+   - compliant or reviewable-with-warnings results continue into the matching
+     publish child skill so the workflow ends with final release-readiness or
+     no-publish closure
    - non-compliant results route back to the earliest failing phase before
      later work resumes
 
@@ -80,7 +85,12 @@ been produced for the current project state.
 ## Next Step
 
 - Continue with [`../cli-forge-publish/SKILL.md`](../cli-forge-publish/SKILL.md)
-  after every successful validation pass. If no explicit release action was
-  requested, enter `publish` in `report_only` mode.
+  after every successful validation pass when the request is about the default
+  repo-native release path. If no explicit release action was requested, enter
+  `publish` in `report_only` mode.
+- Continue with
+  [`../cli-forge-publish-npm/SKILL.md`](../cli-forge-publish-npm/SKILL.md)
+  after every successful validation pass when the request is explicitly about
+  npm publication of the shipped CLI command.
 - Otherwise, route back to the earliest failing phase, fix the gaps there, and
   re-run validation.

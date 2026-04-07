@@ -70,6 +70,10 @@ Before making any edits:
    - If the repository also uses repo-native release automation, keep any
      release/install docs aligned with the same skill description and do not
      make feature docs depend on a parent repository layout.
+   - If the repository also documents optional npm publication, keep the same
+     approved description contract and version framing across repo-native and
+     npm wording, with npm still described as a secondary CLI distribution
+     path.
 5. Run validation commands after the edits:
    - `cargo build`
    - `cargo test`
