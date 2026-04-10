@@ -1,79 +1,89 @@
 ---
 name: cli-forge-scaffold
-description: "Scaffold stage for the cli-forge skill family: create a new Rust CLI Skill project from the package templates and prepare it for validation."
+description: "Scaffold stage for the cli-forge skill family: create a new Rust CLI Skill project from the authoritative templates and prepare it for validation."
 ---
 
 # cli-forge Scaffold
 
 Use this stage when the work is to create a brand-new Rust CLI Skill project
-from this package and the description stage has already approved the generated
-skill's description contract.
+from the baseline templates, and the detailed CLI contract (Plan) has already
+been explicitly defined and approved.
 
-## When To Use This Stage
+## Purpose
 
-- The target project does not exist yet.
-- Intake has classified the work as new-project scaffolding.
-- The description stage has produced the approved purpose summary and
-  positioning contract for the new skill.
-- A prior extension attempt revealed that the scaffold baseline is missing.
+Generate the baseline codebase for a new skill using the approved
+`cli-plan.yml` and the authoritative templates.
 
-## Stage Goal
-
-Create a planning-brief-aligned project scaffold that is immediately ready for
-validation and reuses the approved description contract across generated
-surfaces.
+This stage does not make design decisions; it strictly follows the blueprint
+provided by the Plan stage.
 
 ## Canonical References
 
 - [`./instructions/new.md`](./instructions/new.md)
-- [`./planning-brief.md`](./planning-brief.md)
+- [`../planning-brief.md`](../planning-brief.md)
+- [`../contracts/scaffold-receipt.yml.tpl`](../contracts/scaffold-receipt.yml.tpl)
+- [`../templates/scaffold/`](../templates/scaffold/)
 
-Read `instructions/new.md` as the exact source of truth for token expansion,
-file layout, required commands, and verification checks.
+## Entry Gate
+
+| # | Check | Source |
+|---|-------|--------|
+| 1 | `cli-plan.yml` exists and is approved | Plan stage |
+| 2 | `skill_name` is known | Plan stage |
+| 3 | Target project directory DOES NOT exist | Filesystem |
 
 ## Required Inputs
 
 - `skill_name`
-- optional `author`
-- optional `version`
-- optional `rust_edition`
-- approved description contract from `description`
+- Approved `cli-plan.yml`
+- Optional `author`, `version`, `rust_edition`
 
 ## Workflow
 
-1. Follow the pre-checks in [`./instructions/new.md`](./instructions/new.md):
-   validate the name, require it when missing, and refuse to overwrite an
-   existing target directory.
-2. Create the directory structure and expand the templates exactly as the
-   instruction file defines, reusing the approved description contract instead
-   of inventing new wording during scaffold.
-3. Verify that no template tokens remain unresolved.
-4. Run the required verification commands from the generated project root:
-   `cargo build`, `cargo clippy -- -D warnings`, `cargo fmt --check`, and
-   `cargo test`.
-5. Confirm the generated project exposes the shared runtime contract surfaces
-   described in the instruction file.
+1. Run the pre-checks from
+   [`./instructions/new.md`](./instructions/new.md): require the skill
+   name, verify `cli-plan.yml`, and refuse to overwrite an existing directory.
+2. Create the directory structure.
+3. Expand the templates from `../templates/scaffold/` EXACTLY as defined by
+   `cli-plan.yml` and the instruction file.
+4. Verify that no `{{token}}` placeholders remain unresolved.
+5. Run the required verification commands from the generated project root:
+   - `cargo build`
+   - `cargo clippy -- -D warnings`
+   - `cargo fmt --check`
+   - `cargo test`
 6. Confirm the generated package layout stays within the documented boundary:
-   baseline generated files plus any package-local support files that a
-   supported capability requires. Repository-owned CI workflows, release
-   scripts, release automation, and clone-first install helpers stay outside
-   the generated project until a target repo explicitly adopts the publish
-   asset pack.
+   baseline generated files plus feature-local support files. Repository-owned
+   CI workflows and release scripts stay outside the generated project until Publish.
+7. Generate `.cli-forge/scaffold-receipt.yml` using the template at
+   [`../contracts/scaffold-receipt.yml.tpl`](../contracts/scaffold-receipt.yml.tpl).
+
+## Outputs
+
+- A new Rust CLI package directory
+- `.cli-forge/scaffold-receipt.yml`
+
+## Exit Gate
+
+| # | Check |
+|---|-------|
+| 1 | All templates expanded with no unresolved tokens |
+| 2 | `cargo build` passes |
+| 3 | `cargo clippy -- -D warnings` passes |
+| 4 | `cargo fmt --check` passes |
+| 5 | `cargo test` passes |
+| 6 | `scaffold-receipt.yml` generated |
 
 ## Guardrails
 
-- Do not improvise a different project structure from the templates.
-- Keep the generated project aligned with the planning brief's CLI and text I/O
-  rules.
-- If any verification step fails, fix the scaffold before handing the work
-  forward.
-
-## Done Condition
-
-This stage is complete only when the new project exists, the template expansion
-is clean, and the required checks pass.
+- Use templates EXCLUSIVELY from `../templates/scaffold/`. Do not maintain
+  local copies of templates here.
+- Do not improvise project structure or dependencies. Everything must be tied
+  back to the `cli-plan.yml`.
+- If any Cargo verification step fails, block the workflow and fix the
+  scaffolded files before handing the work forward.
 
 ## Next Step
 
 Continue with [`../cli-forge-validate/SKILL.md`](../cli-forge-validate/SKILL.md)
-unless the user explicitly asked to stop after scaffolding.
+to run the full compliance rule set.

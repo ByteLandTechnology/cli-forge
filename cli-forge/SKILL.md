@@ -1,118 +1,97 @@
 ---
 name: cli-forge
-description: "Parent router for the cli-forge skill family: detect the current workflow stage, resume from the earliest incomplete phase, and hand off to the correct child skill."
+description: "Router for the cli-forge skill family: classify the request, check filesystem state, gather inputs, and route to the earliest incomplete stage."
 ---
 
-# cli-forge
+# cli-forge Router
 
-Use this parent skill when you want one stable entrypoint for the full
-`cli-forge` workflow instead of naming a stage skill up front.
+Use this parent skill as the stable entry point for the full `cli-forge`
+workflow.
 
-This skill does not replace the child skills. Its job is to identify the
-current stage, recover the earliest incomplete phase from repo state, and then
-route work to the matching child skill.
+This skill does not do any design, planning, or implementation work itself. Its
+job is to identify the current stage, recover the earliest incomplete phase from
+the repository state, assemble required inputs, and route work to the correct
+child skill.
+
+## Purpose
+
+Act as the intake layer and traffic controller.
+
+- Classify requests into one of seven stages: Design, Plan, Scaffold, Extend,
+  Validate, Publish, or Distribute.
+- Check the current filesystem state (presence of directories, base files,
+  validation reports).
+- Assemble inputs and generate the `handoff.yml` contract.
+- Resume interrupted workflows when the user provides partial context.
 
 ## Canonical References
 
-- [`../cli-forge-intake/SKILL.md`](../cli-forge-intake/SKILL.md)
-- [`../cli-forge-description/SKILL.md`](../cli-forge-description/SKILL.md)
+- [`../contracts/handoff.yml.tpl`](../contracts/handoff.yml.tpl)
+- [`../planning-brief.md`](../planning-brief.md)
+
+## Entry Gate
+
+| # | Check | Source |
+|---|-------|--------|
+| 1 | User request exists | User |
+
+## Required Inputs
+
+- The user request (explicit or ambiguous)
+- Current filesystem state in the target directory (if determinable)
+
+## Workflow
+
+1. Read the user request and classify the expected outcome.
+2. Inspect the filesystem to disambiguate the stage:
+   - Missing target directory + new request -> Design
+   - `design-contract.yml` exists but no `cli-plan.yml` -> Plan
+   - `cli-plan.yml` exists but no source files -> Scaffold
+   - Existing project + feature request (stream/repl/daemon) -> Extend
+   - Existing project + audit request (or post-edit verification) -> Validate
+   - Passed validation + repo-native release request -> Publish
+   - Passed validation + npm distribution request -> Distribute
+3. Confirm the required inputs for the chosen path:
+   - Scaffold: `skill_name`
+   - Extend: `project_path` and `feature` (stream/repl/daemon)
+   - Validate: `project_path`
+   - Publish/Distribute: `publish_mode`, `publish_channel`
+4. Use the template at `contracts/handoff.yml.tpl` to generate
+   `.cli-forge/handoff.yml` in the target project directory. This explicitly
+   records the classification and inputs for downstream consumption.
+5. Provide a clear handoff response specifying which child skill should be
+   invoked next.
+
+## Outputs
+
+- `.cli-forge/handoff.yml` — The explicit routing contract
+
+## Exit Gate
+
+| # | Check |
+|---|-------|
+| 1 | Request intent classified successfully |
+| 2 | Required inputs for the downstream stage assembled |
+| 3 | `handoff.yml` generated |
+| 4 | Explicit handoff made to the correct child stage |
+
+## Guardrails
+
+- The Router must stay thin. Do not execute templates, run compilation steps,
+  or define CLI contracts here.
+- Never force a workflow forward if an earlier stage is incomplete. For
+  example, if the user asks to "validate" but the project is missing the
+  scaffold baseline, route back to Scaffold.
+- If the user asks for a release but validation is missing or stale, route to
+  Validate first.
+
+## Next Step
+
+Route to one of:
+- [`../cli-forge-design/SKILL.md`](../cli-forge-design/SKILL.md)
+- [`../cli-forge-plan/SKILL.md`](../cli-forge-plan/SKILL.md)
 - [`../cli-forge-scaffold/SKILL.md`](../cli-forge-scaffold/SKILL.md)
 - [`../cli-forge-extend/SKILL.md`](../cli-forge-extend/SKILL.md)
 - [`../cli-forge-validate/SKILL.md`](../cli-forge-validate/SKILL.md)
 - [`../cli-forge-publish/SKILL.md`](../cli-forge-publish/SKILL.md)
-- [`../cli-forge-publish-npm/SKILL.md`](../cli-forge-publish-npm/SKILL.md)
-
-Read this file first, then move into the child skill that owns the current
-phase.
-
-## Parent Role
-
-The parent skill is responsible for:
-
-- classifying the request as `intake`, `description`, `scaffold`, `extend`,
-  `validate`, `publish`, or `publish-npm`
-- inspecting the current filesystem state when the request is ambiguous
-- selecting the earliest incomplete stage instead of skipping ahead
-- routing into the child skill that should do the actual work
-- supporting resume flows when the user says only "continue cli-forge" or
-  provides partial context
-
-The parent skill should stay thin. It should not duplicate the detailed
-instructions already owned by the child skills.
-
-## Stage Selection
-
-Choose the child skill using the request plus the current project state:
-
-1. Route to `intake` when the request is ambiguous, when required inputs are
-   missing, or when the correct stage is not obvious yet.
-2. Route to `description` when the generated skill's purpose, positioning, or
-   user-facing contract must be created or refreshed before implementation.
-3. Route to `scaffold` when the user wants a brand-new Rust CLI Skill project
-   and the approved description contract already exists.
-4. Route to `extend` when a scaffolded project already exists and the requested
-   change is exactly `stream` or `repl`, or when description-impacting work
-   must continue into feature changes.
-5. Route to `validate` when the user explicitly wants an audit or when freshly
-   scaffolded or extended work needs verification.
-6. Route to `publish` when validation is current and the workflow needs final
-   closure, repo-native dry-run review, rehearsal, destination-config checks,
-   or the documented GitHub Release path.
-7. Route to `publish-npm` when validation is current and the workflow is
-   explicitly about publishing the shipped CLI command to npm, including npm
-   readiness review, package-set alignment, or combined-channel follow-through
-   after the repo-native release path is clear.
-
-If more than one stage seems plausible, inspect the filesystem and route to the
-earliest stage that is not clearly complete.
-
-## Resume Rules
-
-- If no target project directory exists yet, resume at `description`, then
-  continue into `scaffold`.
-- If the directory exists but is missing the scaffold baseline, route back to
-  `scaffold` rather than forcing feature or validation work through.
-- If the project exists and the request is to add `stream` or `repl`, resume at
-  `extend`.
-- If scaffold or extend work just completed, always continue into `validate`
-  before treating the workflow as done.
-- If the user wants release work but validation is stale or missing, route back
-  to `validate` first.
-- If the user asks to publish the CLI command to npm, route to
-  `publish-npm` only after validation is current and the target-repository
-  context is explicit.
-- If validation is current and the user did not explicitly ask for a release
-  side effect, still continue into `publish` so the flow ends with
-  `report_only` closure instead of stopping half-finished.
-
-## Typical Flows
-
-1. New project: `intake` -> `description` -> `scaffold` -> `validate` -> `publish`
-2. Add feature: `intake` -> `extend` -> `validate` -> `publish`
-3. Description update: `intake` -> `description` -> `extend` -> `validate` -> `publish`
-4. Validation request: `intake` -> `validate` -> `publish`
-5. Release-oriented request: `intake` -> `validate` -> `publish`, unless
-   validation is already current
-6. npm publication request: `intake` -> `validate` -> `publish-npm`, unless
-   validation is already current
-
-## Routing Examples
-
-- "Create a new cli-forge skill" -> start with `intake`, then `description`.
-- "Add repl to this generated skill" -> inspect the target project, then route
-  to `extend` if the scaffold baseline is present.
-- "Check whether this skill is compliant" -> route to `validate`.
-- "Do a release dry run" -> route to `publish` only after confirming validation
-  is current.
-- "Publish the shipped CLI to npm" -> route to `publish-npm` only after
-  confirming validation is current and the target repository is explicit.
-- "Continue cli-forge" -> inspect the repo and resume from the earliest
-  incomplete stage.
-
-## Done Condition
-
-This parent skill is complete for the current request only when:
-
-- the correct child skill has been selected
-- the required inputs for that child skill are assembled or recoverable
-- the handoff is explicit enough that work can continue without re-triage
+- [`../cli-forge-distribute/SKILL.md`](../cli-forge-distribute/SKILL.md)

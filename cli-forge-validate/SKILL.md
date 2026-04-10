@@ -1,96 +1,92 @@
 ---
 name: cli-forge-validate
-description: "Validation stage for the cli-forge skill family: run the documented compliance checks for an existing project and report whether it is planning-brief-compliant, usable with warnings, or blocked by errors."
+description: "Validate stage for the cli-forge skill family: run the 28-point compliance ruleset against an existing skill project."
 ---
 
 # cli-forge Validate
 
-Use this stage when you need a compliance report for an existing Rust CLI Skill
-project, or when you have just scaffolded or extended one and need to verify
-the result.
+Use this stage to verify that a generated Rust CLI Skill project complies with
+all structural, content, and code constraints before it proceeds to publication
+or whenever a fresh audit is needed.
 
-## When To Use This Stage
+## Purpose
 
-- The user explicitly asked for validation or compliance checking.
-- Scaffold work just finished and needs a verification pass.
-- Extension work just finished and needs a verification pass.
-- Description-stage work just finished and needs the downstream surfaces
-  checked for alignment.
-- Publish-oriented work is requested, but validation is stale or missing.
+Run the authoritative 28-point compliance checks against a scaffolded or
+extended project.
 
-## Stage Goal
-
-Produce a validation report that reflects the project's current state and makes
-the next action obvious.
+This stage acts as the final gatekeeper before release. It consumes the
+`cli-plan.yml` to define *what* should be checked, and produces a structured
+`validation-report.yml` detailing the results.
 
 ## Canonical References
 
 - [`./instructions/validate.md`](./instructions/validate.md)
-- [`./planning-brief.md`](./planning-brief.md)
-- [`../cli-forge-publish/SKILL.md`](../cli-forge-publish/SKILL.md)
-- [`../cli-forge-publish-npm/SKILL.md`](../cli-forge-publish-npm/SKILL.md)
+- [`../planning-brief.md`](../planning-brief.md)
+- [`../contracts/validation-report.yml.tpl`](../contracts/validation-report.yml.tpl)
 
-Read `instructions/validate.md` as the exact source of truth for the ruleset,
-the output table format, build checks, and runtime-convention checks.
+## Entry Gate
+
+| # | Check | Source |
+|---|-------|--------|
+| 1 | `project_path` is known and exists | Router |
+| 2 | `Cargo.toml` is present in the target directory | Filesystem |
+| 3 | `cli-plan.yml` is present (for behavioral checks) | Filesystem |
 
 ## Required Inputs
 
-- `project_path`
+- Target `project_path`
+- `.cli-forge/cli-plan.yml` for expected command/flag definitions
 
 ## Workflow
 
-1. Run the pre-checks from
-   [`./instructions/validate.md`](./instructions/validate.md): resolve
-   the path, confirm it is a directory, and confirm `Cargo.toml` exists.
-2. Execute the documented validation rules in order, including:
-   - structure
-   - naming
-   - dependencies and metadata
-   - `SKILL.md` contract checks
-   - build checks
-   - runtime convention checks
-   - repo-native release/install checks when the target repository adopts the
-     publish asset pack
-   - publish-channel checks that keep repo-native release and optional npm
-     publication distinct
-   - generated package boundary checks so package-local support assets are
-     allowed only when enabled and repository-owned CI automation is not
-     misclassified as generated output
-3. Return the report in the required markdown table shape with the requested
-   summary.
-4. Classify the outcome:
-   - compliant when all required checks pass
-   - usable with warnings when only warning-level gaps fail
-   - non-compliant when any error-level check fails
-5. Prepare the handoff:
-   - compliant or reviewable-with-warnings results continue into the matching
-     publish child skill so the workflow ends with final release-readiness or
-     no-publish closure
-   - non-compliant results route back to the earliest failing phase before
-     later work resumes
+1. Read [`../planning-brief.md`](../planning-brief.md) to understand the
+   baseline planning limits.
+2. Execute the rule set defined in
+   [`./instructions/validate.md`](./instructions/validate.md). The baseline
+   includes 28 specific checks grouped into 6 categories:
+   - `STRUCT-01` to `STRUCT-04` (Structure, License, Readme, Skill Contract)
+   - `CARGO-01` to `CARGO-05` (Cargo Metadata, Rust Edition, Clippy Limits, Build Verification, Release Flags)
+   - `HELP-01` to `HELP-04` (Help Output Strategy, Format Alignment, JSON Format Rule, Command Structure)
+   - `ACTIVE-01` to `ACTIVE-04` (Active Context Behavior, Precedence, Local Testing Override, Clean Scope)
+   - `DAEMON-01` to `DAEMON-08` (Managed Background Rule, Instance Model, Return Boundary, Transport Alignment, Terminal Timeout, Capability Parity, WebSocket Framing, TLS Binding) - Checked only if daemon is in_scope.
+   - `RELEAS-01` to `RELEAS-03` (Release Channel Strategy, Default Mechanism, Target-Package Extrusion)
+3. For each check, look at the filesystem, code, and test output.
+4. If the check requires knowledge of expected CLI behaviors (e.g., flags or
+   daemon scope), source those expectations from `cli-plan.yml`.
+5. Tabulate the results. A check is either `PASS`, `WARN` (missing best
+   practice but non-blocking), or `FAIL` (blocks release).
+6. Determine the final aggregate result:
+   - `compliant` (0 fails)
+   - `warning` (0 fails, >= 1 warn)
+   - `non_compliant` (>= 1 fail)
+7. Generate `.cli-forge/validation-report.yml` using the template at
+   [`../contracts/validation-report.yml.tpl`](../contracts/validation-report.yml.tpl).
+
+## Outputs
+
+- `.cli-forge/validation-report.yml`
+
+## Exit Gate
+
+| # | Check |
+|---|-------|
+| 1 | All 28 checks executed |
+| 2 | Final result aggregated (compliant/warning/non_compliant) |
+| 3 | `validation-report.yml` written |
 
 ## Guardrails
 
-- Do not skip checks just because an earlier rule failed unless the instruction
-  file explicitly says the remaining check would be impossible or misleading.
-- Preserve the exact reporting contract from the instruction file.
-- If failures point to broken scaffold fundamentals, route back to the earlier
-  phase that owns those surfaces before claiming the workflow is done.
-
-## Done Condition
-
-This stage is complete only when the full validation report and summary have
-been produced for the current project state.
+- `WARN` results do not block publication; they highlight where the `cli-forge`
+  standard advises a better path but the skill operates safely.
+- `FAIL` results MUST block any publication or npm distribution attempt. The
+  workflow must return to Scaffold or Extend to correct the issue.
+- **Do not publish automatically.** Ensure the user has the chance to review the
+  validation report before handing off to the Publish stage.
 
 ## Next Step
 
-- Continue with [`../cli-forge-publish/SKILL.md`](../cli-forge-publish/SKILL.md)
-  after every successful validation pass when the request is about the default
-  repo-native release path. If no explicit release action was requested, enter
-  `publish` in `report_only` mode.
-- Continue with
-  [`../cli-forge-publish-npm/SKILL.md`](../cli-forge-publish-npm/SKILL.md)
-  after every successful validation pass when the request is explicitly about
-  npm publication of the shipped CLI command.
-- Otherwise, route back to the earliest failing phase, fix the gaps there, and
-  re-run validation.
+- If `compliant` or `warning`, proceed to
+  [`../cli-forge-publish/SKILL.md`](../cli-forge-publish/SKILL.md) (or
+  `../cli-forge-distribute/SKILL.md` if npm only).
+- If `non_compliant`, return to Scaffold, Extend, or Design to fix the
+  underlying issues.

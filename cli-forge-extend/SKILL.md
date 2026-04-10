@@ -1,90 +1,99 @@
 ---
 name: cli-forge-extend
-description: "Extension stage for the cli-forge skill family: add the supported stream, repl, or daemon feature to an existing scaffolded project while preserving the shared runtime contract."
+description: "Extend stage for the cli-forge skill family: add stream, repl, or daemon features to an existing skill project."
 ---
 
 # cli-forge Extend
 
-Use this stage when an existing scaffolded Rust CLI Skill project needs one of
-the supported optional features: `stream`, `repl`, or `daemon`, or when a
-description-impacting change must continue into feature work after the
-description stage refreshed the contract.
+Use this stage when a generated Rust CLI Skill project already exists, but
+requires optional capabilities like JSON streaming (`stream`), interactive
+terminal sessions (`repl`), or managed background service behavior (`daemon`).
 
-## When To Use This Stage
+## Purpose
 
-- Intake classified the work as optional feature extension.
-- The description stage already ran when the request changed the skill's
-  purpose, positioning, or other user-facing contract.
-- The target project already has the scaffold baseline.
-- The requested feature is exactly `stream`, `repl`, or `daemon`.
+Add optional feature modules to an existing project.
 
-## Stage Goal
-
-Apply the requested feature cleanly, keep the project aligned with the
-planning brief,
-and prepare the result for validation.
+This stage expands feature-specific templates, injects the necessary hooks into
+the main program flow, updates tests, and synchronizes the capability state
+back to the `cli-plan.yml` contract.
 
 ## Canonical References
 
 - [`./instructions/add-feature.md`](./instructions/add-feature.md)
-- [`./planning-brief.md`](./planning-brief.md)
+- [`../planning-brief.md`](../planning-brief.md)
+- [`../contracts/extend-receipt.yml.tpl`](../contracts/extend-receipt.yml.tpl)
+- [`../templates/extensions/`](../templates/extensions/)
 
-Read `instructions/add-feature.md` as the exact source of truth for pre-checks,
-file patches, required touched files, and post-edit verification.
+## Entry Gate
+
+| # | Check | Source |
+|---|-------|--------|
+| 1 | Target project directory exists | Filesystem |
+| 2 | Scaffold baseline is complete | Filesystem |
+| 3 | Requested feature is `stream`, `repl`, or `daemon` | User/Router |
+| 4 | Feature is explicitly marked `in_scope` in `cli-plan.yml` | Plan |
+| 5 | Feature is not already added (idempotency check) | Filesystem |
 
 ## Required Inputs
 
 - `project_path`
-- `feature` where `feature` is exactly `stream`, `repl`, or `daemon`
+- `feature` (`stream`, `repl`, or `daemon`)
+- Details for updating the `cli-plan.yml`
 
 ## Workflow
 
-1. Run the pre-checks from
-   [`./instructions/add-feature.md`](./instructions/add-feature.md):
-   resolve the path, confirm the scaffolded files exist, validate the feature
-   name, and stop if the feature is already present.
-2. Expand the matching template into the target project:
-   - `stream` -> `src/stream.rs`
-   - `repl` -> `src/repl.rs`
-   - `daemon` -> `templates/daemon/` (full daemon template)
-3. Apply the required source, help, and documentation updates described in the
-   instruction file.
-4. Preserve the shared runtime contract while editing:
-   plain-text `--help`, structured `help`, runtime-directory docs, and Active
-   Context behavior must stay accurate.
-5. Keep the generated package within the documented boundary:
-   package-local support files may be added when the enabled capability
-   requires them, but repository-owned CI workflows, release scripts, and
-   release automation must not be copied into the generated skill.
-6. Run the required verification commands after the edit:
-   `cargo build`, `cargo test`, `cargo clippy -- -D warnings`, and
-   `cargo fmt --check`.
+1. If the feature is missing or listed as `out_of_scope` in `cli-plan.yml`,
+   route back to the Plan stage to update the CLI contract first. Do not add
+   code before the plan allows it.
+2. Follow [`./instructions/add-feature.md`](./instructions/add-feature.md).
+3. Expand exactly the requested templates from `../templates/extensions/`
+   (e.g., `stream.rs.tpl` or `repl.rs.tpl`). For the `daemon` feature, follow
+   the specific integration contract documented in the reference implementation
+   at `../templates/extensions/daemon/`.
+4. Run integration updates safely:
+   - add the relevant flags to the args struct
+   - wire the subsystem branch into the `match` loop
+   - add matching struct format assertions in tests
+   - update standard `SKILL.md` boundaries, help text, and README wording
+5. Require explicit compiler safety at every step using `cargo clippy`.
+6. Run the required verification boundaries from the generated project root:
+   - `cargo build`
+   - `cargo test`
+   - `cargo clippy -- -D warnings`
+   - `cargo fmt --check`
+7. Ensure `cli-plan.yml` correctly reflects the added capability as `in_scope`.
+8. Generate `.cli-forge/extend-receipt.yml` using the template at
+   [`../contracts/extend-receipt.yml.tpl`](../contracts/extend-receipt.yml.tpl).
 
-## Supported Extensions
+## Outputs
 
-| Feature | Description | Template |
-|---------|-------------|----------|
-| `stream` | Streaming output for long-running commands | `src/stream.rs` |
-| `repl` | Interactive REPL mode | `src/repl.rs` |
-| `daemon` | Daemon app server with JSON-RPC | `templates/daemon/` |
+- Extended source code and documentation
+- Updated `.cli-forge/cli-plan.yml`
+- `.cli-forge/extend-receipt.yml`
+
+## Exit Gate
+
+| # | Check |
+|---|-------|
+| 1 | Feature files generated from template |
+| 2 | Source, README, help, and tests correctly wired |
+| 3 | `cli-plan.yml` updated and synced |
+| 4 | `cargo build` passes |
+| 5 | `cargo clippy -- -D warnings` passes |
+| 6 | `cargo fmt --check` passes |
+| 7 | `cargo test` passes |
+| 8 | `extend-receipt.yml` generated |
 
 ## Guardrails
 
-- Do not use this stage on a project that is missing the scaffolded baseline.
-  Return to the earlier scaffold phase instead.
-- Do not add unsupported features beyond `stream`, `repl`, and `daemon`.
-- Keep feature-specific changes scoped to the files and behaviors described by
-  the instruction file.
-- If the request changes the generated skill's public description and feature
-  behavior together, treat the approved description contract as an input rather
-  than inventing new summaries here.
-
-## Done Condition
-
-This stage is complete only when the requested feature is present and the
-required verification commands pass.
+- Use templates EXCLUSIVELY from `../templates/extensions/`. Do not maintain
+  local copies of templates here.
+- If the feature being added contradicts the `cli-plan.yml`, update the plan
+  first. Scaffolded code and the CLI plan must remain perfectly aligned.
+- Refuse to add unsupported features through this stage. This stage only handles
+  `stream`, `repl`, and `daemon`.
 
 ## Next Step
 
 Continue with [`../cli-forge-validate/SKILL.md`](../cli-forge-validate/SKILL.md)
-to verify the project after the extension work.
+to run the full compliance rule set.
