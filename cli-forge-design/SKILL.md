@@ -74,6 +74,7 @@ contract (commands, flags, formats) belongs to the Plan stage downstream.
 
 ## Guardrails
 
+- **CRITICAL DIRECTIVE TO THE ASSISTANT**: You MUST STOP execution and ask for the user's explicit approval after generating `design-contract.yml`. Do NOT proceed to the Plan or Scaffold stage autonomously.
 - This stage is the authoritative source for user-facing purpose and
   positioning. Downstream stages consume the approved contract; they do not
   redefine it.

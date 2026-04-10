@@ -77,8 +77,9 @@ Act as the intake layer and traffic controller.
 
 ## Guardrails
 
-- The Router must stay thin. Do not execute templates, run compilation steps,
-  or define CLI contracts here.
+- **CRITICAL DIRECTIVE TO THE ASSISTANT**: You MUST NOT bypass the staged pipeline. Do not write, generate, or scaffold code yourself during this stage.
+- **CRITICAL DIRECTIVE TO THE ASSISTANT**: You MUST STOP and yield to the user after generating `handoff.yml` and explaining the next steps. Do not invoke the next stage autonomously.
+- The Router must stay thin. Do not execute templates, run compilation steps, or define CLI contracts here.
 - Never force a workflow forward if an earlier stage is incomplete. For
   example, if the user asks to "validate" but the project is missing the
   scaffold baseline, route back to Scaffold.

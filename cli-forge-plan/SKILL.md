@@ -95,6 +95,7 @@ and Validate uses as the compliance baseline.
 
 ## Guardrails
 
+- **CRITICAL DIRECTIVE TO THE ASSISTANT**: You MUST STOP execution and ask for the user's explicit approval after generating `cli-plan.yml`. Do NOT proceed to the Scaffold stage autonomously. Wait for the user to say "approved".
 - Do not change the skill's purpose or positioning here. That work was done in
   the Design stage and is locked in `design-contract.yml`.
 - Do not begin implementing code. This stage produces a plan document, not
