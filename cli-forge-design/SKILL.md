@@ -56,7 +56,7 @@ contract (commands, flags, formats) belongs to the Plan stage downstream.
    plus optional npm).
 7. Generate `.cli-forge/design-contract.yml` using the format defined in
    [`../contracts/design-contract.yml.tpl`](../contracts/design-contract.yml.tpl).
-8. Request user approval of the design contract before moving forward.
+8. Request user approval of the design contract before moving forward. **You must explicitly tell the user what to reply to trigger the next skill.** (e.g., "Please review. If approved, reply 'Invoke cli-forge-plan'").
 
 ## Outputs
 

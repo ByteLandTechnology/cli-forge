@@ -38,7 +38,7 @@ Act as the intake layer and traffic controller.
 ## Required Inputs
 
 - The user request (explicit or ambiguous)
-- Current filesystem state in the target directory (if determinable)
+- Target directory path. **CRITICAL**: If the user does not provide the project path, you MUST actively search the workspace for `.cli-forge/` directories to locate the active project, or explicitly ask the user for the path. Do not assume the root directory is the target project.
 
 ## Workflow
 
@@ -60,7 +60,7 @@ Act as the intake layer and traffic controller.
    `.cli-forge/handoff.yml` in the target project directory. This explicitly
    records the classification and inputs for downstream consumption.
 5. Provide a clear handoff response specifying which child skill should be
-   invoked next.
+   invoked next. **You must explicitly tell the user what to reply to trigger the next skill.** (e.g., "Please reply: 'Invoke cli-forge-design'").
 
 ## Outputs
 
@@ -78,13 +78,14 @@ Act as the intake layer and traffic controller.
 ## Guardrails
 
 - **CRITICAL DIRECTIVE TO THE ASSISTANT**: You MUST NOT bypass the staged pipeline. Do not write, generate, or scaffold code yourself during this stage.
-- **CRITICAL DIRECTIVE TO THE ASSISTANT**: You MUST STOP and yield to the user after generating `handoff.yml` and explaining the next steps. Do not invoke the next stage autonomously.
+- **CRITICAL DIRECTIVE TO THE ASSISTANT**: You MUST STOP and yield to the user after generating `handoff.yml` and explaining the next steps. Do not invoke the next stage autonomously. You must wait for the user to explicitly call the next skill.
 - The Router must stay thin. Do not execute templates, run compilation steps, or define CLI contracts here.
 - Never force a workflow forward if an earlier stage is incomplete. For
   example, if the user asks to "validate" but the project is missing the
   scaffold baseline, route back to Scaffold.
 - If the user asks for a release but validation is missing or stale, route to
   Validate first.
+- If the target project directory is unknown, you MUST ask the user or search for `.cli-forge/` folders. Do not assume the current working directory applies.
 
 ## Next Step
 

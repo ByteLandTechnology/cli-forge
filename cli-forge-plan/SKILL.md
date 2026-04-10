@@ -74,7 +74,7 @@ and Validate uses as the compliance baseline.
 10. Lock runtime directory and Active Context behavior.
 11. Generate `.cli-forge/cli-plan.yml` using the format defined in
     [`../contracts/cli-plan.yml.tpl`](../contracts/cli-plan.yml.tpl).
-12. Present the CLI plan to the user for approval.
+12. Present the CLI plan to the user for approval. **You must explicitly tell the user what to reply to trigger the next skill.** (e.g., "Please review the CLI plan. If approved, reply 'Invoke cli-forge-scaffold'").
 
 ## Outputs
 
