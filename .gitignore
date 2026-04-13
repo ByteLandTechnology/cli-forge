@@ -15,3 +15,11 @@ Thumbs.db
 
 # cli-forge intermediate artifacts (pipeline contract files)
 .cli-forge/
+
+# Keep repo-owned release template assets trackable.
+!cli-forge-publish/instructions/release/
+!cli-forge-publish/instructions/release/**
+!cli-forge-publish/templates/release/
+!cli-forge-publish/templates/release/**
+!cli-forge-publish/templates/scripts/release/
+!cli-forge-publish/templates/scripts/release/**

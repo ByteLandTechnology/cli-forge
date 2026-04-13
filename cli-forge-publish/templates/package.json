@@ -8,9 +8,11 @@
     "node": "22.x",
     "npm": "10.x"
   },
+  "packageManager": "npm@10.x",
   "scripts": {
     "release:quality-gates": "node scripts/release/run-generated-skill-quality-gates.mjs",
     "release:build-artifact": "node scripts/release/build-cli-artifact.mjs",
+    "release:build-all": "node scripts/release/build-release-artifacts.mjs",
     "release:verify-config": "node scripts/release/verify-release-config.mjs",
     "release:ci": "node scripts/release/run-semantic-release.mjs",
     "release:dry-run": "node scripts/release/run-semantic-release.mjs --dry-run --no-ci",

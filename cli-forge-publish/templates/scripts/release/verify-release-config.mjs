@@ -1,6 +1,7 @@
 import { appendFileSync, existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import {
+  configuredArtifactTargets,
   installScriptAbsolutePath,
   installScriptRelativePath,
   isPlaceholderRepository,
@@ -141,13 +142,19 @@ function verifyGeneratedPackageBoundary() {
   const { packageLocalSupportExamples, repositoryOwnedAutomation } =
     config.generatedPackageBoundary;
 
-  if (!Array.isArray(packageLocalSupportExamples) || !packageLocalSupportExamples.length) {
+  if (
+    !Array.isArray(packageLocalSupportExamples) ||
+    !packageLocalSupportExamples.length
+  ) {
     throw new Error(
       "generatedPackageBoundary.packageLocalSupportExamples must contain at least one entry.",
     );
   }
 
-  if (!Array.isArray(repositoryOwnedAutomation) || !repositoryOwnedAutomation.length) {
+  if (
+    !Array.isArray(repositoryOwnedAutomation) ||
+    !repositoryOwnedAutomation.length
+  ) {
     throw new Error(
       "generatedPackageBoundary.repositoryOwnedAutomation must contain at least one entry.",
     );
@@ -193,6 +200,7 @@ if (process.env.GITHUB_OUTPUT) {
     [
       `github_release_assets_dir=${path.relative(rootDir, releaseAssetsDir(config)).replace(/\\/g, "/")}`,
       `install_script_path=${installScriptRelativePath(config)}`,
+      `all_targets=${configuredArtifactTargets(config).join(",")}`,
       `owner_repository=${ownerRepository}`,
       `release_artifacts_dir=${path.relative(rootDir, releaseArtifactsDir(config)).replace(/\\/g, "/")}`,
       `release_evidence_filename=${releaseEvidenceFilename(config)}`,

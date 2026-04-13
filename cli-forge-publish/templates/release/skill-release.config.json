@@ -10,9 +10,7 @@
     "releaseAssetsDir": ".work/release/github-release",
     "installScriptPath": "scripts/install-current-release.sh",
     "installCommandExample": "./scripts/install-current-release.sh",
-    "assetGlobPatterns": [
-      ".work/release/github-release/*"
-    ]
+    "assetGlobPatterns": [".work/release/github-release/*"]
   },
   "optionalSecondaryPublication": {
     "enabled": false,
@@ -74,6 +72,7 @@
       "repo-native install helper"
     ],
     "repositoryOwnedAutomation": [
+      ".github/actions/setup-build-env/action.yml",
       ".github/workflows/release.yml",
       "release/skill-release.config.json",
       "scripts/release",

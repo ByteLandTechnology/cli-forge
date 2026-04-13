@@ -20,6 +20,7 @@ The target repository should receive these files at its own root:
 - `package.json`
 - `package-lock.json`
 - `.releaserc.json`
+- `.github/actions/setup-build-env/action.yml`
 - `.github/workflows/release.yml`
 - `release/skill-release.config.json`
 - `scripts/release/*`
@@ -38,9 +39,10 @@ root after the contents of `templates/` have been copied there.
 Examples:
 
 ```bash
-npm ci
+npm ci --omit=optional
 npm run release:verify-config
 npm run release:quality-gates
+npm run release:build-all
 GITHUB_TOKEN=<valid token> npm run release:dry-run
 ```
 
@@ -112,6 +114,9 @@ release commands yet.
 Run from the target repository root:
 
 ```bash
+npm run release:verify-config
+npm run release:quality-gates
+npm run release:build-all
 GITHUB_TOKEN=<valid token> npm run release:dry-run
 ```
 
@@ -125,8 +130,7 @@ Run from the target repository root:
 ```bash
 npm run release:verify-config
 npm run release:quality-gates
-npm run release:build-artifact -- x86_64-unknown-linux-gnu
-npm run release:build-artifact -- aarch64-apple-darwin
+npm run release:build-all
 node scripts/release/publish-skill-to-target-repo.mjs \
   0.0.0-local \
   v0.0.0-local \
@@ -149,10 +153,12 @@ The supported production path is the target repository's
 That workflow should:
 
 1. verify release config
-2. run release quality gates
-3. build required target artifacts
-4. run semantic-release
-5. attach version-matched archives and evidence to the repo's GitHub Release
+2. install the configured Rust target set
+3. apply `.github/actions/setup-build-env`
+4. run release quality gates
+5. build configured target artifacts from macOS
+6. run semantic-release
+7. attach version-matched archives and evidence to the repo's GitHub Release
 
 ## Clone-First Install Flow
 
@@ -178,6 +184,7 @@ From the target repository root:
 ```bash
 npm run release:verify-config
 npm run release:quality-gates
+npm run release:build-all
 ```
 
 These checks should confirm:
@@ -200,7 +207,9 @@ Keep this distinction explicit:
   - skill docs and runtime behavior
 - repository-owned release automation:
   - `package.json`
+  - `package-lock.json`
   - `.releaserc.json`
+  - `.github/actions/setup-build-env/action.yml`
   - `.github/workflows/release.yml`
   - `release/`
   - `scripts/release/`

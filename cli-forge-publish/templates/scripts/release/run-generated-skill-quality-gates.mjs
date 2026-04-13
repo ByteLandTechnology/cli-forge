@@ -11,9 +11,15 @@ import {
 const config = loadReleaseConfig();
 const projectDir = prepareGeneratedSkillProject(config);
 
-const generatedReadme = readFileSync(path.join(projectDir, "README.md"), "utf8");
+const generatedReadme = readFileSync(
+  path.join(projectDir, "README.md"),
+  "utf8",
+);
 const generatedSkill = readFileSync(path.join(projectDir, "SKILL.md"), "utf8");
-const installScriptPath = path.join(projectDir, installScriptRelativePath(config));
+const installScriptPath = path.join(
+  projectDir,
+  installScriptRelativePath(config),
+);
 
 if (!existsSync(installScriptPath)) {
   throw new Error(
@@ -24,15 +30,21 @@ if (!existsSync(installScriptPath)) {
 chmodSync(installScriptPath, 0o755);
 
 if (!generatedReadme.includes("scripts/install-current-release.sh")) {
-  throw new Error("Generated README.md must document scripts/install-current-release.sh.");
+  throw new Error(
+    "Generated README.md must document scripts/install-current-release.sh.",
+  );
 }
 
 if (!generatedSkill.includes("GitHub Release")) {
-  throw new Error("Generated SKILL.md must mention repo-native GitHub Release installation.");
+  throw new Error(
+    "Generated SKILL.md must mention repo-native GitHub Release installation.",
+  );
 }
 
 if (!generatedReadme.includes(releaseEvidenceFilename(config))) {
-  throw new Error("Generated README.md must mention the release evidence file.");
+  throw new Error(
+    "Generated README.md must mention the release evidence file.",
+  );
 }
 
 runCommand("cargo", ["fmt"], { cwd: projectDir });

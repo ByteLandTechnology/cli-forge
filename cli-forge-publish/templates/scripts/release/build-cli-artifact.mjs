@@ -1,5 +1,6 @@
 import { chmodSync, writeFileSync } from "node:fs";
 import {
+  buildRustBinaryForTarget,
   buildBinaryFromProjectPath,
   getArtifactTarget,
   loadReleaseConfig,
@@ -7,6 +8,7 @@ import {
   relativeToRoot,
   releaseBuildBinaryPath,
   runCommand,
+  shouldUseCargoZigbuild,
   targetArtifactsDir,
   writeJson,
 } from "./release-helpers.mjs";
@@ -39,15 +41,17 @@ if (synthetic) {
   writeFileSync(binaryPath, stubContents, "utf8");
   chmodSync(binaryPath, 0o755);
 } else {
-  runCommand("cargo", ["build", "--release", "--target", target], {
-    cwd: projectDir,
-  });
+  buildRustBinaryForTarget(target, { cwd: projectDir });
   runCommand("cp", [buildBinaryFromProjectPath(config, target), binaryPath]);
 }
 
 const metadata = {
   archiveBasenamePrefix: `${config.sourceSkillId}-<version>-${target}`,
-  artifactOrigin: synthetic ? "synthetic_rehearsal" : "cargo_build",
+  artifactOrigin: synthetic
+    ? "synthetic_rehearsal"
+    : shouldUseCargoZigbuild(target)
+      ? "cargo_zigbuild"
+      : "cargo_build",
   binaryName: config.artifactBuild.binaryName,
   binaryPath: relativeToRoot(binaryPath),
   builtAt: new Date().toISOString(),

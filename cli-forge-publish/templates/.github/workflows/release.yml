@@ -1,122 +1,72 @@
-name: release-skill
+name: Release
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   workflow_dispatch:
 
 permissions:
   contents: write
+  id-token: write
   issues: write
   pull-requests: write
 
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
 jobs:
-  quality_gates:
-    if: github.event_name != 'push' || !contains(github.event.head_commit.message, '[skip ci]')
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22.x
-
-      - name: Set up Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          components: rustfmt, clippy
-
-      - name: Install release tooling
-        run: npm ci
-
-      - name: Run release quality gates
-        run: npm run release:quality-gates
-
-  build_artifacts:
-    if: github.event_name != 'push' || !contains(github.event.head_commit.message, '[skip ci]')
-    needs: quality_gates
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: ubuntu-latest
-            target: x86_64-unknown-linux-gnu
-          - os: macos-14
-            target: aarch64-apple-darwin
-    runs-on: ${{ matrix.os }}
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22.x
-
-      - name: Set up Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: ${{ matrix.target }}
-
-      - name: Install release tooling
-        run: npm ci
-
-      - name: Build target artifact
-        run: npm run release:build-artifact -- "${{ matrix.target }}"
-
-      - name: Upload target artifact evidence
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ matrix.target }}
-          path: .work/release/artifacts/${{ matrix.target }}
-
   release:
-    if: github.event_name != 'push' || !contains(github.event.head_commit.message, '[skip ci]')
-    needs:
-      - build_artifacts
-    runs-on: ubuntu-latest
+    runs-on: macos-14
     env:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       DESTINATION_REPOSITORY_TOKEN: ${{ secrets.DESTINATION_REPOSITORY_TOKEN }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
         with:
-          node-version: 22.x
-
-      - name: Install release tooling
-        run: npm ci
-
-      - name: Download linux target evidence
-        uses: actions/download-artifact@v4
-        with:
-          name: x86_64-unknown-linux-gnu
-          path: .work/release/artifacts/x86_64-unknown-linux-gnu
-
-      - name: Download macOS target evidence
-        uses: actions/download-artifact@v4
-        with:
-          name: aarch64-apple-darwin
-          path: .work/release/artifacts/aarch64-apple-darwin
+          node-version: 22
+          registry-url: https://registry.npmjs.org
 
       - name: Verify repo-native release configuration
         id: verify_release_config
         run: node scripts/release/verify-release-config.mjs
 
-      - name: Run semantic-release
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+          targets: ${{ steps.verify_release_config.outputs.all_targets }}
+
+      - uses: Swatinem/rust-cache@v2
+
+      - uses: ./.github/actions/setup-build-env
+
+      - name: Install dependencies
+        run: npm ci --omit=optional
+
+      - name: Quality gates
+        run: npm run release:quality-gates
+
+      - name: Build configured release artifacts
+        run: npm run release:build-all
+
+      - name: Release
         run: npm run release:ci
+        env:
+          GIT_AUTHOR_NAME: github-actions[bot]
+          GIT_AUTHOR_EMAIL: github-actions[bot]@users.noreply.github.com
+          GIT_COMMITTER_NAME: github-actions[bot]
+          GIT_COMMITTER_EMAIL: github-actions[bot]@users.noreply.github.com
 
       - name: Fail workflow when release receipt is missing
         if: ${{ always() && hashFiles('.work/release/last-publication-receipt.json') == '' }}
@@ -130,6 +80,6 @@ jobs:
         with:
           name: release-evidence
           path: |
-            .work/release/github-release
+            ${{ steps.verify_release_config.outputs.github_release_assets_dir }}
             .work/release/last-publication-receipt.json
             .release-manifest.json

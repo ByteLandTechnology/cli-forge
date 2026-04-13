@@ -28,21 +28,25 @@ released skill version sourced from the released tag and matching
 
 1. Copy the contents of this directory into the root of the target CLI skill
    repository that will own the release workflow.
-2. Run `npm ci` from that target repository root.
+2. Run `npm ci --omit=optional` from that target repository root.
 3. Update `release/skill-release.config.json` and replace the placeholder
    values with the target project's real skill id, repository identity,
    description, author/team, and any optional secondary publication settings.
 4. Keep `scripts/install-current-release.sh` in the target repository root so
    cloned checkouts can install the matching released binary for the checked
    out tag.
-5. Run release commands from the target repository root, not from this
+5. Keep `.github/actions/setup-build-env/action.yml` alongside
+   `.github/workflows/release.yml` so the release workflow can install the
+   macOS-led cross-build toolchain expected by `release:build-all`.
+6. Run release commands from the target repository root, not from this
    skill-family repository.
 
-## Root-Level Files Expected In The Target Repository
+## Files Expected In The Target Repository
 
 - `package.json`
 - `package-lock.json`
 - `.releaserc.json`
+- `.github/actions/setup-build-env/action.yml`
 - `.github/workflows/release.yml`
 - `release/skill-release.config.json`
 - `scripts/release/*`
@@ -56,6 +60,7 @@ From the target repository root:
 ```bash
 npm run release:verify-config
 npm run release:quality-gates
+npm run release:build-all
 npm run release:dry-run
 ```
 
@@ -69,6 +74,21 @@ git checkout v<version>
 The `templates/` directory is part of the release support bundle. It exists for
 fixture generation and validation support; it is not the final shipped CLI
 binary interface.
+
+## Workflow Shape
+
+The default workflow template now runs as one `macos-14` release job that:
+
+1. verifies the repo-native release config
+2. installs the configured Rust targets
+3. applies `.github/actions/setup-build-env`
+4. runs release quality gates
+5. builds every configured artifact target with `npm run release:build-all`
+6. runs `npm run release:ci`
+
+This keeps the published asset pack aligned with the repo-native release
+scripts while adopting the newer workflow style used by
+`ByteLandTechnology/telegram-agent-cli`.
 
 If a target repository later documents optional npm installation, keep that
 guidance subordinate to the default repo-native release path and explain the

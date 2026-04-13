@@ -50,7 +50,9 @@ not publish to npm; that is the distinct responsibility of the Distribute stage.
 3. If the skill project lacks the release automation assets, adopt them by
    copying the contents of `./templates/` to the project root. Note:
    this template pack DOES NOT contain project source templates (like
-   `main.rs.tpl`); those are consumed during Scaffold.
+   `main.rs.tpl`); those are consumed during Scaffold. The adopted release
+   assets include both `.github/workflows/release.yml` and the local composite
+   action at `.github/actions/setup-build-env/action.yml`.
 4. Verify the required target repository configuration (`GITHUB_TOKEN`, write
    access, GitHub Actions enabled).
 5. Follow the mode-specific execution path defined in
@@ -92,8 +94,10 @@ not publish to npm; that is the distinct responsibility of the Distribute stage.
   explicitly enforce that boundary by refusing to implement npm publication
   directives.
 - The `publish/` asset pack copied to the target root must not contain `.tpl`
-  source files or `package-lock.json`. Scaffold assets live in the Scaffold
-  stage's bundled `./templates/` directory.
+  source files from the Scaffold stage. The release asset pack may include
+  repository-owned automation files such as `package-lock.json` and
+  `.github/actions/setup-build-env/action.yml`. Scaffold assets live in the
+  Scaffold stage's bundled `./templates/` directory.
 - Do not bypass stale validation. If the codebase changed since the last
   validation report, route back to Validate.
 

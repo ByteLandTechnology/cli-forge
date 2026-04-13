@@ -81,6 +81,27 @@ export function runCommand(command, args, options = {}) {
   });
 }
 
+export function shouldUseCargoZigbuild(target) {
+  return (
+    process.platform === "darwin" &&
+    /-(unknown-linux-gnu|unknown-linux-musl)$/.test(target)
+  );
+}
+
+export function buildRustBinaryForTarget(target, options = {}) {
+  const command = "cargo";
+  const args = shouldUseCargoZigbuild(target)
+    ? ["zigbuild", "--release", "--target", target]
+    : ["build", "--release", "--target", target];
+
+  return runCommand(command, args, {
+    cwd: options.cwd,
+    env: options.env,
+    stdio: options.stdio,
+    encoding: options.encoding,
+  });
+}
+
 export function computeSha256(filePath) {
   return createHash("sha256").update(readFileSync(filePath)).digest("hex");
 }
@@ -158,6 +179,10 @@ export function getArtifactTarget(config, target) {
 
 export function requiredArtifactTargets(config) {
   return config.artifactTargets.filter((entry) => entry.required);
+}
+
+export function configuredArtifactTargets(config) {
+  return config.artifactTargets.map((entry) => entry.target);
 }
 
 export function archiveFilenameForTarget(config, version, target) {
