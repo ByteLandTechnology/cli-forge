@@ -39,14 +39,17 @@ planning stage.
 ## Approval And Handoff UX
 
 - When a stage needs user approval or needs to hand work to the next stage, use
-  a dialog-based chooser when the platform supports it (for example,
-  `request_user_input`).
+  a dialog-based chooser (for example, `request_user_input`). This is required
+  for every approval and handoff step.
 - Offer 2 or 3 explicit options with the recommended path first, such as
   approve and continue, request changes, or stop for now.
 - Never require the user to type an exact phrase, a skill name, or the literal
   word `approved` just to continue.
-- If dialog tooling is unavailable, ask a concise approval question and accept
-  any clear natural-language approval, revision, or stop response.
+- Never present a numbered menu or ask the user to reply with a digit,
+  sequence number, or manually typed option label.
+- If dialog tooling is unavailable in the current runtime, stop and report that
+  the workflow is waiting for a dialog-capable handoff surface. Do not fall
+  back to free-form or numbered text input.
 
 ## CLI And Skill Expectations
 

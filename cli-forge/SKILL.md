@@ -60,11 +60,11 @@ Act as the intake layer and traffic controller.
    `.cli-forge/handoff.yml` in the target project directory. This explicitly
    records the classification and inputs for downstream consumption.
 5. Provide a clear handoff response specifying which child skill should be
-   invoked next. Use a dialog-based chooser for the next-step handoff whenever
-   the platform supports it (for example, `request_user_input`). Do not require
-   the user to type an exact phrase or skill name. If dialog tooling is
-   unavailable, accept any clear natural-language confirmation of the desired
-   next step.
+   invoked next. Use a dialog-based chooser for the next-step handoff
+   (for example, `request_user_input`). Do not require the user to type an
+   exact phrase or skill name, and do not present numbered options that expect
+   a typed reply. If dialog tooling is unavailable, stop and report that the
+   workflow requires a dialog-capable handoff surface.
 
 ## Outputs
 
@@ -82,7 +82,7 @@ Act as the intake layer and traffic controller.
 ## Guardrails
 
 - **CRITICAL DIRECTIVE TO THE ASSISTANT**: You MUST NOT bypass the staged pipeline. Do not write, generate, or scaffold code yourself during this stage.
-- **CRITICAL DIRECTIVE TO THE ASSISTANT**: You MUST STOP and yield to the user after generating `handoff.yml` and explaining the next steps. Do not invoke the next stage autonomously. Use a dialog-based selection for the handoff whenever supported, and never require the user to explicitly type the next skill name.
+- **CRITICAL DIRECTIVE TO THE ASSISTANT**: You MUST STOP and yield to the user after generating `handoff.yml` and explaining the next steps. Do not invoke the next stage autonomously. Use a dialog-based selection for the handoff, never require the user to explicitly type the next skill name, and never replace the chooser with numbered text input.
 - The Router must stay thin. Do not execute templates, run compilation steps, or define CLI contracts here.
 - Never force a workflow forward if an earlier stage is incomplete. For
   example, if the user asks to "validate" but the project is missing the

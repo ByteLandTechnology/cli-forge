@@ -29,9 +29,10 @@ When creating a brand-new skill contract:
 6. Generate `design-contract.yml` from the template at
    `contracts/design-contract.yml.tpl`.
 7. Present the contract to the user for approval using a dialog-based chooser
-   when the platform supports it. Do not require an exact reply string; if
-   dialog tooling is unavailable, accept any clear approval or revision
-   response.
+   before proceeding. Do not require an exact reply string, and do not fall
+   back to numbered or free-form typed approval input. If dialog tooling is
+   unavailable, stop and report that approval is blocked until a dialog-capable
+   surface is available.
 
 ## For Existing Skills (Refresh)
 
@@ -43,9 +44,10 @@ When refreshing the contract of an existing skill:
 4. Confirm the sync surfaces list is still complete.
 5. Generate an updated `design-contract.yml`.
 6. Present the changes to the user for approval using a dialog-based chooser
-   when the platform supports it. Do not require an exact reply string; if
-   dialog tooling is unavailable, accept any clear approval or revision
-   response.
+   before proceeding. Do not require an exact reply string, and do not fall
+   back to numbered or free-form typed approval input. If dialog tooling is
+   unavailable, stop and report that approval is blocked until a dialog-capable
+   surface is available.
 
 ## Contract Format
 

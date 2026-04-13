@@ -62,9 +62,9 @@ This stage acts as the final gatekeeper before release. It consumes the
 7. Generate `.cli-forge/validation-report.yml` using the template at
    [`../contracts/validation-report.yml.tpl`](../contracts/validation-report.yml.tpl).
 8. Present the validation outcome and any next-stage options using a
-   dialog-based chooser whenever the platform supports it. Do not require the
-   user to type an exact phrase to continue to Publish, Distribute, or a fix-up
-   stage.
+   dialog-based chooser. Do not require the user to type an exact phrase to
+   continue to Publish, Distribute, or a fix-up stage, and do not present
+   numbered options that expect typed input.
 
 ## Outputs
 
@@ -86,8 +86,9 @@ This stage acts as the final gatekeeper before release. It consumes the
   workflow must return to Scaffold or Extend to correct the issue.
 - **Do not publish automatically.** Ensure the user has the chance to review the
   validation report before handing off to the Publish stage. Use a dialog-based
-  handoff whenever supported, and if dialog tooling is unavailable, accept any
-  clear natural-language choice instead of requiring an exact reply.
+  handoff, never replace it with numbered text input, and if dialog tooling is
+  unavailable, stop and report the blocker instead of accepting a typed
+  fallback response.
 
 ## Next Step
 

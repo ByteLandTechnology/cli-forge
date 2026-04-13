@@ -59,7 +59,7 @@ Run every rule below in order and record one output row per rule. Some task pros
 | `STRUCT-003` | structure      | Standards | error    | `src/main.rs` exists.                                                                                                          |
 | `STRUCT-004` | structure      | Standards | warning  | `src/lib.rs` exists.                                                                                                           |
 | `STRUCT-005` | structure      | Standards | error    | `tests/cli_test.rs` exists.                                                                                                    |
-| `STRUCT-006` | structure      | Standards | error    | `.gitignore` exists and contains `.cli-forge/` to prevent intermediate pipeline artifacts from being committed.                 |
+| `STRUCT-006` | structure      | Standards | error    | `.gitignore` exists and contains `.cli-forge/` to prevent intermediate pipeline artifacts from being committed.                |
 | `NAME-001`   | naming         | Standards | error    | Directory name matches lowercase kebab-case: `[a-z][a-z0-9]*(-[a-z0-9]+)*`.                                                    |
 | `NAME-002`   | naming         | Standards | error    | `[package].name` in `Cargo.toml` matches the directory name exactly.                                                           |
 | `DEPS-001`   | dependencies   | VI        | error    | `clap` dependency exists and enables the `derive` feature.                                                                     |

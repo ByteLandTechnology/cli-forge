@@ -73,7 +73,8 @@ Hey, I want to use cli-forge to create a new Rust tool that formats JSON.
 
 The Router will classify the intent as `design` and hand you over to the Design
 stage using a dialog-based next-step choice instead of asking you to type a
-skill name. If interrupted, you can resume at any time:
+skill name or reply to a numbered text menu. If interrupted, you can resume at
+any time:
 
 ```text
 Continue with the cli-forge workflow.
@@ -81,4 +82,5 @@ Continue with the cli-forge workflow.
 
 The Router will inspect your project's `.cli-forge/` directory and route you
 automatically to the next incomplete stage, then present dialog-style approval
-or continuation options instead of requiring exact-text replies.
+or continuation options instead of requiring exact-text replies or typed
+sequence-number input.

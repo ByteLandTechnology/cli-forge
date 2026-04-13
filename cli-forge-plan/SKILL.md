@@ -75,9 +75,9 @@ and Validate uses as the compliance baseline.
 11. Generate `.cli-forge/cli-plan.yml` using the format defined in
     [`../contracts/cli-plan.yml.tpl`](../contracts/cli-plan.yml.tpl).
 12. Present the CLI plan to the user for approval. Use a dialog-based chooser
-    whenever the platform supports it (for example, `request_user_input`) so
-    the user can select `approve and continue`, `request changes`, or `stop for
-now`. Do not require an exact reply string.
+    (for example, `request_user_input`) so the user can select `approve and
+continue`, `request changes`, or `stop for now`. Do not require an exact
+    reply string, and do not ask for numbered or manually typed menu input.
 
 ## Outputs
 
@@ -98,7 +98,7 @@ now`. Do not require an exact reply string.
 
 ## Guardrails
 
-- **CRITICAL DIRECTIVE TO THE ASSISTANT**: You MUST STOP execution and ask for the user's explicit approval after generating `cli-plan.yml`. Do NOT proceed to the Scaffold stage autonomously. Use a dialog-based approval prompt whenever supported, and never require the user to type the literal word `approved`.
+- **CRITICAL DIRECTIVE TO THE ASSISTANT**: You MUST STOP execution and ask for the user's explicit approval after generating `cli-plan.yml`. Do NOT proceed to the Scaffold stage autonomously. Use a dialog-based approval prompt, never require the user to type the literal word `approved`, and never replace the chooser with numbered text input.
 - Do not change the skill's purpose or positioning here. That work was done in
   the Design stage and is locked in `design-contract.yml`.
 - Do not begin implementing code. This stage produces a plan document, not

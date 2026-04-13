@@ -57,9 +57,10 @@ contract (commands, flags, formats) belongs to the Plan stage downstream.
 7. Generate `.cli-forge/design-contract.yml` using the format defined in
    [`../contracts/design-contract.yml.tpl`](../contracts/design-contract.yml.tpl).
 8. Request user approval of the design contract before moving forward. Use a
-   dialog-based chooser whenever the platform supports it (for example,
-   `request_user_input`) so the user can select `approve and continue`,
-   `request changes`, or `stop for now`. Do not require an exact reply string.
+   dialog-based chooser (for example, `request_user_input`) so the user can
+   select `approve and continue`, `request changes`, or `stop for now`. Do not
+   require an exact reply string, and do not ask for numbered or manually typed
+   menu responses.
 
 ## Outputs
 
@@ -77,7 +78,7 @@ contract (commands, flags, formats) belongs to the Plan stage downstream.
 
 ## Guardrails
 
-- **CRITICAL DIRECTIVE TO THE ASSISTANT**: You MUST STOP execution and ask for the user's explicit approval after generating `design-contract.yml`. Do NOT proceed to the Plan or Scaffold stage autonomously. Use a dialog-based approval prompt whenever supported; otherwise accept any clear natural-language approval or revision request.
+- **CRITICAL DIRECTIVE TO THE ASSISTANT**: You MUST STOP execution and ask for the user's explicit approval after generating `design-contract.yml`. Do NOT proceed to the Plan or Scaffold stage autonomously. Use a dialog-based approval prompt, and never replace it with free-form or numbered text input.
 - This stage is the authoritative source for user-facing purpose and
   positioning. Downstream stages consume the approved contract; they do not
   redefine it.
