@@ -23,9 +23,11 @@ commands:
     description: "Structured help output"
 ```
 
-If the skill has subcommands, list each one. If daemon is in scope, include
-the full `daemon` subcommand group: `daemon start`, `daemon stop`,
-`daemon restart`, `daemon status`, `daemon run`.
+If the skill has subcommands, list each one. If daemon capability is in scope,
+also list the `daemon` subcommand group: `daemon run`, `daemon start`,
+`daemon stop`, `daemon restart`, and `daemon status`. Plans that enable daemon
+should also identify which leaf commands are daemonizable and therefore accept
+client-routing flags such as `--via daemon` and `--ensure-daemon`.
 
 ## Step 2: Define Flags Per Command
 
@@ -72,30 +74,48 @@ For each optional capability, explicitly state whether it is in scope:
 Do not leave any capability undefined. Explicitly marking something as
 `out_of_scope` prevents ambiguity during scaffold and extend.
 
-## Step 6: Lock Daemon Contract (If In Scope)
+## Step 6: Lock The Daemon Capability Contract
 
-When daemon is in scope, the following must be defined:
+If daemon capability is in scope, the following must be defined:
 
-- **Mode**: managed background daemon only (attached foreground is out of
-  scope)
+- **Enabled flag**: `daemon_contract.enabled: true`
+- **Mode**: `app_server`
 - **Instance model**: single instance by default
-- **Lifecycle commands**: `daemon start|stop|restart|status`
-- **Return behavior**: commands return only after reaching `running`,
-  `stopped`, `failed`, or an explicit timeout
-- **Recovery**: all recovery stays within the four lifecycle commands
-- **Transport modes**: `--transport stdio|tcp|unix`
-- **WebSocket**: TCP and Unix Socket transports use WebSocket framing
-- **TLS**: `wss://` support with `--cert-file` and `--key-file`
-- **Authentication**: `capability-token` and/or `signed-bearer-token`
+- **Lifecycle commands**: `daemon run|start|stop|restart|status`
+- **Daemonizable commands**: which leaf commands may execute through the daemon
+- **Client routing**: `--via local|daemon` and `--ensure-daemon`
+- **Transports**: local IPC required, TCP opt-in only
+- **Auth**: OS permissions for local IPC, mandatory auth for TCP mode
+- **RPC**: structured JSON transport, preferably JSON-RPC 2.0
+- **Streaming**: how daemonized streaming maps to JSON, YAML, and TOML
+- **Runtime artifacts**: the files written beneath `state/daemon/`
+- **Return behavior**:
+  - `daemon start` returns after `running`, `failed`, or `timeout`
+  - `daemon stop` returns after `stopped`, `failed`, or `timeout`
+  - `daemon restart` returns after `running`, `failed`, or `timeout`
+  - `daemon run` stays attached until stopped or failed
+- **Recovery**: client recovery stays within structured daemon lifecycle and
+  routed-command errors
+
+If daemon capability is out of scope, set `capabilities.daemon:
+out_of_scope`, keep `daemon_contract.enabled: false`, and do not add daemon
+commands or daemon-routing flags to the command plan. In `cli-plan.yml`, keep
+the daemon section collapsed to the minimal `daemon_contract.enabled: false`
+block rather than emitting daemon-only routing or transport fields.
+
+Use the supplemental design note at `instructions/daemon-app-server.md` as the
+source of truth for daemon app-server planning details.
 
 ## Step 7: Lock Runtime Behavior
 
 Define:
 
-- **Runtime directory**: where the skill stores persistent state
-  (e.g., `~/.skill-name/`)
+- **Runtime directory family**: document `config`, `data`, `state`, `cache`,
+  and optional `logs` separately, along with their default user-scoped
+  behavior and override flags
 - **Active Context**: whether the skill supports Active Context, and if so,
-  how context is discovered, persisted, and overridden via `--context`
+  how it is inspected (`context show`), persisted (`context use`), and
+  overridden per invocation (`--selector`, `--cwd`)
 
 ## Step 8: Generate cli-plan.yml
 
@@ -117,7 +137,7 @@ This instruction is complete only when:
 
 - Every command and its flags are fully defined
 - Output format strategy is locked with no ambiguity
-- Every capability is explicitly scoped
-- Daemon contract is locked (if applicable)
+- Every optional feature capability is explicitly scoped
+- The daemon capability contract is locked or explicitly out of scope
 - `cli-plan.yml` is written and approved
 - The Scaffold stage can proceed using the plan as its sole contract

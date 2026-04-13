@@ -7,7 +7,7 @@ pub mod context;
 pub mod help;
 
 use anyhow::{Context, Result};
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use std::collections::BTreeMap;
 use std::io::Write;
 
@@ -18,28 +18,6 @@ pub enum Format {
     Yaml,
     Json,
     Toml,
-}
-
-/// Shared daemon lifecycle states for generated daemon-capable CLIs.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum DaemonLifecycleState {
-    Stopped,
-    Starting,
-    Running,
-    Stopping,
-    Failed,
-}
-
-impl DaemonLifecycleState {
-    pub fn as_recommended_action(&self) -> &'static str {
-        match self {
-            Self::Stopped => "start",
-            Self::Starting | Self::Stopping => "status",
-            Self::Running => "status",
-            Self::Failed => "restart",
-        }
-    }
 }
 
 impl Format {
@@ -89,30 +67,6 @@ pub struct {{SKILL_NAME_PASCAL}}Output {
     pub message: String,
     pub input: String,
     pub effective_context: BTreeMap<String, String>,
-}
-
-/// Structured daemon status payload returned by the shared daemon contract.
-#[derive(Debug, Clone, Serialize)]
-pub struct DaemonStatusOutput {
-    pub state: DaemonLifecycleState,
-    pub readiness: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub reason: Option<String>,
-    pub recommended_next_action: String,
-    pub instance_model: String,
-    pub instance_id: String,
-}
-
-/// Structured daemon control payload returned by lifecycle commands.
-#[derive(Debug, Clone, Serialize)]
-pub struct DaemonCommandOutput {
-    pub action: String,
-    pub result: String,
-    pub state: DaemonLifecycleState,
-    pub message: String,
-    pub recommended_next_action: String,
-    pub instance_model: String,
-    pub instance_id: String,
 }
 
 /// Run the core logic and return the output.

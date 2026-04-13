@@ -1,8 +1,8 @@
 //! Optional REPL overlay for the generated package layout. This module is
 //! package-local to generated skills when REPL support is enabled.
-//! It does not replace the shared daemon contract: daemon control remains in
-//! the dedicated `daemon start|stop|restart|status` command family, and
-//! attached foreground daemon execution stays out of scope.
+//! It does not define or replace daemon behavior. If the generated project
+//! exposes daemon capability, keep the daemon command surface and routing
+//! semantics aligned with the project's documented CLI plan.
 
 use crate::context::{
     build_context_state, inspect_context, load_active_context, parse_selector,
@@ -80,9 +80,9 @@ pub fn repl_help_text() -> String {
         "  context use cwd=/path        Persist a current-directory cue",
         "  exit | quit                  End the session",
         "",
-        "DAEMON CONTRACT",
-        "  Managed background daemon control stays on daemon start|stop|restart|status.",
-        "  Attached foreground daemon execution is out of scope.",
+        "DAEMON NOTE",
+        "  This REPL overlay does not define daemon behavior.",
+        "  If the project exposes daemon capability, use the documented daemon commands and routing flags.",
         "",
         "OUTPUT",
         "  Default REPL output is human-readable when the startup format is YAML.",

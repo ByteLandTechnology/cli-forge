@@ -19,7 +19,7 @@ checks:
     detail: "{{optional_detail}}"
 
 summary:
-  total: 28
+  total: 46
   pass: "{{count}}"
   warn: "{{count}}"
   fail: "{{count}}"

@@ -32,7 +32,7 @@ commands:
         type: "enum"
         required: false
         default: "yaml"
-        values: ["yaml", "json"]
+        values: ["yaml", "json", "toml"]
         description: "Output format for structured help"
 
 help:
@@ -45,33 +45,110 @@ capabilities:
   daemon: "{{in_scope|out_of_scope}}"
 
 runtime:
-  directory: "~/.{{skill_name}}/"
-  active_context: "{{true|false}}"
-  context_override: "--context flag"
+  directories:
+    config: "platform default user-scoped config directory"
+    data: "platform default user-scoped data directory"
+    state: "derived from data directory by default"
+    cache: "platform default user-scoped cache directory"
+    logs: "state/logs when logging is enabled"
+  scope: "user_scoped_default"
+  overrides:
+    - "--config-dir"
+    - "--data-dir"
+    - "--state-dir"
+    - "--cache-dir"
+    - "--log-dir"
+  active_context:
+    supported: "{{true|false}}"
+    inspect_command: "{{skill_name}} context show"
+    persist_command: "{{skill_name}} context use --selector workspace=demo"
+    per_invocation_overrides:
+      - "--selector KEY=VALUE"
+      - "--cwd PATH"
+    precedence: "explicit invocation values override the persisted Active Context for one invocation only"
 
-# Include this section only when daemon capability is in_scope
 daemon_contract:
-  mode: "managed_background"
-  instance_model: "single"
-  lifecycle:
-    - "start"
-    - "stop"
-    - "restart"
-    - "status"
-  return_on:
-    - "running"
-    - "stopped"
-    - "failed"
-    - "timeout"
-  transports:
-    stdio: "--transport stdio"
-    tcp: "--transport tcp --port N"
-    unix: "--transport unix --socket PATH"
-  websocket: true
-  tls: "--cert-file and --key-file"
-  auth_modes:
-    - "capability-token"
-    - "signed-bearer-token"
+  enabled: "{{true|false}}"
+
+# When capabilities.daemon is out_of_scope, keep daemon_contract as the
+# minimal single-field block above and do not add daemon commands or
+# daemon-routing flags anywhere else in cli-plan.yml.
+#
+# When capabilities.daemon is in_scope, replace the minimal block above with:
+#
+# daemon_contract:
+#   enabled: true
+#   mode: "app_server"
+#   instance_model: "single"
+#   lifecycle:
+#     foreground:
+#       - "run"
+#     background:
+#       - "start"
+#       - "stop"
+#       - "restart"
+#       - "status"
+#   daemonizable_commands:
+#     - "{{command_name}}"
+#   client_routing:
+#     execution_flag:
+#       name: "--via"
+#       values: ["local", "daemon"]
+#       default: "local"
+#     ensure_daemon_flag:
+#       name: "--ensure-daemon"
+#       requires: "--via daemon"
+#     local_only_commands:
+#       - "help"
+#       - "paths"
+#       - "context"
+#       - "daemon"
+#   transports:
+#     local_default: "unix_socket_or_named_pipe"
+#     tcp: "opt_in_loopback_only"
+#   auth:
+#     local_ipc: "os_permissions"
+#     tcp: "required_when_enabled"
+#   rpc:
+#     protocol: "json_rpc_2_0"
+#     methods:
+#       - "daemon.health"
+#       - "daemon.status"
+#       - "daemon.shutdown"
+#       - "command.execute"
+#       - "command.execute_stream"
+#   status_fields:
+#     - "state"
+#     - "readiness"
+#     - "instance_id"
+#     - "pid"
+#     - "transport"
+#     - "endpoint"
+#     - "uptime_sec"
+#     - "active_requests"
+#     - "queue_depth"
+#     - "last_error"
+#     - "recommended_next_action"
+#   return_on:
+#     start: ["running", "failed", "timeout"]
+#     stop: ["stopped", "failed", "timeout"]
+#     restart: ["running", "failed", "timeout"]
+#     run: ["stopped", "failed"]
+#   recovery: "client_uses_status_stop_restart_and_structured_errors"
+#   streaming:
+#     rpc_method: "command.execute_stream"
+#     json: "ndjson"
+#     yaml: "multi_document"
+#     toml: "unsupported_unless_explicitly_planned"
+#   runtime_artifacts:
+#     directory: "state/daemon"
+#     files:
+#       - "daemon.pid"
+#       - "daemon.sock_or_pipe_metadata"
+#       - "daemon-state.json"
+#       - "daemon.log"
+#       - "daemon.lock"
+#       - "auth.token_when_tcp_enabled"
 
 approved_by: "{{user}}"
 approved_at: "{{iso8601_timestamp}}"

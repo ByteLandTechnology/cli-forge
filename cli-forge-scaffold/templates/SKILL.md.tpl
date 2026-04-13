@@ -25,7 +25,6 @@ metadata, `SKILL.md`, README, and help text.
 {{SKILL_NAME}} [OPTIONS] <COMMAND>
 {{SKILL_NAME}} help [COMMAND_PATH ...] [--format yaml|json|toml]
 {{SKILL_NAME}} run [OPTIONS] <INPUT>
-{{SKILL_NAME}} daemon <start|stop|restart|status>
 {{SKILL_NAME}} paths [OPTIONS]
 {{SKILL_NAME}} context <show|use> [OPTIONS]
 ```
@@ -54,7 +53,6 @@ as the final installed skill interface.
 | -------------- | ---- | ------------------------------------------------------------ |
 | `help`         | leaf | Return structured help for the requested command path        |
 | `run`          | leaf | Execute the generated leaf command                           |
-| `daemon`       | tree | Control one managed background daemon through CLI commands   |
 | `paths`        | leaf | Inspect config/data/state/cache and optional log directories |
 | `context show` | leaf | Display the current Active Context and effective values      |
 | `context use`  | leaf | Persist selectors or ambient cues as the Active Context      |
@@ -119,19 +117,6 @@ override_mechanisms:
 - Explicit per-invocation selectors on `run` override the persisted Active
   Context for that invocation only.
 
-### Managed Daemon Contract
-
-- Daemon control is CLI-only and uses `daemon start`, `daemon stop`,
-  `daemon restart`, and `daemon status`.
-- The contract standardizes only managed background daemon mode.
-- Attached foreground execution is out of scope.
-- The default daemon model is one managed instance unless the generated skill
-  explicitly documents a bounded multi-instance model.
-- `daemon start`, `daemon stop`, and `daemon restart` return only after the
-  daemon reaches `running`, `stopped`, `failed`, or an explicit timeout.
-- Recovery stays inside the same four daemon commands. `daemon status`
-  reports the next supported action.
-
 ### Optional Features
 
 - Streaming may be added later with `--stream`.
@@ -180,12 +165,6 @@ Structured help:
 
 ```text
 $ {{SKILL_NAME}} help run --format yaml
-```
-
-Inspect daemon status:
-
-```text
-$ {{SKILL_NAME}} daemon status --format json
 ```
 
 Persist Active Context:

@@ -47,13 +47,15 @@ Act as the intake layer and traffic controller.
    - Missing target directory + new request -> Design
    - `design-contract.yml` exists but no `cli-plan.yml` -> Plan
    - `cli-plan.yml` exists but no source files -> Scaffold
-   - Existing project + feature request (stream/repl/daemon) -> Extend
+   - Existing project + feature request (`stream` or `repl`) -> Extend
+   - Existing project + daemon capability request -> Plan
    - Existing project + audit request (or post-edit verification) -> Validate
    - Passed validation + repo-native release request -> Publish
    - Passed validation + npm distribution request -> Distribute
 3. Confirm the required inputs for the chosen path:
    - Scaffold: `skill_name`
-   - Extend: `project_path` and `feature` (stream/repl/daemon)
+   - Extend: `project_path` and `feature` (`stream` or `repl`)
+   - Plan: daemon capability requests, daemon contract changes, or daemon scope updates
    - Validate: `project_path`
    - Publish/Distribute: `publish_mode`, `publish_channel`
 4. Use the template at `contracts/handoff.yml.tpl` to generate
@@ -89,6 +91,10 @@ Act as the intake layer and traffic controller.
   scaffold baseline, route back to Scaffold.
 - If the user asks for a release but validation is missing or stale, route to
   Validate first.
+- If the user asks to add daemon support to an existing project, route to Plan
+  first so the daemon capability contract can be updated explicitly. Do not
+  send daemon requests to Extend until dedicated daemon implementation support
+  exists there.
 - If the target project directory is unknown, you MUST ask the user or search for `.cli-forge/` folders. Do not assume the current working directory applies.
 
 ## Next Step

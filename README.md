@@ -33,8 +33,8 @@ graph LR
 | **1. Design**     | `./cli-forge-design/`     | Define the high-level description, purpose, positioning, and required sync surfaces.                                      | `.cli-forge/design-contract.yml`   |
 | **2. Plan**       | `./cli-forge-plan/`       | Translate the design into a detailed CLI contract (commands, flags, capabilities, daemon contract).                       | `.cli-forge/cli-plan.yml`          |
 | **3. Scaffold**   | `./cli-forge-scaffold/`   | Generate the baseline Rust project exclusively using the rules defined in `cli-plan.yml` and the authoritative templates. | `.cli-forge/scaffold-receipt.yml`  |
-| **4. Extend**     | `./cli-forge-extend/`     | Add optional features (`stream`, `repl`, `daemon`) to an existing project and update the plan.                            | `.cli-forge/extend-receipt.yml`    |
-| **5. Validate**   | `./cli-forge-validate/`   | Run 28 compliance checks against the projected generated codebase to block invalid artifacts from release.                | `.cli-forge/validation-report.yml` |
+| **4. Extend**     | `./cli-forge-extend/`     | Add optional features (`stream`, `repl`) to an existing project and update the plan.                                      | `.cli-forge/extend-receipt.yml`    |
+| **5. Validate**   | `./cli-forge-validate/`   | Run 46 compliance checks against the projected generated codebase to block invalid artifacts from release.                | `.cli-forge/validation-report.yml` |
 | **6. Publish**    | `./cli-forge-publish/`    | Manage the primary repo-native GitHub Release pipeline and automation assets.                                             | `.cli-forge/release-receipt.yml`   |
 | **7. Distribute** | `./cli-forge-distribute/` | (Optional) Execute secondary npm publication using a platform-specific package model.                                     | _N/A (terminal stage)_             |
 
@@ -65,6 +65,17 @@ This layout intentionally favors installability over a shared root asset pool:
 the repository structure mirrors the expected installed-skill shape so no stage
 depends on root-level `contracts/`, `templates/`, or `planning-brief.md` files
 at runtime.
+
+## Daemon Design
+
+The Plan stage now models daemon behavior as an optional app-server capability.
+The detailed planning reference lives at
+[`./cli-forge-plan/instructions/daemon-app-server.md`](./cli-forge-plan/instructions/daemon-app-server.md)
+and defines long-lived background execution plus client-routed command
+execution. The legacy managed-daemon placeholder has been removed from the
+default scaffold baseline. Daemon generation itself is still future work, so a
+plan that marks `daemon` `in_scope` currently needs dedicated scaffold support
+before generated artifacts can claim end-to-end parity with that contract.
 
 ## Usage
 

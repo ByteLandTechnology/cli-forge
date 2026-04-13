@@ -11,7 +11,7 @@ classification: "{{classification}}" # design | plan | scaffold | extend | valid
 inputs:
   skill_name: "{{skill_name}}"
   project_path: "{{project_path}}"
-  feature: "{{feature}}"             # stream | repl | daemon (only for extend)
+  feature: "{{feature}}"             # stream | repl (for extend); daemon requests route to plan
   publish_mode: "{{mode}}"           # report_only | dry_run | rehearsal | live_release (only for publish/distribute)
   publish_channel: "{{channel}}"     # repo_native | npm | both (only for publish/distribute)
 

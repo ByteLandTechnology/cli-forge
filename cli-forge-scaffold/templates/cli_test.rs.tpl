@@ -27,15 +27,6 @@ fn sandbox_args(temp_dir: &TempDir) -> Vec<String> {
     ]
 }
 
-fn daemon_env_name(suffix: &str) -> String {
-    format!(
-        "{}_{suffix}",
-        env!("CARGO_PKG_NAME")
-            .replace('-', "_")
-            .to_ascii_uppercase()
-    )
-}
-
 fn repl_supported() -> bool {
     Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("src/repl.rs")
@@ -82,6 +73,7 @@ fn test_{{SKILL_NAME_SNAKE}}_top_level_auto_help_exits_zero() {
         .success()
         .stdout(predicate::str::contains("NAME"))
         .stdout(predicate::str::contains("Available subcommands"))
+        .stdout(predicate::str::contains("--version"))
         .stdout(predicate::str::contains("run"));
 }
 
@@ -206,169 +198,6 @@ fn test_{{SKILL_NAME_SNAKE}}_missing_leaf_input_returns_structured_json_error() 
             .unwrap()
             .contains("requires <INPUT>")
     );
-}
-
-#[test]
-fn test_{{SKILL_NAME_SNAKE}}_daemon_help_documents_four_command_contract() {
-    let output = cmd()
-        .args(["daemon", "--help"])
-        .output()
-        .expect("failed to execute");
-
-    assert!(output.status.success(), "expected exit 0");
-
-    let stdout = String::from_utf8(output.stdout).expect("non-utf8 output");
-    assert!(stdout.contains("daemon <start|stop|restart|status>"));
-    assert!(stdout.contains("managed background daemon"));
-    assert!(stdout.contains("single managed instance"));
-    assert!(stdout.contains("Attached foreground execution is out of scope"));
-}
-
-#[test]
-fn test_{{SKILL_NAME_SNAKE}}_daemon_start_status_stop_round_trip_uses_single_instance() {
-    let temp_dir = TempDir::new().expect("temp dir");
-    let sandbox = sandbox_args(&temp_dir);
-
-    let start_output = cmd()
-        .args(&sandbox)
-        .args(["daemon", "start"])
-        .output()
-        .expect("failed to execute");
-    assert!(start_output.status.success(), "expected exit 0");
-    let start_stdout = String::from_utf8(start_output.stdout).expect("non-utf8 output");
-    let start_value: serde_yaml::Value =
-        serde_yaml::from_str(&start_stdout).expect("stdout should be valid YAML");
-    assert_eq!(start_value["action"], "start");
-    assert_eq!(start_value["result"], "running");
-    assert_eq!(start_value["state"], "running");
-    assert_eq!(start_value["instance_model"], "single_instance");
-    assert_eq!(start_value["instance_id"], "default");
-
-    let status_output = cmd()
-        .args(&sandbox)
-        .args(["daemon", "status"])
-        .output()
-        .expect("failed to execute");
-    assert!(status_output.status.success(), "expected exit 0");
-    let status_stdout = String::from_utf8(status_output.stdout).expect("non-utf8 output");
-    let status_value: serde_yaml::Value =
-        serde_yaml::from_str(&status_stdout).expect("stdout should be valid YAML");
-    assert_eq!(status_value["state"], "running");
-    assert_eq!(status_value["recommended_next_action"], "status");
-    assert_eq!(status_value["instance_model"], "single_instance");
-
-    let stop_output = cmd()
-        .args(&sandbox)
-        .args(["daemon", "stop"])
-        .output()
-        .expect("failed to execute");
-    assert!(stop_output.status.success(), "expected exit 0");
-    let stop_stdout = String::from_utf8(stop_output.stdout).expect("non-utf8 output");
-    let stop_value: serde_yaml::Value =
-        serde_yaml::from_str(&stop_stdout).expect("stdout should be valid YAML");
-    assert_eq!(stop_value["action"], "stop");
-    assert_eq!(stop_value["result"], "stopped");
-    assert_eq!(stop_value["state"], "stopped");
-}
-
-#[test]
-fn test_{{SKILL_NAME_SNAKE}}_daemon_start_no_op_when_already_running() {
-    let temp_dir = TempDir::new().expect("temp dir");
-    let sandbox = sandbox_args(&temp_dir);
-
-    cmd()
-        .args(&sandbox)
-        .args(["daemon", "start"])
-        .assert()
-        .success();
-
-    let output = cmd()
-        .args(&sandbox)
-        .args(["daemon", "start"])
-        .output()
-        .expect("failed to execute");
-    assert!(output.status.success(), "expected exit 0");
-
-    let stdout = String::from_utf8(output.stdout).expect("non-utf8 output");
-    let value: serde_yaml::Value =
-        serde_yaml::from_str(&stdout).expect("stdout should be valid YAML");
-    assert_eq!(value["result"], "no_op");
-    assert_eq!(value["state"], "running");
-    assert_eq!(value["recommended_next_action"], "status");
-}
-
-#[test]
-fn test_{{SKILL_NAME_SNAKE}}_daemon_timeout_and_recovery_stay_in_four_commands() {
-    let temp_dir = TempDir::new().expect("temp dir");
-    let sandbox = sandbox_args(&temp_dir);
-    let timeout_flag = daemon_env_name("DAEMON_TIMEOUT_START");
-
-    let output = cmd()
-        .env(&timeout_flag, "1")
-        .args(&sandbox)
-        .args(["daemon", "start"])
-        .output()
-        .expect("failed to execute");
-    assert!(output.status.success(), "expected exit 0");
-
-    let stdout = String::from_utf8(output.stdout).expect("non-utf8 output");
-    let value: serde_yaml::Value =
-        serde_yaml::from_str(&stdout).expect("stdout should be valid YAML");
-    assert_eq!(value["result"], "timed_out");
-    assert_eq!(value["state"], "starting");
-    assert_eq!(value["recommended_next_action"], "status");
-
-    let status_output = cmd()
-        .args(&sandbox)
-        .args(["daemon", "status"])
-        .output()
-        .expect("failed to execute");
-    assert!(status_output.status.success(), "expected exit 0");
-    let status_stdout = String::from_utf8(status_output.stdout).expect("non-utf8 output");
-    let status_value: serde_yaml::Value =
-        serde_yaml::from_str(&status_stdout).expect("stdout should be valid YAML");
-    assert_eq!(status_value["state"], "starting");
-    assert_eq!(status_value["recommended_next_action"], "status");
-
-    let stop_output = cmd()
-        .args(&sandbox)
-        .args(["daemon", "stop"])
-        .output()
-        .expect("failed to execute");
-    assert!(stop_output.status.success(), "expected exit 0");
-    let stop_stdout = String::from_utf8(stop_output.stdout).expect("non-utf8 output");
-    let stop_value: serde_yaml::Value =
-        serde_yaml::from_str(&stop_stdout).expect("stdout should be valid YAML");
-    assert_eq!(stop_value["action"], "stop");
-    assert_eq!(stop_value["state"], "stopped");
-}
-
-#[test]
-fn test_{{SKILL_NAME_SNAKE}}_daemon_status_reports_unexpected_exit_and_restart_path() {
-    let temp_dir = TempDir::new().expect("temp dir");
-    let sandbox = sandbox_args(&temp_dir);
-    let unexpected_exit_flag = daemon_env_name("DAEMON_UNEXPECTED_EXIT");
-
-    cmd()
-        .args(&sandbox)
-        .args(["daemon", "start"])
-        .assert()
-        .success();
-
-    let output = cmd()
-        .env(&unexpected_exit_flag, "1")
-        .args(&sandbox)
-        .args(["daemon", "status"])
-        .output()
-        .expect("failed to execute");
-    assert!(output.status.success(), "expected exit 0");
-
-    let stdout = String::from_utf8(output.stdout).expect("non-utf8 output");
-    let value: serde_yaml::Value =
-        serde_yaml::from_str(&stdout).expect("stdout should be valid YAML");
-    assert_eq!(value["state"], "failed");
-    assert_eq!(value["recommended_next_action"], "restart");
-    assert!(value["reason"].as_str().unwrap().contains("unexpectedly"));
 }
 
 #[test]

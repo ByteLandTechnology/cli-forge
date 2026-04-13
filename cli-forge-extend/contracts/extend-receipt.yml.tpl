@@ -8,7 +8,7 @@ skill_name: "{{skill_name}}"
 cli_plan_ref: "./cli-plan.yml"
 timestamp: "{{iso8601_timestamp}}"
 
-feature: "{{stream|repl|daemon}}"
+feature: "{{stream|repl}}"
 template_source: "templates/"
 
 files_added:

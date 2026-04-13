@@ -26,10 +26,10 @@ Every plan must explicitly lock these decisions:
 - `SKILL.md` contract surfaces that must stay aligned with code and help text
 - output formats supported by each command
 - runtime-directory and Active Context behavior when those surfaces exist
-- daemon lifecycle command surfaces and recovery rules when daemon mode is in
-  scope
-- which optional capabilities are in scope: base only, `stream`, `repl`,
-  `daemon`, or publish/release follow-through
+- daemon command surfaces, client routing, transport/auth expectations, and
+  recovery rules when daemon capability is in scope
+- which optional capabilities are in scope: `stream`, `repl`, `daemon`, or
+  publish/release follow-through
 - whether publish-oriented work is about the default repo-native release path,
   the optional npm channel, or both with repo-native release remaining primary
 
@@ -65,10 +65,10 @@ planning stage.
   the required sections and call out any user-visible changes.
 - The approved description contract must stay synchronized across
   `Cargo.toml`, `SKILL.md`, `README.md`, and help summaries.
-- When daemon behavior is in scope, plans must lock the shared managed
-  background contract: `daemon start|stop|restart|status`, default
-  single-instance control, terminal outcome or explicit timeout, CLI-only
-  recovery, and attached foreground execution out of scope.
+- Plans must lock daemon behavior explicitly: either mark daemon
+  `out_of_scope`, or define the app-server contract with `daemon run`,
+  `daemon start|stop|restart|status`, client routing flags, local IPC defaults,
+  opt-in TCP, auth expectations, and structured recovery behavior.
 - Repository-owned automation and release plumbing must stay outside generated
   skill packages unless a stage explicitly handles publish concerns.
 - When publish concerns are in scope, plans must keep repo-native GitHub
@@ -86,8 +86,8 @@ Plans must state the intended behavior for:
 - explicit `--format yaml|json|toml` support
 - structured errors on `stderr` with stable machine-readable fields
 - plain-text `--help` vs structured `help` behavior
-- daemon lifecycle states, timeout semantics, and recovery messaging when
-  daemon control is in scope
+- daemon lifecycle states, routing semantics, timeout semantics, and recovery
+  messaging when daemon is enabled
 - `--stream` framing rules if streaming is in scope
 - `--repl` interaction model if REPL is in scope
 
@@ -101,8 +101,8 @@ Plans should include the expected generated structure and validation evidence:
 - root contract files such as `Cargo.toml`, `SKILL.md`, and user-facing docs
 - source layout under `src/` and CLI contract tests under `tests/`
 - CLI integration tests that invoke the built binary
-- coverage for help, format switching, error handling, Active Context, and any
-  enabled `stream`, `repl`, or `daemon` behavior
+- coverage for help, format switching, error handling, Active Context,
+  daemon behavior when enabled, and any enabled `stream` or `repl` behavior
 - verification steps such as `cargo build`, `cargo test`,
   `cargo clippy -- -D warnings`, and `cargo fmt --check`
 

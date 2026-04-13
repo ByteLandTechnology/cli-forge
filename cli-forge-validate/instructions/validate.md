@@ -13,11 +13,11 @@ as required generated output. When a target repository has adopted the publish
 asset pack, validate repo-native release/install surfaces as repository
 automation rather than generated package files, and keep any optional npm
 publication wording clearly secondary. If the project exposes daemon
-behavior, validate the shared managed-background daemon contract as well:
-`daemon start|stop|restart|status`, default single-instance control, lifecycle
-commands that wait for a terminal outcome or explicit timeout, CLI-only
-recovery, attached foreground execution out of scope, and unsupported runtimes
-excluded from the supported surface.
+behavior, validate it against the daemon contract declared in `cli-plan.yml`
+rather than against a hard-coded managed-background assumption. Until a
+dedicated `DAEMON-*` ruleset exists, use the shared help/runtime/error checks
+plus the daemon overlay described below to compare planned daemon behavior with
+the actual documented and implemented surface.
 
 ## Inputs
 
@@ -46,11 +46,14 @@ Before running the ruleset:
 | Severity  | Meaning                                                                | Agent Action                                                                                               |
 | --------- | ---------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
 | `error`   | Required for planning-brief compliance or for a working CLI Skill      | Mark the row `FAIL` and tell the user the project must be fixed.                                           |
-| `warning` | Recommended for maintainability or testability but not always blocking | Mark the row `FAIL` with severity `warning`, explain the gap, and continue running the rest of the checks. |
+| `warning` | Recommended for maintainability or testability but not always blocking | Mark the row `WARN`, explain the gap, and continue running the rest of the checks.                          |
 
 ## Validation Rules
 
-Run every rule below in order and record one output row per rule. Some task prose still says "27 checks" or "28 checks", but the current ruleset enumerates 29 concrete checks; use the table below as the source of truth and do not omit any of them.
+Run every rule below in order and record one output row per rule. Some task
+prose still says "27 checks", "28 checks", or "29 checks", but the current
+ruleset enumerates 46 concrete checks; use the table below as the source of
+truth and do not omit any of them.
 
 | Check ID     | Category       | Principle | Severity | What to Verify                                                                                                                 |
 | ------------ | -------------- | --------- | -------- | ------------------------------------------------------------------------------------------------------------------------------ |
@@ -186,9 +189,11 @@ record the following:
    - Confirm `help --format yaml|json|toml` returns structured help.
    - Confirm top-level or non-leaf invocation without a leaf command returns
      plain-text help with subcommands and exit `0`.
-   - If daemon behavior is present, confirm help documents only managed
-     background daemon control and names `daemon start`, `daemon stop`,
-     `daemon restart`, and `daemon status`.
+   - If daemon behavior is in scope according to `cli-plan.yml`, confirm help
+     documents the daemon surface declared in the plan, including lifecycle
+     commands, any client-routing flags, and which commands remain local-only.
+   - If daemon behavior is marked `out_of_scope`, confirm help does not claim
+     daemon support.
 2. **Runtime directories**
    - Confirm config/data/state/cache are documented separately.
    - Confirm user-scoped defaults are documented.
@@ -202,8 +207,9 @@ record the following:
    - Confirm missing leaf-command inputs return a structured error in the
      selected output format rather than raw help text.
    - Confirm structured errors include at least `code` and `message`.
-   - If daemon behavior is present, confirm failure and timeout messaging keeps
-     recovery inside `start`, `stop`, `restart`, and `status`.
+   - If daemon behavior is present, confirm daemon lifecycle failures and
+     routed-command errors stay structured and keep recovery guidance aligned
+     with the daemon contract declared in `cli-plan.yml`.
 5. **REPL**
    - If REPL mode is present, confirm REPL help is plain text only.
    - Confirm REPL history and tab completion are available.
@@ -231,13 +237,16 @@ inspect and record the following in the validation narrative:
 
 When the project includes daemon behavior, extend the report narrative with:
 
-1. whether the docs and help surfaces explicitly scope daemon behavior to
-   managed background mode only
-2. whether the default instance model is documented as single-instance
-3. whether lifecycle commands wait for a terminal outcome or explicit timeout
-4. whether recovery guidance stays inside `daemon start|stop|restart|status`
-5. whether unsupported runtimes are treated as out of scope rather than as a
-   fallback execution mode
+1. whether the docs and help surfaces match the daemon lifecycle and routing
+   contract declared in `cli-plan.yml`
+2. whether the default instance model is documented correctly
+3. whether lifecycle commands and terminal-state expectations match the plan
+4. whether daemonizable commands, local-only commands, and `--ensure-daemon`
+   semantics are documented or implemented when planned
+5. whether transport, auth, and runtime artifact expectations are documented
+   consistently with the plan
+6. whether any mismatch between plan-declared daemon behavior and the actual
+   project surface should block release
 
 ## Output Format
 
@@ -248,12 +257,13 @@ Return the report directly in the conversation as a markdown table with exactly 
 
 Formatting rules:
 
-- `Status` must be `PASS` or `FAIL`.
+- `Status` must be `PASS`, `WARN`, or `FAIL`.
 - Prefix `Details` with the severity, for example `error:` or `warning:`.
 - Include a short summary after the table:
   - total passed checks
+  - total warned checks
   - total failed checks
-  - whether the project is planning-brief-compliant overall
+  - whether the project is `compliant`, `warning`, or `non_compliant` overall
 
 ## Error Conditions
 

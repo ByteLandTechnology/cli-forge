@@ -9,6 +9,8 @@ conventions from this Skill package: plain-text `--help`, structured `help`,
 stable structured errors, runtime-directory helpers, and Active Context
 boilerplate. This operation consumes the description contract approved by the
 earlier `description` stage; it does not invent a competing skill summary.
+The current scaffold baseline does not implement the planned daemon app-server
+capability.
 
 ## Inputs
 
@@ -114,18 +116,10 @@ The expanded files must also preserve the invocation contract:
   stay secondary to the repo-native release path and must keep the same
   approved description contract.
 
-If the generated skill includes daemon behavior, the expanded files must keep
-the daemon contract synchronized everywhere it appears:
-
-- daemon control is CLI-only and uses `daemon start|stop|restart|status`
-- only managed background daemon mode is standardized
-- attached foreground execution is out of scope
-- the default instance model is one managed daemon
-- recovery stays inside the same four daemon commands
-- `start`, `stop`, and `restart` wait for a terminal outcome or explicit
-  timeout before returning
-- unsupported runtimes are out of scope and should not be described as
-  fallback modes
+If `cli-plan.yml` marks `capabilities.daemon: in_scope`, stop before
+generation and report that scaffold support for the daemon app-server contract
+is not implemented yet. Do not silently emit the old managed-daemon placeholder
+and do not drop daemon from the generated package without telling the user.
 
 If `author` was omitted:
 
@@ -160,9 +154,6 @@ After writing all files, verify:
    - `help run --format yaml` should return structured help.
    - `paths` should document user-scoped runtime directories.
    - `context show` should expose the generated Active Context surface.
-   - If daemon behavior is present, help, README, and `SKILL.md` should agree
-     on the managed-background-only daemon contract and the default
-     single-instance model.
    - `SKILL.md` should document the bare command contract, while `README.md`
      distinguishes canonical invocation from local development and
      release-binary invocation.

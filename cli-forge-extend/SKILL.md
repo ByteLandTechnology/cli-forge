@@ -1,13 +1,13 @@
 ---
 name: cli-forge-extend
-description: "Extend stage for the cli-forge skill family: add stream, repl, or daemon features to an existing skill project."
+description: "Extend stage for the cli-forge skill family: add stream or repl features to an existing skill project."
 ---
 
 # cli-forge Extend
 
 Use this stage when a generated Rust CLI Skill project already exists, but
-requires optional capabilities like JSON streaming (`stream`), interactive
-terminal sessions (`repl`), or managed background service behavior (`daemon`).
+requires optional capabilities like JSON streaming (`stream`) or interactive
+terminal sessions (`repl`).
 
 ## Purpose
 
@@ -30,14 +30,14 @@ back to the `cli-plan.yml` contract.
 | --- | --------------------------------------------------------- | ----------- |
 | 1   | Target project directory exists                           | Filesystem  |
 | 2   | Scaffold baseline is complete                             | Filesystem  |
-| 3   | Requested feature is `stream`, `repl`, or `daemon`        | User/Router |
+| 3   | Requested feature is `stream` or `repl`                   | User/Router |
 | 4   | Feature is explicitly marked `in_scope` in `cli-plan.yml` | Plan        |
 | 5   | Feature is not already added (idempotency check)          | Filesystem  |
 
 ## Required Inputs
 
 - `project_path`
-- `feature` (`stream`, `repl`, or `daemon`)
+- `feature` (`stream` or `repl`)
 - Details for updating the `cli-plan.yml`
 
 ## Workflow
@@ -47,9 +47,7 @@ back to the `cli-plan.yml` contract.
    code before the plan allows it.
 2. Follow [`./instructions/add-feature.md`](./instructions/add-feature.md).
 3. Expand exactly the requested templates from `./templates/`
-   (e.g., `stream.rs.tpl` or `repl.rs.tpl`). For the `daemon` feature, follow
-   the specific integration contract documented in the reference implementation
-   at `./templates/daemon/`.
+   (e.g., `stream.rs.tpl` or `repl.rs.tpl`).
 4. Run integration updates safely:
    - add the relevant flags to the args struct
    - wire the subsystem branch into the `match` loop
@@ -90,8 +88,15 @@ back to the `cli-plan.yml` contract.
   stage. Do not reach outside this skill package for extension templates.
 - If the feature being added contradicts the `cli-plan.yml`, update the plan
   first. Scaffolded code and the CLI plan must remain perfectly aligned.
-- Refuse to add unsupported features through this stage. This stage only handles
-  `stream`, `repl`, and `daemon`.
+- If the target project already declares daemon behavior in `cli-plan.yml`,
+  preserve that documented daemon surface. `stream` and `repl` overlays must
+  not silently rewrite daemon commands, routing flags, transport choices, or
+  recovery semantics.
+- Refuse to add unsupported features through this stage. This stage only
+  handles `stream` and `repl`.
+- The planned daemon app-server capability is documented in
+  [`../cli-forge-plan/instructions/daemon-app-server.md`](../cli-forge-plan/instructions/daemon-app-server.md)
+  but is not yet implemented by this stage.
 
 ## Next Step
 

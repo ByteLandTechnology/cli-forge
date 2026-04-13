@@ -58,12 +58,10 @@ Before making any edits:
      command surfaces already scaffolded into the project.
    - Keep `src/help.rs` synchronized by updating the global option list and
      `FeatureAvailability` values for the newly enabled feature.
-   - Do not replace or bypass the shared daemon contract when the project also
-     exposes daemon behavior. Managed background daemon control remains
-     `daemon start|stop|restart|status`, with attached foreground execution
-     out of scope, single-instance control as the default unless the project
-     explicitly documents otherwise, and unsupported runtimes kept out of the
-     supported surface.
+   - Do not replace or bypass a project's declared daemon contract when the
+     project also exposes daemon behavior. Preserve the daemon command surface,
+     routing flags, transport choices, recovery semantics, and documented
+     local-only command boundaries already recorded in `cli-plan.yml`.
    - Keep capability-specific support files package-local to the generated
      project. Repository-owned CI workflows, release scripts, and release
      automation stay outside generated skill outputs.

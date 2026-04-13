@@ -80,6 +80,10 @@ provided by the Plan stage.
   stage. Do not reach outside this skill package for scaffold templates.
 - Do not improvise project structure or dependencies. Everything must be tied
   back to the `cli-plan.yml`.
+- The current scaffold baseline does not implement the planned daemon
+  app-server capability. If `cli-plan.yml` marks `daemon` `in_scope`, stop and
+  report that scaffold support for daemon must be implemented before
+  generation can proceed.
 - If any Cargo verification step fails, block the workflow and fix the
   scaffolded files before handing the work forward.
 

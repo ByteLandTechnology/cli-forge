@@ -2,14 +2,12 @@
 //! baseline. Package-local packaging-ready fixtures may reference these
 //! locations when a supported capability requires them.
 
-use crate::DaemonLifecycleState;
 use anyhow::{Context, Result, anyhow};
 use directories::ProjectDirs;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
-use std::time::{SystemTime, UNIX_EPOCH};
 
 #[derive(Debug, Clone, Default)]
 pub struct RuntimeOverrides {
@@ -79,10 +77,6 @@ impl RuntimeLocations {
         self.state_dir.join("repl-history.txt")
     }
 
-    pub fn daemon_state_file(&self) -> PathBuf {
-        self.state_dir.join("daemon-state.toml")
-    }
-
     pub fn ensure_exists(&self) -> Result<()> {
         fs::create_dir_all(&self.config_dir)
             .with_context(|| format!("failed to create {}", self.config_dir.display()))?;
@@ -141,46 +135,6 @@ pub struct ContextPersistenceResult {
     pub context_file: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct PersistedDaemonState {
-    pub state: DaemonLifecycleState,
-    pub readiness: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub reason: Option<String>,
-    pub recommended_next_action: String,
-    pub instance_model: String,
-    pub instance_id: String,
-    pub last_action: String,
-    pub updated_at: String,
-}
-
-impl Default for PersistedDaemonState {
-    fn default() -> Self {
-        Self {
-            state: DaemonLifecycleState::Stopped,
-            readiness: "inactive".to_string(),
-            reason: None,
-            recommended_next_action: "start".to_string(),
-            instance_model: "single_instance".to_string(),
-            instance_id: "default".to_string(),
-            last_action: "status".to_string(),
-            updated_at: timestamp_string(),
-        }
-    }
-}
-
-#[derive(Debug, Clone, Default)]
-pub struct DaemonSimulationFlags {
-    pub fail_start: bool,
-    pub fail_stop: bool,
-    pub fail_restart: bool,
-    pub timeout_start: bool,
-    pub timeout_stop: bool,
-    pub timeout_restart: bool,
-    pub block_control: bool,
-    pub unexpected_exit: bool,
-}
-
 pub fn resolve_runtime_locations(
     overrides: &RuntimeOverrides,
     log_enabled: bool,
@@ -226,20 +180,6 @@ pub fn resolve_runtime_locations(
             "user_scoped_default".to_string()
         },
     })
-}
-
-pub fn daemon_simulation_flags() -> DaemonSimulationFlags {
-    let prefix = "{{SKILL_NAME_SNAKE}}".to_ascii_uppercase();
-    DaemonSimulationFlags {
-        fail_start: env_flag(&format!("{prefix}_DAEMON_FAIL_START")),
-        fail_stop: env_flag(&format!("{prefix}_DAEMON_FAIL_STOP")),
-        fail_restart: env_flag(&format!("{prefix}_DAEMON_FAIL_RESTART")),
-        timeout_start: env_flag(&format!("{prefix}_DAEMON_TIMEOUT_START")),
-        timeout_stop: env_flag(&format!("{prefix}_DAEMON_TIMEOUT_STOP")),
-        timeout_restart: env_flag(&format!("{prefix}_DAEMON_TIMEOUT_RESTART")),
-        block_control: env_flag(&format!("{prefix}_DAEMON_BLOCK_CONTROL")),
-        unexpected_exit: env_flag(&format!("{prefix}_DAEMON_UNEXPECTED_EXIT")),
-    }
 }
 
 pub fn parse_selector(raw: &str) -> Result<(String, String)> {
@@ -314,31 +254,6 @@ pub fn persist_active_context(
     })
 }
 
-pub fn load_daemon_state(runtime: &RuntimeLocations) -> Result<PersistedDaemonState> {
-    let daemon_state_file = runtime.daemon_state_file();
-    if !daemon_state_file.exists() {
-        return Ok(PersistedDaemonState::default());
-    }
-
-    let raw = fs::read_to_string(&daemon_state_file)
-        .with_context(|| format!("failed to read {}", daemon_state_file.display()))?;
-    let state = toml::from_str(&raw)
-        .with_context(|| format!("failed to parse {}", daemon_state_file.display()))?;
-    Ok(state)
-}
-
-pub fn persist_daemon_state(
-    runtime: &RuntimeLocations,
-    state: &PersistedDaemonState,
-) -> Result<()> {
-    runtime.ensure_exists()?;
-    let serialized = toml::to_string_pretty(state).context("failed to serialize daemon state")?;
-    let daemon_state_file = runtime.daemon_state_file();
-    fs::write(&daemon_state_file, serialized)
-        .with_context(|| format!("failed to write {}", daemon_state_file.display()))?;
-    Ok(())
-}
-
 pub fn resolve_effective_context(
     persisted: Option<&ActiveContextState>,
     overrides: &InvocationContextOverrides,
@@ -396,17 +311,4 @@ pub fn current_directory_or(path: Option<PathBuf>) -> Result<Option<PathBuf>> {
 
 pub fn path_to_string(path: &Path) -> String {
     path.display().to_string()
-}
-
-fn env_flag(name: &str) -> bool {
-    std::env::var(name)
-        .map(|value| matches!(value.as_str(), "1" | "true" | "TRUE" | "yes" | "YES"))
-        .unwrap_or(false)
-}
-
-fn timestamp_string() -> String {
-    SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .map(|duration| duration.as_secs().to_string())
-        .unwrap_or_else(|_| "0".to_string())
 }
