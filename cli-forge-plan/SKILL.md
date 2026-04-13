@@ -86,16 +86,16 @@ continue`, `request changes`, or `stop for now`. Do not require an exact
 
 ## Exit Gate
 
-| #   | Check                                                         |
-| --- | ------------------------------------------------------------- |
-| 1   | Command tree is fully defined                                 |
-| 2   | Every command has its flags listed with types and defaults    |
-| 3   | Output format strategy is locked                              |
-| 4   | Help behavior (plain-text and structured) is defined          |
+| #   | Check                                                                          |
+| --- | ------------------------------------------------------------------------------ |
+| 1   | Command tree is fully defined                                                  |
+| 2   | Every command has its flags listed with types and defaults                     |
+| 3   | Output format strategy is locked                                               |
+| 4   | Help behavior (plain-text and structured) is defined                           |
 | 5   | Each optional feature capability is explicitly marked in_scope or out_of_scope |
-| 6   | The daemon capability contract is locked or explicitly out of scope |
-| 7   | Runtime directory and Active Context behavior are defined     |
-| 8   | `cli-plan.yml` is generated and approved                      |
+| 6   | The daemon capability contract is locked or explicitly out of scope            |
+| 7   | Runtime directory and Active Context behavior are defined                      |
+| 8   | `cli-plan.yml` is generated and approved                                       |
 
 ## Guardrails
 

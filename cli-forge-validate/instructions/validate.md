@@ -43,10 +43,10 @@ Before running the ruleset:
 
 ## Severity Levels
 
-| Severity  | Meaning                                                                | Agent Action                                                                                               |
-| --------- | ---------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| `error`   | Required for planning-brief compliance or for a working CLI Skill      | Mark the row `FAIL` and tell the user the project must be fixed.                                           |
-| `warning` | Recommended for maintainability or testability but not always blocking | Mark the row `WARN`, explain the gap, and continue running the rest of the checks.                          |
+| Severity  | Meaning                                                                | Agent Action                                                                       |
+| --------- | ---------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `error`   | Required for planning-brief compliance or for a working CLI Skill      | Mark the row `FAIL` and tell the user the project must be fixed.                   |
+| `warning` | Recommended for maintainability or testability but not always blocking | Mark the row `WARN`, explain the gap, and continue running the rest of the checks. |
 
 ## Validation Rules
 
