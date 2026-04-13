@@ -28,10 +28,10 @@ and Validate uses as the compliance baseline.
 
 ## Entry Gate
 
-| # | Check | Source |
-|---|-------|--------|
-| 1 | `design-contract.yml` exists and is approved | Design stage |
-| 2 | Skill scope is clear from the design contract | Design stage |
+| #   | Check                                         | Source       |
+| --- | --------------------------------------------- | ------------ |
+| 1   | `design-contract.yml` exists and is approved  | Design stage |
+| 2   | Skill scope is clear from the design contract | Design stage |
 
 ## Required Inputs
 
@@ -74,7 +74,10 @@ and Validate uses as the compliance baseline.
 10. Lock runtime directory and Active Context behavior.
 11. Generate `.cli-forge/cli-plan.yml` using the format defined in
     [`../contracts/cli-plan.yml.tpl`](../contracts/cli-plan.yml.tpl).
-12. Present the CLI plan to the user for approval. **You must explicitly tell the user what to reply to trigger the next skill.** (e.g., "Please review the CLI plan. If approved, reply 'Invoke cli-forge-scaffold'").
+12. Present the CLI plan to the user for approval. Use a dialog-based chooser
+    whenever the platform supports it (for example, `request_user_input`) so
+    the user can select `approve and continue`, `request changes`, or `stop for
+now`. Do not require an exact reply string.
 
 ## Outputs
 
@@ -82,20 +85,20 @@ and Validate uses as the compliance baseline.
 
 ## Exit Gate
 
-| # | Check |
-|---|-------|
-| 1 | Command tree is fully defined |
-| 2 | Every command has its flags listed with types and defaults |
-| 3 | Output format strategy is locked |
-| 4 | Help behavior (plain-text and structured) is defined |
-| 5 | Each capability is explicitly marked in_scope or out_of_scope |
-| 6 | Daemon contract is locked (if daemon is in_scope) |
-| 7 | Runtime directory and Active Context behavior are defined |
-| 8 | `cli-plan.yml` is generated and approved |
+| #   | Check                                                         |
+| --- | ------------------------------------------------------------- |
+| 1   | Command tree is fully defined                                 |
+| 2   | Every command has its flags listed with types and defaults    |
+| 3   | Output format strategy is locked                              |
+| 4   | Help behavior (plain-text and structured) is defined          |
+| 5   | Each capability is explicitly marked in_scope or out_of_scope |
+| 6   | Daemon contract is locked (if daemon is in_scope)             |
+| 7   | Runtime directory and Active Context behavior are defined     |
+| 8   | `cli-plan.yml` is generated and approved                      |
 
 ## Guardrails
 
-- **CRITICAL DIRECTIVE TO THE ASSISTANT**: You MUST STOP execution and ask for the user's explicit approval after generating `cli-plan.yml`. Do NOT proceed to the Scaffold stage autonomously. Wait for the user to say "approved".
+- **CRITICAL DIRECTIVE TO THE ASSISTANT**: You MUST STOP execution and ask for the user's explicit approval after generating `cli-plan.yml`. Do NOT proceed to the Scaffold stage autonomously. Use a dialog-based approval prompt whenever supported, and never require the user to type the literal word `approved`.
 - Do not change the skill's purpose or positioning here. That work was done in
   the Design stage and is locked in `design-contract.yml`.
 - Do not begin implementing code. This stage produces a plan document, not

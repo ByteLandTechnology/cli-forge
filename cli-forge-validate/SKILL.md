@@ -15,7 +15,7 @@ Run the authoritative 28-point compliance checks against a scaffolded or
 extended project.
 
 This stage acts as the final gatekeeper before release. It consumes the
-`cli-plan.yml` to define *what* should be checked, and produces a structured
+`cli-plan.yml` to define _what_ should be checked, and produces a structured
 `validation-report.yml` detailing the results.
 
 ## Canonical References
@@ -26,11 +26,11 @@ This stage acts as the final gatekeeper before release. It consumes the
 
 ## Entry Gate
 
-| # | Check | Source |
-|---|-------|--------|
-| 1 | `project_path` is known and exists | Router |
-| 2 | `Cargo.toml` is present in the target directory | Filesystem |
-| 3 | `cli-plan.yml` is present (for behavioral checks) | Filesystem |
+| #   | Check                                             | Source     |
+| --- | ------------------------------------------------- | ---------- |
+| 1   | `project_path` is known and exists                | Router     |
+| 2   | `Cargo.toml` is present in the target directory   | Filesystem |
+| 3   | `cli-plan.yml` is present (for behavioral checks) | Filesystem |
 
 ## Required Inputs
 
@@ -61,6 +61,10 @@ This stage acts as the final gatekeeper before release. It consumes the
    - `non_compliant` (>= 1 fail)
 7. Generate `.cli-forge/validation-report.yml` using the template at
    [`../contracts/validation-report.yml.tpl`](../contracts/validation-report.yml.tpl).
+8. Present the validation outcome and any next-stage options using a
+   dialog-based chooser whenever the platform supports it. Do not require the
+   user to type an exact phrase to continue to Publish, Distribute, or a fix-up
+   stage.
 
 ## Outputs
 
@@ -68,11 +72,11 @@ This stage acts as the final gatekeeper before release. It consumes the
 
 ## Exit Gate
 
-| # | Check |
-|---|-------|
-| 1 | All 28 checks executed |
-| 2 | Final result aggregated (compliant/warning/non_compliant) |
-| 3 | `validation-report.yml` written |
+| #   | Check                                                     |
+| --- | --------------------------------------------------------- |
+| 1   | All 28 checks executed                                    |
+| 2   | Final result aggregated (compliant/warning/non_compliant) |
+| 3   | `validation-report.yml` written                           |
 
 ## Guardrails
 
@@ -81,7 +85,9 @@ This stage acts as the final gatekeeper before release. It consumes the
 - `FAIL` results MUST block any publication or npm distribution attempt. The
   workflow must return to Scaffold or Extend to correct the issue.
 - **Do not publish automatically.** Ensure the user has the chance to review the
-  validation report before handing off to the Publish stage.
+  validation report before handing off to the Publish stage. Use a dialog-based
+  handoff whenever supported, and if dialog tooling is unavailable, accept any
+  clear natural-language choice instead of requiring an exact reply.
 
 ## Next Step
 

@@ -25,10 +25,10 @@ contract (commands, flags, formats) belongs to the Plan stage downstream.
 
 ## Entry Gate
 
-| # | Check | Source |
-|---|-------|--------|
-| 1 | `handoff.yml` exists with `classification: design` | Router |
-| 2 | Skill scope is at least partially known | User request or handoff |
+| #   | Check                                              | Source                  |
+| --- | -------------------------------------------------- | ----------------------- |
+| 1   | `handoff.yml` exists with `classification: design` | Router                  |
+| 2   | Skill scope is at least partially known            | User request or handoff |
 
 ## Required Inputs
 
@@ -56,7 +56,10 @@ contract (commands, flags, formats) belongs to the Plan stage downstream.
    plus optional npm).
 7. Generate `.cli-forge/design-contract.yml` using the format defined in
    [`../contracts/design-contract.yml.tpl`](../contracts/design-contract.yml.tpl).
-8. Request user approval of the design contract before moving forward. **You must explicitly tell the user what to reply to trigger the next skill.** (e.g., "Please review. If approved, reply 'Invoke cli-forge-plan'").
+8. Request user approval of the design contract before moving forward. Use a
+   dialog-based chooser whenever the platform supports it (for example,
+   `request_user_input`) so the user can select `approve and continue`,
+   `request changes`, or `stop for now`. Do not require an exact reply string.
 
 ## Outputs
 
@@ -64,17 +67,17 @@ contract (commands, flags, formats) belongs to the Plan stage downstream.
 
 ## Exit Gate
 
-| # | Check |
-|---|-------|
-| 1 | Single-line purpose summary is approved |
-| 2 | Positioning statement is approved |
-| 3 | Sync surfaces list is complete |
-| 4 | Publish-channel preference is recorded |
-| 5 | `design-contract.yml` is generated and approved |
+| #   | Check                                           |
+| --- | ----------------------------------------------- |
+| 1   | Single-line purpose summary is approved         |
+| 2   | Positioning statement is approved               |
+| 3   | Sync surfaces list is complete                  |
+| 4   | Publish-channel preference is recorded          |
+| 5   | `design-contract.yml` is generated and approved |
 
 ## Guardrails
 
-- **CRITICAL DIRECTIVE TO THE ASSISTANT**: You MUST STOP execution and ask for the user's explicit approval after generating `design-contract.yml`. Do NOT proceed to the Plan or Scaffold stage autonomously.
+- **CRITICAL DIRECTIVE TO THE ASSISTANT**: You MUST STOP execution and ask for the user's explicit approval after generating `design-contract.yml`. Do NOT proceed to the Plan or Scaffold stage autonomously. Use a dialog-based approval prompt whenever supported; otherwise accept any clear natural-language approval or revision request.
 - This stage is the authoritative source for user-facing purpose and
   positioning. Downstream stages consume the approved contract; they do not
   redefine it.

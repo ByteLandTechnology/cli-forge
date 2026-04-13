@@ -31,9 +31,9 @@ Act as the intake layer and traffic controller.
 
 ## Entry Gate
 
-| # | Check | Source |
-|---|-------|--------|
-| 1 | User request exists | User |
+| #   | Check               | Source |
+| --- | ------------------- | ------ |
+| 1   | User request exists | User   |
 
 ## Required Inputs
 
@@ -60,7 +60,11 @@ Act as the intake layer and traffic controller.
    `.cli-forge/handoff.yml` in the target project directory. This explicitly
    records the classification and inputs for downstream consumption.
 5. Provide a clear handoff response specifying which child skill should be
-   invoked next. **You must explicitly tell the user what to reply to trigger the next skill.** (e.g., "Please reply: 'Invoke cli-forge-design'").
+   invoked next. Use a dialog-based chooser for the next-step handoff whenever
+   the platform supports it (for example, `request_user_input`). Do not require
+   the user to type an exact phrase or skill name. If dialog tooling is
+   unavailable, accept any clear natural-language confirmation of the desired
+   next step.
 
 ## Outputs
 
@@ -68,17 +72,17 @@ Act as the intake layer and traffic controller.
 
 ## Exit Gate
 
-| # | Check |
-|---|-------|
-| 1 | Request intent classified successfully |
-| 2 | Required inputs for the downstream stage assembled |
-| 3 | `handoff.yml` generated |
-| 4 | Explicit handoff made to the correct child stage |
+| #   | Check                                              |
+| --- | -------------------------------------------------- |
+| 1   | Request intent classified successfully             |
+| 2   | Required inputs for the downstream stage assembled |
+| 3   | `handoff.yml` generated                            |
+| 4   | Explicit handoff made to the correct child stage   |
 
 ## Guardrails
 
 - **CRITICAL DIRECTIVE TO THE ASSISTANT**: You MUST NOT bypass the staged pipeline. Do not write, generate, or scaffold code yourself during this stage.
-- **CRITICAL DIRECTIVE TO THE ASSISTANT**: You MUST STOP and yield to the user after generating `handoff.yml` and explaining the next steps. Do not invoke the next stage autonomously. You must wait for the user to explicitly call the next skill.
+- **CRITICAL DIRECTIVE TO THE ASSISTANT**: You MUST STOP and yield to the user after generating `handoff.yml` and explaining the next steps. Do not invoke the next stage autonomously. Use a dialog-based selection for the handoff whenever supported, and never require the user to explicitly type the next skill name.
 - The Router must stay thin. Do not execute templates, run compilation steps, or define CLI contracts here.
 - Never force a workflow forward if an earlier stage is incomplete. For
   example, if the user asks to "validate" but the project is missing the
@@ -90,6 +94,7 @@ Act as the intake layer and traffic controller.
 ## Next Step
 
 Route to one of:
+
 - [`../cli-forge-design/SKILL.md`](../cli-forge-design/SKILL.md)
 - [`../cli-forge-plan/SKILL.md`](../cli-forge-plan/SKILL.md)
 - [`../cli-forge-scaffold/SKILL.md`](../cli-forge-scaffold/SKILL.md)

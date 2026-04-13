@@ -31,11 +31,11 @@ the full `daemon` subcommand group: `daemon start`, `daemon stop`,
 
 For each command, list every flag:
 
-| Flag | Type | Required | Default | Enum Values | Description |
-|------|------|----------|---------|-------------|-------------|
-| `--input` | path | yes | — | — | Input file path |
-| `--format` | enum | no | yaml | yaml, json, toml | Output format |
-| `--stream` | bool | no | false | — | Enable streaming |
+| Flag       | Type | Required | Default | Enum Values      | Description      |
+| ---------- | ---- | -------- | ------- | ---------------- | ---------------- |
+| `--input`  | path | yes      | —       | —                | Input file path  |
+| `--format` | enum | no       | yaml    | yaml, json, toml | Output format    |
+| `--stream` | bool | no       | false   | —                | Enable streaming |
 
 Flag types: `string`, `path`, `bool`, `enum`, `int`.
 
@@ -63,11 +63,11 @@ Define two distinct help surfaces:
 
 For each optional capability, explicitly state whether it is in scope:
 
-| Capability | Status | Justification |
-|------------|--------|---------------|
-| `stream` | in_scope / out_of_scope | ... |
-| `repl` | in_scope / out_of_scope | ... |
-| `daemon` | in_scope / out_of_scope | ... |
+| Capability | Status                  | Justification |
+| ---------- | ----------------------- | ------------- |
+| `stream`   | in_scope / out_of_scope | ...           |
+| `repl`     | in_scope / out_of_scope | ...           |
+| `daemon`   | in_scope / out_of_scope | ...           |
 
 Do not leave any capability undefined. Explicitly marking something as
 `out_of_scope` prevents ambiguity during scaffold and extend.
@@ -104,8 +104,10 @@ Write the file to `.cli-forge/cli-plan.yml`.
 
 ## Step 9: User Approval
 
-Present the complete CLI plan to the user. The plan must be approved before
-the Scaffold stage can proceed.
+Present the complete CLI plan to the user using a dialog-based chooser when
+the platform supports it. The plan must be approved before the Scaffold stage
+can proceed, but the user must not be required to type an exact phrase or the
+literal word `approved`.
 
 ## Done Condition
 

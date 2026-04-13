@@ -36,6 +36,18 @@ Every plan must explicitly lock these decisions:
 If a plan cannot answer one of those items, it is not ready to move past the
 planning stage.
 
+## Approval And Handoff UX
+
+- When a stage needs user approval or needs to hand work to the next stage, use
+  a dialog-based chooser when the platform supports it (for example,
+  `request_user_input`).
+- Offer 2 or 3 explicit options with the recommended path first, such as
+  approve and continue, request changes, or stop for now.
+- Never require the user to type an exact phrase, a skill name, or the literal
+  word `approved` just to continue.
+- If dialog tooling is unavailable, ask a concise approval question and accept
+  any clear natural-language approval, revision, or stop response.
+
 ## CLI And Skill Expectations
 
 - The skill remains CLI-first: one executable command is the required
