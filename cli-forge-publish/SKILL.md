@@ -28,12 +28,12 @@ not publish to npm; that is the distinct responsibility of the Distribute stage.
 
 ## Entry Gate
 
-| # | Check | Source |
-|---|-------|--------|
-| 1 | `validation-report.yml` exists and `result == compliant` or `warning` | Validate |
-| 2 | Target repository path is explicitly known | Router / User |
-| 3 | Requested publish mode is explicit | Router / User |
-| 4 | The command hierarchy `caller -> agent -> skill -> package` is clear | User |
+| #   | Check                                                                 | Source        |
+| --- | --------------------------------------------------------------------- | ------------- |
+| 1   | `validation-report.yml` exists and `result == compliant` or `warning` | Validate      |
+| 2   | Target repository path is explicitly known                            | Router / User |
+| 3   | Requested publish mode is explicit                                    | Router / User |
+| 4   | The command hierarchy `caller -> agent -> skill -> package` is clear  | User          |
 
 ## Required Inputs
 
@@ -78,13 +78,13 @@ not publish to npm; that is the distinct responsibility of the Distribute stage.
 
 ## Exit Gate
 
-| # | Check |
-|---|-------|
-| 1 | The requested mode (report, dry_run, rehearsal, live) was executed |
-| 2 | Code base and automation assets are correctly aligned |
-| 3 | Asset pack was adopted if it was missing |
-| 4 | Version tag and evidence match |
-| 5 | `release-receipt.yml` generated |
+| #   | Check                                                              |
+| --- | ------------------------------------------------------------------ |
+| 1   | The requested mode (report, dry_run, rehearsal, live) was executed |
+| 2   | Code base and automation assets are correctly aligned              |
+| 3   | Asset pack was adopted if it was missing                           |
+| 4   | Version tag and evidence match                                     |
+| 5   | `release-receipt.yml` generated                                    |
 
 ## Guardrails
 

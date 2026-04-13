@@ -26,13 +26,13 @@ back to the `cli-plan.yml` contract.
 
 ## Entry Gate
 
-| # | Check | Source |
-|---|-------|--------|
-| 1 | Target project directory exists | Filesystem |
-| 2 | Scaffold baseline is complete | Filesystem |
-| 3 | Requested feature is `stream`, `repl`, or `daemon` | User/Router |
-| 4 | Feature is explicitly marked `in_scope` in `cli-plan.yml` | Plan |
-| 5 | Feature is not already added (idempotency check) | Filesystem |
+| #   | Check                                                     | Source      |
+| --- | --------------------------------------------------------- | ----------- |
+| 1   | Target project directory exists                           | Filesystem  |
+| 2   | Scaffold baseline is complete                             | Filesystem  |
+| 3   | Requested feature is `stream`, `repl`, or `daemon`        | User/Router |
+| 4   | Feature is explicitly marked `in_scope` in `cli-plan.yml` | Plan        |
+| 5   | Feature is not already added (idempotency check)          | Filesystem  |
 
 ## Required Inputs
 
@@ -73,16 +73,16 @@ back to the `cli-plan.yml` contract.
 
 ## Exit Gate
 
-| # | Check |
-|---|-------|
-| 1 | Feature files generated from template |
-| 2 | Source, README, help, and tests correctly wired |
-| 3 | `cli-plan.yml` updated and synced |
-| 4 | `cargo build` passes |
-| 5 | `cargo clippy -- -D warnings` passes |
-| 6 | `cargo fmt --check` passes |
-| 7 | `cargo test` passes |
-| 8 | `extend-receipt.yml` generated |
+| #   | Check                                           |
+| --- | ----------------------------------------------- |
+| 1   | Feature files generated from template           |
+| 2   | Source, README, help, and tests correctly wired |
+| 3   | `cli-plan.yml` updated and synced               |
+| 4   | `cargo build` passes                            |
+| 5   | `cargo clippy -- -D warnings` passes            |
+| 6   | `cargo fmt --check` passes                      |
+| 7   | `cargo test` passes                             |
+| 8   | `extend-receipt.yml` generated                  |
 
 ## Guardrails
 

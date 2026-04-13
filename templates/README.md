@@ -25,27 +25,27 @@ Used by the Scaffold stage to create a new Rust CLI Skill project. These
 templates contain `{{token}}` placeholders that are expanded using values from
 the approved `cli-plan.yml`.
 
-| Template | Generated File | Purpose |
-|----------|---------------|---------|
-| `Cargo.toml.tpl` | `Cargo.toml` | Package metadata and dependencies |
-| `README.md.tpl` | `README.md` | User-facing documentation |
-| `SKILL.md.tpl` | `SKILL.md` | Skill contract |
-| `cli_test.rs.tpl` | `tests/cli_test.rs` | CLI integration tests |
-| `context.rs.tpl` | `src/context.rs` | Active Context handling |
-| `help.rs.tpl` | `src/help.rs` | Help system module |
-| `lib.rs.tpl` | `src/lib.rs` | Library entry point |
-| `main.rs.tpl` | `src/main.rs` | Program entry point |
+| Template          | Generated File      | Purpose                           |
+| ----------------- | ------------------- | --------------------------------- |
+| `Cargo.toml.tpl`  | `Cargo.toml`        | Package metadata and dependencies |
+| `README.md.tpl`   | `README.md`         | User-facing documentation         |
+| `SKILL.md.tpl`    | `SKILL.md`          | Skill contract                    |
+| `cli_test.rs.tpl` | `tests/cli_test.rs` | CLI integration tests             |
+| `context.rs.tpl`  | `src/context.rs`    | Active Context handling           |
+| `help.rs.tpl`     | `src/help.rs`       | Help system module                |
+| `lib.rs.tpl`      | `src/lib.rs`        | Library entry point               |
+| `main.rs.tpl`     | `src/main.rs`       | Program entry point               |
 
 ### Extension Templates (`extensions/`)
 
 Used by the Extend stage to add optional capabilities to an existing
 scaffolded project.
 
-| Template | Generated File | Feature |
-|----------|---------------|---------|
-| `stream.rs.tpl` | `src/stream.rs` | Streaming output |
-| `repl.rs.tpl` | `src/repl.rs` | Interactive REPL mode |
-| `daemon/` | Full crate | Daemon app server with JSON-RPC |
+| Template        | Generated File  | Feature                         |
+| --------------- | --------------- | ------------------------------- |
+| `stream.rs.tpl` | `src/stream.rs` | Streaming output                |
+| `repl.rs.tpl`   | `src/repl.rs`   | Interactive REPL mode           |
+| `daemon/`       | Full crate      | Daemon app server with JSON-RPC |
 
 ### Publish Asset Pack (`publish/`)
 

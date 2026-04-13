@@ -26,11 +26,11 @@ provided by the Plan stage.
 
 ## Entry Gate
 
-| # | Check | Source |
-|---|-------|--------|
-| 1 | `cli-plan.yml` exists and is approved | Plan stage |
-| 2 | `skill_name` is known | Plan stage |
-| 3 | Target project directory DOES NOT exist | Filesystem |
+| #   | Check                                   | Source     |
+| --- | --------------------------------------- | ---------- |
+| 1   | `cli-plan.yml` exists and is approved   | Plan stage |
+| 2   | `skill_name` is known                   | Plan stage |
+| 3   | Target project directory DOES NOT exist | Filesystem |
 
 ## Required Inputs
 
@@ -65,14 +65,14 @@ provided by the Plan stage.
 
 ## Exit Gate
 
-| # | Check |
-|---|-------|
-| 1 | All templates expanded with no unresolved tokens |
-| 2 | `cargo build` passes |
-| 3 | `cargo clippy -- -D warnings` passes |
-| 4 | `cargo fmt --check` passes |
-| 5 | `cargo test` passes |
-| 6 | `scaffold-receipt.yml` generated |
+| #   | Check                                            |
+| --- | ------------------------------------------------ |
+| 1   | All templates expanded with no unresolved tokens |
+| 2   | `cargo build` passes                             |
+| 3   | `cargo clippy -- -D warnings` passes             |
+| 4   | `cargo fmt --check` passes                       |
+| 5   | `cargo test` passes                              |
+| 6   | `scaffold-receipt.yml` generated                 |
 
 ## Guardrails
 

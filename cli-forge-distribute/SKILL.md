@@ -32,13 +32,13 @@ from the authoritative released tag.
 
 ## Entry Gate
 
-| # | Check | Source |
-|---|-------|--------|
-| 1 | `validation-report.yml` exists and `result == compliant` | Validate stage |
-| 2 | Repo-native release path is explicit | Publish stage (or user) |
-| 3 | Authoritative version (tag + release evidence) is determined | Target repository |
-| 4 | Coordinating package and platform package names are decided | User / Plan |
-| 5 | Package ownership / permissions are confirmed | User |
+| #   | Check                                                        | Source                  |
+| --- | ------------------------------------------------------------ | ----------------------- |
+| 1   | `validation-report.yml` exists and `result == compliant`     | Validate stage          |
+| 2   | Repo-native release path is explicit                         | Publish stage (or user) |
+| 3   | Authoritative version (tag + release evidence) is determined | Target repository       |
+| 4   | Coordinating package and platform package names are decided  | User / Plan             |
+| 5   | Package ownership / permissions are confirmed                | User                    |
 
 ## Required Inputs
 
@@ -85,13 +85,13 @@ from the authoritative released tag.
 
 ## Exit Gate
 
-| # | Check |
-|---|-------|
-| 1 | Requested mode activity (report, dry-run, live) is completed |
-| 2 | Version chain is tightly aligned (tag = evidence = coordinating = platform) |
-| 3 | If live: coordinating and all platform packages are published |
-| 4 | User-facing npm install story stays distinct from repo-native clone |
-| 5 | Explicit wording remains that repo-native is the default model |
+| #   | Check                                                                       |
+| --- | --------------------------------------------------------------------------- |
+| 1   | Requested mode activity (report, dry-run, live) is completed                |
+| 2   | Version chain is tightly aligned (tag = evidence = coordinating = platform) |
+| 3   | If live: coordinating and all platform packages are published               |
+| 4   | User-facing npm install story stays distinct from repo-native clone         |
+| 5   | Explicit wording remains that repo-native is the default model              |
 
 ## Guardrails
 

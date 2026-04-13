@@ -48,33 +48,33 @@ This document describes the daemon protocol contract for CLI Forge daemon instan
 
 ### Standard Error Codes
 
-| Code | Constant | Description |
-|------|----------|-------------|
+| Code   | Constant          | Description                    |
+| ------ | ----------------- | ------------------------------ |
 | -32001 | SERVER_OVERLOADED | Server overloaded, retry later |
-| -32600 | INVALID_REQUEST | Invalid JSON-RPC request |
-| -32601 | METHOD_NOT_FOUND | Method does not exist |
-| -32603 | INTERNAL_ERROR | Internal server error |
+| -32600 | INVALID_REQUEST   | Invalid JSON-RPC request       |
+| -32601 | METHOD_NOT_FOUND  | Method does not exist          |
+| -32603 | INTERNAL_ERROR    | Internal server error          |
 
 ## Daemon Methods
 
 ### Core Methods
 
-| Method | Description | Params |
-|--------|-------------|--------|
+| Method       | Description               | Params                |
+| ------------ | ------------------------- | --------------------- |
 | `initialize` | Initialize daemon session | `{ version: string }` |
-| `ping` | Health check | `{}` |
-| `start` | Start daemon (if stopped) | `{}` |
-| `stop` | Stop daemon gracefully | `{}` |
-| `restart` | Restart daemon | `{}` |
-| `status` | Get daemon status | `{}` |
+| `ping`       | Health check              | `{}`                  |
+| `start`      | Start daemon (if stopped) | `{}`                  |
+| `stop`       | Stop daemon gracefully    | `{}`                  |
+| `restart`    | Restart daemon            | `{}`                  |
+| `status`     | Get daemon status         | `{}`                  |
 
 ### Notifications
 
-| Notification | Description | Payload |
-|-------------|-------------|---------|
-| `stateChanged` | Lifecycle state changed | `{ state: string, health: string }` |
-| `healthChanged` | Health status changed | `{ health: string, reason?: string }` |
-| `error` | Error occurred | `{ code: number, message: string }` |
+| Notification    | Description             | Payload                               |
+| --------------- | ----------------------- | ------------------------------------- |
+| `stateChanged`  | Lifecycle state changed | `{ state: string, health: string }`   |
+| `healthChanged` | Health status changed   | `{ health: string, reason?: string }` |
+| `error`         | Error occurred          | `{ code: number, message: string }`   |
 
 ## Lifecycle States
 
@@ -86,24 +86,24 @@ Stopped → Starting → Running → Stopping → Stopped
 
 ### State Transitions
 
-| From | To | Trigger |
-|------|-----|---------|
-| Stopped | Starting | `start()` called |
-| Starting | Running | Initialization complete |
-| Starting | Failed | Initialization error |
-| Running | Stopping | `stop()` called |
-| Running | Failed | Unrecoverable error |
-| Stopping | Stopped | Shutdown complete |
-| Failed | Starting | `restart()` called |
+| From     | To       | Trigger                 |
+| -------- | -------- | ----------------------- |
+| Stopped  | Starting | `start()` called        |
+| Starting | Running  | Initialization complete |
+| Starting | Failed   | Initialization error    |
+| Running  | Stopping | `stop()` called         |
+| Running  | Failed   | Unrecoverable error     |
+| Stopping | Stopped  | Shutdown complete       |
+| Failed   | Starting | `restart()` called      |
 
 ## Health Status
 
-| Status | Description |
-|--------|-------------|
-| `Initializing` | Daemon starting up |
-| `Ready` | Daemon running and healthy |
-| `Degraded` | Daemon running but with warnings |
-| `Unhealthy` | Daemon not fully functional |
+| Status         | Description                      |
+| -------------- | -------------------------------- |
+| `Initializing` | Daemon starting up               |
+| `Ready`        | Daemon running and healthy       |
+| `Degraded`     | Daemon running but with warnings |
+| `Unhealthy`    | Daemon not fully functional      |
 
 ## Authentication
 
