@@ -22,9 +22,9 @@ not publish to npm; that is the distinct responsibility of the Distribute stage.
 
 - [`./instructions/release/skill-release-runbook.md`](./instructions/release/skill-release-runbook.md)
 - [`./planning-brief.md`](./planning-brief.md)
-- [`../planning-brief.md`](../planning-brief.md)
-- [`../contracts/release-receipt.yml.tpl`](../contracts/release-receipt.yml.tpl)
-- [`../templates/publish/`](../templates/publish/)
+- [`./shared-planning-brief.md`](./shared-planning-brief.md)
+- [`./contracts/release-receipt.yml.tpl`](./contracts/release-receipt.yml.tpl)
+- [`./templates/`](./templates/)
 
 ## Entry Gate
 
@@ -48,7 +48,7 @@ not publish to npm; that is the distinct responsibility of the Distribute stage.
 2. Accept the inbound `validation-report.yml`. Do not re-run validation here.
    If validation failed, refuse to proceed.
 3. If the skill project lacks the release automation assets, adopt them by
-   copying the contents of `../templates/publish/` to the project root. Note:
+   copying the contents of `./templates/` to the project root. Note:
    this template pack DOES NOT contain project source templates (like
    `main.rs.tpl`); those are consumed during Scaffold.
 4. Verify the required target repository configuration (`GITHUB_TOKEN`, write
@@ -68,7 +68,7 @@ not publish to npm; that is the distinct responsibility of the Distribute stage.
 6. Verify the outcome of the requested mode (e.g., verifying the tag and assets
    were created for `live_release`).
 7. Generate `.cli-forge/release-receipt.yml` using the template at
-   [`../contracts/release-receipt.yml.tpl`](../contracts/release-receipt.yml.tpl).
+   [`./contracts/release-receipt.yml.tpl`](./contracts/release-receipt.yml.tpl).
 
 ## Outputs
 
@@ -92,8 +92,8 @@ not publish to npm; that is the distinct responsibility of the Distribute stage.
   explicitly enforce that boundary by refusing to implement npm publication
   directives.
 - The `publish/` asset pack copied to the target root must not contain `.tpl`
-  source files or `package-lock.json`. Scaffold assets live in
-  `templates/scaffold`.
+  source files or `package-lock.json`. Scaffold assets live in the Scaffold
+  stage's bundled `./templates/` directory.
 - Do not bypass stale validation. If the codebase changed since the last
   validation report, route back to Validate.
 

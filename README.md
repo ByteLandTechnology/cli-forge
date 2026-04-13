@@ -47,20 +47,24 @@ git — neither in this repository nor in any generated target project. Both thi
 repository's `.gitignore` and the scaffold template's `.gitignore.tpl` enforce
 this rule automatically.
 
-## Single Source of Truth
+## Bundled Stage Assets
 
-To ensure consistency across the entire workflow, `cli-forge` relies on single
-sources of truth:
+Each `cli-forge-*` stage directory now carries the resources it needs locally
+so the installed skills remain self-contained:
 
-1. **`planning-brief.md`**: Found in the repository root, this file dictates
-   the rules every generated skill must follow (e.g., must have a single CLI
-   entrypoint, must use stderr for structured errors).
-2. **`templates/`**: All source code templates live exclusively in the root
-   `templates/` directory. No stage maintains local copies of templates.
-   - `templates/scaffold/`: Baseline Rust project setup
-   - `templates/extensions/`: Feature module additions
-   - `templates/publish/`: Un-templated release automation assets
-3. **`contracts/*.tpl`**: The templates for inter-stage communication artifacts.
+1. **Local planning briefs**: every stage that needs the shared planning rules
+   ships its own `planning-brief.md` copy, and publish/distribute also carry
+   their stage-specific briefs.
+2. **Local contracts**: every stage that writes pipeline artifacts ships the
+   specific `contracts/*.tpl` files it needs inside its own `contracts/`
+   directory.
+3. **Local templates**: stages that expand code or release assets ship their
+   own `templates/` directory inside that stage package.
+
+This layout intentionally favors installability over a shared root asset pool:
+the repository structure mirrors the expected installed-skill shape so no stage
+depends on root-level `contracts/`, `templates/`, or `planning-brief.md` files
+at runtime.
 
 ## Usage
 

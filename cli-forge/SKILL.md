@@ -26,8 +26,8 @@ Act as the intake layer and traffic controller.
 
 ## Canonical References
 
-- [`../contracts/handoff.yml.tpl`](../contracts/handoff.yml.tpl)
-- [`../planning-brief.md`](../planning-brief.md)
+- [`./contracts/handoff.yml.tpl`](./contracts/handoff.yml.tpl)
+- [`./planning-brief.md`](./planning-brief.md)
 
 ## Entry Gate
 

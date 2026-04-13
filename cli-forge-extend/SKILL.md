@@ -20,9 +20,9 @@ back to the `cli-plan.yml` contract.
 ## Canonical References
 
 - [`./instructions/add-feature.md`](./instructions/add-feature.md)
-- [`../planning-brief.md`](../planning-brief.md)
-- [`../contracts/extend-receipt.yml.tpl`](../contracts/extend-receipt.yml.tpl)
-- [`../templates/extensions/`](../templates/extensions/)
+- [`./planning-brief.md`](./planning-brief.md)
+- [`./contracts/extend-receipt.yml.tpl`](./contracts/extend-receipt.yml.tpl)
+- [`./templates/`](./templates/)
 
 ## Entry Gate
 
@@ -46,10 +46,10 @@ back to the `cli-plan.yml` contract.
    route back to the Plan stage to update the CLI contract first. Do not add
    code before the plan allows it.
 2. Follow [`./instructions/add-feature.md`](./instructions/add-feature.md).
-3. Expand exactly the requested templates from `../templates/extensions/`
+3. Expand exactly the requested templates from `./templates/`
    (e.g., `stream.rs.tpl` or `repl.rs.tpl`). For the `daemon` feature, follow
    the specific integration contract documented in the reference implementation
-   at `../templates/extensions/daemon/`.
+   at `./templates/daemon/`.
 4. Run integration updates safely:
    - add the relevant flags to the args struct
    - wire the subsystem branch into the `match` loop
@@ -63,7 +63,7 @@ back to the `cli-plan.yml` contract.
    - `cargo fmt --check`
 7. Ensure `cli-plan.yml` correctly reflects the added capability as `in_scope`.
 8. Generate `.cli-forge/extend-receipt.yml` using the template at
-   [`../contracts/extend-receipt.yml.tpl`](../contracts/extend-receipt.yml.tpl).
+   [`./contracts/extend-receipt.yml.tpl`](./contracts/extend-receipt.yml.tpl).
 
 ## Outputs
 
@@ -86,8 +86,8 @@ back to the `cli-plan.yml` contract.
 
 ## Guardrails
 
-- Use templates EXCLUSIVELY from `../templates/extensions/`. Do not maintain
-  local copies of templates here.
+- Use templates EXCLUSIVELY from the bundled `./templates/` directory for this
+  stage. Do not reach outside this skill package for extension templates.
 - If the feature being added contradicts the `cli-plan.yml`, update the plan
   first. Scaffolded code and the CLI plan must remain perfectly aligned.
 - Refuse to add unsupported features through this stage. This stage only handles

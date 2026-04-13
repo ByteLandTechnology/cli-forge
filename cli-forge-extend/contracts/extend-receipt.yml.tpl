@@ -9,7 +9,7 @@ cli_plan_ref: "./cli-plan.yml"
 timestamp: "{{iso8601_timestamp}}"
 
 feature: "{{stream|repl|daemon}}"
-template_source: "templates/extensions/"
+template_source: "templates/"
 
 files_added:
   - "{{file_path}}"

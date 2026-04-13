@@ -20,9 +20,9 @@ provided by the Plan stage.
 ## Canonical References
 
 - [`./instructions/new.md`](./instructions/new.md)
-- [`../planning-brief.md`](../planning-brief.md)
-- [`../contracts/scaffold-receipt.yml.tpl`](../contracts/scaffold-receipt.yml.tpl)
-- [`../templates/scaffold/`](../templates/scaffold/)
+- [`./planning-brief.md`](./planning-brief.md)
+- [`./contracts/scaffold-receipt.yml.tpl`](./contracts/scaffold-receipt.yml.tpl)
+- [`./templates/`](./templates/)
 
 ## Entry Gate
 
@@ -44,7 +44,7 @@ provided by the Plan stage.
    [`./instructions/new.md`](./instructions/new.md): require the skill
    name, verify `cli-plan.yml`, and refuse to overwrite an existing directory.
 2. Create the directory structure.
-3. Expand the templates from `../templates/scaffold/` EXACTLY as defined by
+3. Expand the templates from `./templates/` EXACTLY as defined by
    `cli-plan.yml` and the instruction file.
 4. Verify that no `{{token}}` placeholders remain unresolved.
 5. Run the required verification commands from the generated project root:
@@ -56,7 +56,7 @@ provided by the Plan stage.
    baseline generated files plus feature-local support files. Repository-owned
    CI workflows and release scripts stay outside the generated project until Publish.
 7. Generate `.cli-forge/scaffold-receipt.yml` using the template at
-   [`../contracts/scaffold-receipt.yml.tpl`](../contracts/scaffold-receipt.yml.tpl).
+   [`./contracts/scaffold-receipt.yml.tpl`](./contracts/scaffold-receipt.yml.tpl).
 
 ## Outputs
 
@@ -76,8 +76,8 @@ provided by the Plan stage.
 
 ## Guardrails
 
-- Use templates EXCLUSIVELY from `../templates/scaffold/`. Do not maintain
-  local copies of templates here.
+- Use templates EXCLUSIVELY from the bundled `./templates/` directory for this
+  stage. Do not reach outside this skill package for scaffold templates.
 - Do not improvise project structure or dependencies. Everything must be tied
   back to the `cli-plan.yml`.
 - If any Cargo verification step fails, block the workflow and fix the

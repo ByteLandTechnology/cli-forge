@@ -46,9 +46,9 @@ This scaffold follows the shared cli-forge runtime contract:
 The generated package includes the baseline skill files plus any package-local
 support files required by enabled capabilities. Repository-owned CI workflows,
 release scripts, and release automation are not scaffolded into the generated
-project by default. If a target repository later adopts the
-`cli-forge-publish/templates/` asset pack, those files live at the
-target repository root rather than inside the shipped CLI skill package.
+project by default. If a target repository later adopts the `cli-forge-publish`
+stage's bundled release asset pack, those files live at the target repository
+root rather than inside the shipped CLI skill package.
 
 Package-local packaging-ready metadata or support fixtures should appear only
 when a supported capability or packaging path explicitly requires them.

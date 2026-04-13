@@ -27,8 +27,8 @@ from the authoritative released tag.
 
 - [`./instructions/release/npm-publish-runbook.md`](./instructions/release/npm-publish-runbook.md)
 - [`./planning-brief.md`](./planning-brief.md)
-- [`../planning-brief.md`](../planning-brief.md)
-- [`../contracts/validation-report.yml.tpl`](../contracts/validation-report.yml.tpl)
+- [`./shared-planning-brief.md`](./shared-planning-brief.md)
+- [`./contracts/validation-report.yml.tpl`](./contracts/validation-report.yml.tpl)
 
 ## Entry Gate
 

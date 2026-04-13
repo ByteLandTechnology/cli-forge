@@ -21,8 +21,8 @@ This stage acts as the final gatekeeper before release. It consumes the
 ## Canonical References
 
 - [`./instructions/validate.md`](./instructions/validate.md)
-- [`../planning-brief.md`](../planning-brief.md)
-- [`../contracts/validation-report.yml.tpl`](../contracts/validation-report.yml.tpl)
+- [`./planning-brief.md`](./planning-brief.md)
+- [`./contracts/validation-report.yml.tpl`](./contracts/validation-report.yml.tpl)
 
 ## Entry Gate
 
@@ -39,7 +39,7 @@ This stage acts as the final gatekeeper before release. It consumes the
 
 ## Workflow
 
-1. Read [`../planning-brief.md`](../planning-brief.md) to understand the
+1. Read [`./planning-brief.md`](./planning-brief.md) to understand the
    baseline planning limits.
 2. Execute the rule set defined in
    [`./instructions/validate.md`](./instructions/validate.md). The baseline
@@ -60,7 +60,7 @@ This stage acts as the final gatekeeper before release. It consumes the
    - `warning` (0 fails, >= 1 warn)
    - `non_compliant` (>= 1 fail)
 7. Generate `.cli-forge/validation-report.yml` using the template at
-   [`../contracts/validation-report.yml.tpl`](../contracts/validation-report.yml.tpl).
+   [`./contracts/validation-report.yml.tpl`](./contracts/validation-report.yml.tpl).
 8. Present the validation outcome and any next-stage options using a
    dialog-based chooser. Do not require the user to type an exact phrase to
    continue to Publish, Distribute, or a fix-up stage, and do not present

@@ -20,8 +20,8 @@ contract (commands, flags, formats) belongs to the Plan stage downstream.
 ## Canonical References
 
 - [`./instructions/design-contract.md`](./instructions/design-contract.md)
-- [`../planning-brief.md`](../planning-brief.md)
-- [`../contracts/design-contract.yml.tpl`](../contracts/design-contract.yml.tpl)
+- [`./planning-brief.md`](./planning-brief.md)
+- [`./contracts/design-contract.yml.tpl`](./contracts/design-contract.yml.tpl)
 
 ## Entry Gate
 
@@ -41,7 +41,7 @@ contract (commands, flags, formats) belongs to the Plan stage downstream.
 
 1. Confirm whether the work creates a new skill or changes the user-facing
    contract of an existing one.
-2. Read [`../planning-brief.md`](../planning-brief.md) to load the shared
+2. Read [`./planning-brief.md`](./planning-brief.md) to load the shared
    constraints.
 3. Define or refresh the approved purpose summary (one line).
 4. Define or refresh the positioning statement (one paragraph).
@@ -55,7 +55,7 @@ contract (commands, flags, formats) belongs to the Plan stage downstream.
 6. Record the publish-channel preference (repo-native only, or repo-native
    plus optional npm).
 7. Generate `.cli-forge/design-contract.yml` using the format defined in
-   [`../contracts/design-contract.yml.tpl`](../contracts/design-contract.yml.tpl).
+   [`./contracts/design-contract.yml.tpl`](./contracts/design-contract.yml.tpl).
 8. Request user approval of the design contract before moving forward. Use a
    dialog-based chooser (for example, `request_user_input`) so the user can
    select `approve and continue`, `request changes`, or `stop for now`. Do not

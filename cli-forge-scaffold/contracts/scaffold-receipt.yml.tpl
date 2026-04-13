@@ -8,7 +8,7 @@ skill_name: "{{skill_name}}"
 cli_plan_ref: "./cli-plan.yml"
 timestamp: "{{iso8601_timestamp}}"
 
-template_source: "templates/scaffold/"
+template_source: "templates/"
 files_generated:
   - "Cargo.toml"
   - "src/main.rs"

@@ -22,9 +22,9 @@ and Validate uses as the compliance baseline.
 ## Canonical References
 
 - [`./instructions/plan-cli.md`](./instructions/plan-cli.md)
-- [`../planning-brief.md`](../planning-brief.md)
-- [`../contracts/cli-plan.yml.tpl`](../contracts/cli-plan.yml.tpl)
-- [`../contracts/design-contract.yml.tpl`](../contracts/design-contract.yml.tpl)
+- [`./planning-brief.md`](./planning-brief.md)
+- [`./contracts/cli-plan.yml.tpl`](./contracts/cli-plan.yml.tpl)
+- [`./contracts/design-contract.yml.tpl`](./contracts/design-contract.yml.tpl)
 
 ## Entry Gate
 
@@ -42,7 +42,7 @@ and Validate uses as the compliance baseline.
 ## Workflow
 
 1. Load the approved `design-contract.yml` from `.cli-forge/`.
-2. Read [`../planning-brief.md`](../planning-brief.md) to load the shared
+2. Read [`./planning-brief.md`](./planning-brief.md) to load the shared
    constraints.
 3. Follow the detailed steps in
    [`./instructions/plan-cli.md`](./instructions/plan-cli.md).
@@ -73,7 +73,7 @@ and Validate uses as the compliance baseline.
    - WebSocket framing, TLS support, auth modes
 10. Lock runtime directory and Active Context behavior.
 11. Generate `.cli-forge/cli-plan.yml` using the format defined in
-    [`../contracts/cli-plan.yml.tpl`](../contracts/cli-plan.yml.tpl).
+    [`./contracts/cli-plan.yml.tpl`](./contracts/cli-plan.yml.tpl).
 12. Present the CLI plan to the user for approval. Use a dialog-based chooser
     (for example, `request_user_input`) so the user can select `approve and
 continue`, `request changes`, or `stop for now`. Do not require an exact

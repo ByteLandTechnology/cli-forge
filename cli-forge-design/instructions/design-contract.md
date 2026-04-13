@@ -51,7 +51,7 @@ When refreshing the contract of an existing skill:
 
 ## Contract Format
 
-See [`../contracts/design-contract.yml.tpl`](../contracts/design-contract.yml.tpl)
+See [`./contracts/design-contract.yml.tpl`](./contracts/design-contract.yml.tpl)
 for the canonical format.
 
 ## Done Condition

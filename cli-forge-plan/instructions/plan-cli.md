@@ -8,7 +8,7 @@ CLI plan during the Plan stage.
 1. Confirm that `.cli-forge/design-contract.yml` exists and is approved.
 2. Load the design contract to inherit the skill name, purpose, and
    positioning.
-3. Load `planning-brief.md` from the repository root to ensure all required
+3. Load `planning-brief.md` from this Skill package root to ensure all required
    planning decisions are addressed.
 
 ## Step 1: Define the Command Tree
