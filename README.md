@@ -38,6 +38,15 @@ graph LR
 | **6. Publish**    | `./cli-forge-publish/`    | Manage the primary repo-native GitHub Release pipeline and automation assets.                                             | `.cli-forge/release-receipt.yml`   |
 | **7. Distribute** | `./cli-forge-distribute/` | (Optional) Execute secondary npm publication using a platform-specific package model.                                     | _N/A (terminal stage)_             |
 
+## Artifact Policy
+
+The `.cli-forge/` directory contains intermediate pipeline contract files
+(`handoff.yml`, `design-contract.yml`, `cli-plan.yml`, receipts, reports). These
+files are **transient build-time artifacts** and **must not** be committed to
+git — neither in this repository nor in any generated target project. Both this
+repository's `.gitignore` and the scaffold template's `.gitignore.tpl` enforce
+this rule automatically.
+
 ## Single Source of Truth
 
 To ensure consistency across the entire workflow, `cli-forge` relies on single

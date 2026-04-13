@@ -50,7 +50,7 @@ Before running the ruleset:
 
 ## Validation Rules
 
-Run every rule below in order and record one output row per rule. Some task prose still says "27 checks", but the current `data-model.md` enumerates 28 concrete checks; use the table below as the source of truth and do not omit any of them.
+Run every rule below in order and record one output row per rule. Some task prose still says "27 checks" or "28 checks", but the current ruleset enumerates 29 concrete checks; use the table below as the source of truth and do not omit any of them.
 
 | Check ID     | Category       | Principle | Severity | What to Verify                                                                                                                 |
 | ------------ | -------------- | --------- | -------- | ------------------------------------------------------------------------------------------------------------------------------ |
@@ -59,6 +59,7 @@ Run every rule below in order and record one output row per rule. Some task pros
 | `STRUCT-003` | structure      | Standards | error    | `src/main.rs` exists.                                                                                                          |
 | `STRUCT-004` | structure      | Standards | warning  | `src/lib.rs` exists.                                                                                                           |
 | `STRUCT-005` | structure      | Standards | error    | `tests/cli_test.rs` exists.                                                                                                    |
+| `STRUCT-006` | structure      | Standards | error    | `.gitignore` exists and contains `.cli-forge/` to prevent intermediate pipeline artifacts from being committed.                 |
 | `NAME-001`   | naming         | Standards | error    | Directory name matches lowercase kebab-case: `[a-z][a-z0-9]*(-[a-z0-9]+)*`.                                                    |
 | `NAME-002`   | naming         | Standards | error    | `[package].name` in `Cargo.toml` matches the directory name exactly.                                                           |
 | `DEPS-001`   | dependencies   | VI        | error    | `clap` dependency exists and enables the `derive` feature.                                                                     |
@@ -110,7 +111,7 @@ Run every rule below in order and record one output row per rule. Some task pros
 
 ### Step 2: Run Structure Checks
 
-Inspect the root layout and create rows for `STRUCT-001` through `STRUCT-005`.
+Inspect the root layout and create rows for `STRUCT-001` through `STRUCT-006`.
 
 - For each required file, mark:
   - `PASS` when the file exists where expected.

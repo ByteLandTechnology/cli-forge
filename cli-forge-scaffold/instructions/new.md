@@ -76,16 +76,17 @@ copied into generated skill directories by default.
 
 For each template file, read it from the `templates/` directory in this Skill package, replace all `{{TOKEN_NAME}}` placeholders with actual values, and write the expanded file to the target path.
 
-| Template                    | Write To                         |
-| --------------------------- | -------------------------------- |
-| `templates/Cargo.toml.tpl`  | `{skill_name}/Cargo.toml`        |
-| `templates/main.rs.tpl`     | `{skill_name}/src/main.rs`       |
-| `templates/lib.rs.tpl`      | `{skill_name}/src/lib.rs`        |
-| `templates/help.rs.tpl`     | `{skill_name}/src/help.rs`       |
-| `templates/context.rs.tpl`  | `{skill_name}/src/context.rs`    |
-| `templates/SKILL.md.tpl`    | `{skill_name}/SKILL.md`          |
-| `templates/cli_test.rs.tpl` | `{skill_name}/tests/cli_test.rs` |
-| `templates/README.md.tpl`   | `{skill_name}/README.md`         |
+| Template                     | Write To                         |
+| ---------------------------- | -------------------------------- |
+| `templates/.gitignore.tpl`   | `{skill_name}/.gitignore`        |
+| `templates/Cargo.toml.tpl`   | `{skill_name}/Cargo.toml`        |
+| `templates/main.rs.tpl`      | `{skill_name}/src/main.rs`       |
+| `templates/lib.rs.tpl`       | `{skill_name}/src/lib.rs`        |
+| `templates/help.rs.tpl`      | `{skill_name}/src/help.rs`       |
+| `templates/context.rs.tpl`   | `{skill_name}/src/context.rs`    |
+| `templates/SKILL.md.tpl`     | `{skill_name}/SKILL.md`          |
+| `templates/cli_test.rs.tpl`  | `{skill_name}/tests/cli_test.rs` |
+| `templates/README.md.tpl`    | `{skill_name}/README.md`         |
 
 **Important**: After expansion, verify no `{{` or `}}` token markers remain in any generated file. If any remain, you missed a token — go back and fix it.
 
@@ -135,7 +136,8 @@ If `author` was omitted:
 
 After writing all files, verify:
 
-1. **All 8 files exist** in the generated directory:
+1. **All 9 files exist** in the generated directory:
+   - `.gitignore`
    - `Cargo.toml`
    - `src/main.rs`
    - `src/lib.rs`
