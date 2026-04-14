@@ -51,9 +51,9 @@ contract (commands, flags, formats) belongs to the Plan stage downstream.
    - `README.md` header and description
    - Help text summary line
    - Release notes summary (when publish is in scope)
-   - npm package description (when distribute is in scope)
-6. Record the publish-channel preference (repo-native only, or repo-native
-   plus optional npm).
+   - npm package description (when publish is in scope)
+6. Record the publish contract for later release work: Publish owns both the
+   repo-native GitHub Release and npm publication.
 7. Generate `.cli-forge/design-contract.yml` using the format defined in
    [`./contracts/design-contract.yml.tpl`](./contracts/design-contract.yml.tpl).
 8. Request user approval of the design contract before moving forward. Use a
@@ -73,7 +73,7 @@ contract (commands, flags, formats) belongs to the Plan stage downstream.
 | 1   | Single-line purpose summary is approved         |
 | 2   | Positioning statement is approved               |
 | 3   | Sync surfaces list is complete                  |
-| 4   | Publish-channel preference is recorded          |
+| 4   | Publish contract is recorded                    |
 | 5   | `design-contract.yml` is generated and approved |
 
 ## Guardrails
@@ -86,9 +86,8 @@ contract (commands, flags, formats) belongs to the Plan stage downstream.
   to the Plan stage.
 - When publish support is later adopted, all release-facing wording must reuse
   the approved summary.
-- If optional npm distribution is later adopted, its package descriptions must
-  reuse the same approved contract without presenting npm as the default
-  release channel.
+- npm package descriptions must reuse the same approved contract whenever the
+  Publish stage adopts npm publication.
 
 ## Next Step
 

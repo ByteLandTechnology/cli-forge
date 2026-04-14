@@ -1,0 +1,22 @@
+{
+  "name": "REPLACE_WITH_PACKAGE_NAME",
+  "version": "0.0.0-development",
+  "description": "REPLACE_WITH_DESCRIPTION",
+  "license": "UNLICENSED",
+  "type": "module",
+  "bin": {
+    "REPLACE_WITH_CLI_NAME": "bin/cli.js"
+  },
+  "files": [
+    "bin/",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "optionalDependencies": {}
+}

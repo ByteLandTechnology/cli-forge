@@ -17,8 +17,8 @@ child skill.
 
 Act as the intake layer and traffic controller.
 
-- Classify requests into one of seven stages: Design, Plan, Scaffold, Extend,
-  Validate, Publish, or Distribute.
+- Classify requests into one of six downstream stages: Design, Plan, Scaffold,
+  Extend, Validate, or Publish.
 - Check the current filesystem state (presence of directories, base files,
   validation reports).
 - Assemble inputs and generate the `handoff.yml` contract.
@@ -50,14 +50,14 @@ Act as the intake layer and traffic controller.
    - Existing project + feature request (`stream` or `repl`) -> Extend
    - Existing project + daemon capability request -> Plan
    - Existing project + audit request (or post-edit verification) -> Validate
-   - Passed validation + repo-native release request -> Publish
-   - Passed validation + npm distribution request -> Distribute
+   - Passed validation + release request (including npm publication) ->
+     Publish
 3. Confirm the required inputs for the chosen path:
    - Scaffold: `skill_name`
    - Extend: `project_path` and `feature` (`stream` or `repl`)
    - Plan: daemon capability requests, daemon contract changes, or daemon scope updates
    - Validate: `project_path`
-   - Publish/Distribute: `publish_mode`, `publish_channel`
+   - Publish: `publish_mode`
 4. Use the template at `contracts/handoff.yml.tpl` to generate
    `.cli-forge/handoff.yml` in the target project directory. This explicitly
    records the classification and inputs for downstream consumption.
@@ -95,6 +95,9 @@ Act as the intake layer and traffic controller.
   first so the daemon capability contract can be updated explicitly. Do not
   send daemon requests to Extend until dedicated daemon implementation support
   exists there.
+- Do not route new work to `cli-forge-distribute`. npm publication is part of
+  Publish, and `cli-forge-distribute` is retained only as archived reference
+  material.
 - If the target project directory is unknown, you MUST ask the user or search for `.cli-forge/` folders. Do not assume the current working directory applies.
 
 ## Next Step
@@ -107,4 +110,3 @@ Route to one of:
 - [`../cli-forge-extend/SKILL.md`](../cli-forge-extend/SKILL.md)
 - [`../cli-forge-validate/SKILL.md`](../cli-forge-validate/SKILL.md)
 - [`../cli-forge-publish/SKILL.md`](../cli-forge-publish/SKILL.md)
-- [`../cli-forge-distribute/SKILL.md`](../cli-forge-distribute/SKILL.md)

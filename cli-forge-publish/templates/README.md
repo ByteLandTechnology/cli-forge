@@ -1,101 +1,120 @@
 # Release Automation Asset Pack
 
-This directory contains a repository-owned, repo-native release automation
-asset pack for target CLI skill repositories generated with the `cli-forge`
-skill family.
+Repository-owned release automation for target CLI skill repositories generated
+with the `cli-forge` skill family.
 
-## Default Release Model
+## Release Model
 
-The default distribution path is the target repository's own GitHub Release:
+One semantic-release run publishes:
 
-1. semantic-release computes one version
-2. the repo creates tag `v<version>`
-3. GitHub Release assets publish version-matched CLI archives
-4. `release-evidence.json` and `.release-manifest.json` record the same version
-5. users clone the repo and run `scripts/install-current-release.sh`
+1. git tag `v<version>` + GitHub Release page (archive + sha256 per target)
+2. **N platform npm packages** (`<name>-darwin-arm64`, `<name>-linux-x64`, ...) each
+   carrying only the matching native binary, gated by `os` / `cpu`
+3. **1 main npm package** (`<name>`) — a tiny JS shim whose `optionalDependencies`
+   pin every platform package to the same version
+4. `CHANGELOG.md` entry
+5. `chore(release): <version> [skip ci]` commit (`CHANGELOG.md`,
+   `Cargo.toml`, `Cargo.lock`, `npm/main/package.json`)
 
-Shared-destination publication is optional secondary follow-up only. It is not
-the default user-facing distribution path.
-
-Optional npm publication, when a target repository chooses to add it, is a
-separate secondary channel for the shipped CLI command. The npm path uses one
-coordinating package plus one platform package per supported target, and every
-package in that set must use the same version as the target repository's
-released skill version sourced from the released tag and matching
-`release-evidence.json`.
+Users install with plain `npm install -g <name>`; npm picks the right platform
+package automatically. No postinstall download.
 
 ## How To Use It
 
 1. Copy the contents of this directory into the root of the target CLI skill
-   repository that will own the release workflow.
-2. Run `npm ci --omit=optional` from that target repository root.
-3. Update `release/skill-release.config.json` and replace the placeholder
-   values with the target project's real skill id, repository identity,
-   description, author/team, and any optional secondary publication settings.
-4. Keep `scripts/install-current-release.sh` in the target repository root so
-   cloned checkouts can install the matching released binary for the checked
-   out tag.
-5. Keep `.github/actions/setup-build-env/action.yml` alongside
-   `.github/workflows/release.yml` so the release workflow can install the
-   macOS-led cross-build toolchain expected by `release:build-all`.
-6. Run release commands from the target repository root, not from this
-   skill-family repository.
+   repository.
+2. Fill `release/config.json`:
+   - `cliName` — the shipped CLI binary name
+   - `packageName` — the npm main package name (with scope if used,
+     e.g. `@acme/foo`)
+   - `npmScope` — `null` for unscoped, or the scope string (e.g. `acme`)
+     for scoped publication
+   - `sourceRepository` — `owner/repo` on GitHub
+3. `npm/main/package.json` is derived at release time from
+   `release/config.json`. You may pre-fill it for local testing, but
+   `sync-platform-packages.mjs` will overwrite `name`, `version`, `bin`, and
+   `optionalDependencies` from the authoritative config during `prepare`.
+4. Configure npm trusted publishing on npmjs.com for this repository's
+   `release.yml`:
+   - configure a publisher entry for the main package and for **each** platform
+     package: `<name>-darwin-arm64` / `-darwin-x64` / `-linux-arm64` /
+     `-linux-x64` / `-win32-arm64` / `-win32-x64`
+   - each entry points at the same workflow file (`release.yml`)
+   - keep the job's `id-token: write` permission and do not inject `NPM_TOKEN`
+5. Install the release harness locally once for a dry-run:
 
-## Files Expected In The Target Repository
+   ```bash
+   npm ci
+   npm run release:rehearse
+   ```
 
-- `package.json`
-- `package-lock.json`
-- `.releaserc.json`
-- `.github/actions/setup-build-env/action.yml`
-- `.github/workflows/release.yml`
-- `release/skill-release.config.json`
-- `scripts/release/*`
-- `scripts/install-current-release.sh`
-- `templates/*`
+   This builds every target, generates platform packages, and runs
+   `npm publish --dry-run` for each — validating the full pipeline without
+   pushing tags or publishing to npm.
 
-## Required Verification
+   To see what version semantic-release _would_ choose without exercising the
+   custom hooks:
 
-From the target repository root:
+   ```bash
+   npm run release:dry-run
+   ```
+
+6. Push to `main`; the workflow drives the live release.
+
+## Targets
+
+Defined in `release/config.json#targets`. Defaults:
+
+| rustTarget                   | npm package suffix | os     | cpu   |
+| ---------------------------- | ------------------ | ------ | ----- |
+| `aarch64-apple-darwin`       | `darwin-arm64`     | darwin | arm64 |
+| `x86_64-apple-darwin`        | `darwin-x64`       | darwin | x64   |
+| `aarch64-unknown-linux-musl` | `linux-arm64`      | linux  | arm64 |
+| `x86_64-unknown-linux-musl`  | `linux-x64`        | linux  | x64   |
+| `aarch64-pc-windows-gnullvm` | `win32-arm64`      | win32  | arm64 |
+| `x86_64-pc-windows-gnullvm`  | `win32-x64`        | win32  | x64   |
+
+All six are built on a single `macos-14` runner using `cargo` + `cargo zigbuild`
+
+- `llvm-mingw` (set up by `.github/actions/setup-build-env`). Linux targets use
+  musl for fully static binaries that run on both glibc and musl (Alpine) systems.
+
+## Clone-First Install (optional)
+
+When users already have a checkout and want to install the binary directly from
+the tagged GitHub Release archive, the harness attaches `tar.gz` + `sha256` per
+target:
 
 ```bash
-npm run release:verify-config
-npm run release:quality-gates
-npm run release:build-all
-npm run release:dry-run
-```
-
-The quickstart install path should also be verifiable from a released checkout:
-
-```bash
+git clone https://github.com/<owner>/<repo>.git
+cd <repo>
 git checkout v<version>
-./scripts/install-current-release.sh <version>
+./scripts/install-current-release.sh
 ```
 
-The `templates/` directory is part of the release support bundle. It exists for
-fixture generation and validation support; it is not the final shipped CLI
-binary interface.
+The helper requires Node.js to read `release/config.json`. Prefer
+`npm install -g <name>` for everything else.
 
-## Workflow Shape
+## Files
 
-The default workflow template now runs as one `macos-14` release job that:
-
-1. verifies the repo-native release config
-2. installs the configured Rust targets
-3. applies `.github/actions/setup-build-env`
-4. runs release quality gates
-5. builds every configured artifact target with `npm run release:build-all`
-6. runs `npm run release:ci`
-
-This keeps the published asset pack aligned with the repo-native release
-scripts while adopting the newer workflow style used by
-`ByteLandTechnology/telegram-agent-cli`.
-
-If a target repository later documents optional npm installation, keep that
-guidance subordinate to the default repo-native release path and explain the
-package-set boundary clearly:
-
-- users install `npm install -g <coordinating-package>@<version>`
-- users install the coordinating package
-- the coordinating package resolves the matching platform package
-- the coordinating package version and every required platform-package version
-  must match the released repository version
+- `.releaserc.json` — semantic-release plugin chain
+- `.github/workflows/release.yml` — single release job
+- `.github/actions/setup-build-env/action.yml` — macOS cross-build toolchain
+- `release/config.json` — CLI name, package name, target list
+- `npm/main/` — JS shim + published main package template
+- `npm/platforms/` — generated at release time by
+  `scripts/release/sync-platform-packages.mjs`
+- `scripts/release/build-binaries.mjs` — semantic-release `prepare` hook that bumps
+  `Cargo.toml#version`, builds all targets, and creates dist archives + provenance
+- `scripts/release/validate-config.mjs` — shared config validation (fields, scope
+  consistency, repository match, placeholder check); called by release.yml and
+  sync-platform-packages.mjs
+- `scripts/release/sync-platform-packages.mjs` — semantic-release `prepare` hook
+- `scripts/release/publish-npm-packages.mjs` — semantic-release `publish` hook
+  that publishes every platform package and the main package, each guarded by
+  an `npm view` existence check for idempotent reruns
+- `scripts/release/rehearse.mjs` — local rehearsal: build + sync +
+  `npm publish --dry-run` for every package (no tag, no real publish)
+- `scripts/install-current-release.sh` — clone-first install helper
+- `package.json` — devDependencies (semantic-release + plugins) only
+- `CHANGELOG.md` — maintained by semantic-release

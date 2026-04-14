@@ -1,21 +1,26 @@
 {
-  "name": "cli-skill-release-automation",
+  "name": "cli-skill-release-harness",
   "version": "0.0.0-development",
   "private": true,
-  "description": "Portable repo-native GitHub Release automation asset pack for target CLI skill repositories generated with cli-forge.",
-  "license": "UNLICENSED",
+  "description": "Release harness for the target CLI skill repository. Not published to npm.",
+  "type": "module",
   "engines": {
-    "node": "22.x",
-    "npm": "10.x"
+    "node": "^22.14.0 || >=24.10.0",
+    "npm": ">=10"
   },
-  "packageManager": "npm@10.x",
   "scripts": {
-    "release:quality-gates": "node scripts/release/run-generated-skill-quality-gates.mjs",
-    "release:build-artifact": "node scripts/release/build-cli-artifact.mjs",
-    "release:build-all": "node scripts/release/build-release-artifacts.mjs",
-    "release:verify-config": "node scripts/release/verify-release-config.mjs",
-    "release:ci": "node scripts/release/run-semantic-release.mjs",
-    "release:dry-run": "node scripts/release/run-semantic-release.mjs --dry-run --no-ci",
-    "release:install-current": "./scripts/install-current-release.sh"
+    "release:dry-run": "npx --yes semantic-release --dry-run --no-ci",
+    "release:rehearse": "node scripts/release/rehearse.mjs"
+  },
+  "devDependencies": {
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/commit-analyzer": "^13.0.1",
+    "@semantic-release/exec": "^7.0.3",
+    "@semantic-release/git": "^10.0.1",
+    "@semantic-release/github": "^12.0.0",
+    "@semantic-release/npm": "^13.0.1",
+    "@semantic-release/release-notes-generator": "^14.0.3",
+    "conventional-changelog-conventionalcommits": "^9.0.0",
+    "semantic-release": "^25.0.0"
   }
 }

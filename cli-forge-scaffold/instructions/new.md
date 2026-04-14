@@ -112,9 +112,9 @@ The expanded files must also preserve the invocation contract:
 - If the target repo later adopts repo-native release automation, its clone
   `->` checkout `->` install helper flow must remain a repository-owned concern
   that reuses this same description contract.
-- If the target repo later adds optional npm publication, that wording must
-  stay secondary to the repo-native release path and must keep the same
-  approved description contract.
+- If the target repo later adopts Publish-stage npm publication, the npm
+  package wording must keep the same approved description contract and the same
+  released version as the repo-native GitHub Release.
 
 If `cli-plan.yml` marks `capabilities.daemon: in_scope`, stop before
 generation and report that scaffold support for the daemon app-server contract

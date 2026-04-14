@@ -55,9 +55,9 @@ This stage acts as the final gatekeeper before release. It consumes the
    - `CTX-*` (Active Context behavior and precedence)
    - `ERR-*` (structured error behavior)
    - `REPL-*` (REPL behavior when present)
-   Daemon expectations are currently validated through plan-aligned help,
-   runtime, and error checks plus a daemon-specific narrative overlay whenever
-   daemon behavior is present. A dedicated `DAEMON-*` ruleset is future work.
+     Daemon expectations are currently validated through plan-aligned help,
+     runtime, and error checks plus a daemon-specific narrative overlay whenever
+     daemon behavior is present. A dedicated `DAEMON-*` ruleset is future work.
 3. For each check, look at the filesystem, code, and test output.
 4. If the check requires knowledge of expected CLI behaviors (for example,
    flags, optional feature scope, or runtime conventions), source those
@@ -72,7 +72,7 @@ This stage acts as the final gatekeeper before release. It consumes the
    [`./contracts/validation-report.yml.tpl`](./contracts/validation-report.yml.tpl).
 8. Present the validation outcome and any next-stage options using a
    dialog-based chooser. Do not require the user to type an exact phrase to
-   continue to Publish, Distribute, or a fix-up stage, and do not present
+   continue to Publish or a fix-up stage, and do not present
    numbered options that expect typed input.
 
 ## Outputs
@@ -106,7 +106,6 @@ This stage acts as the final gatekeeper before release. It consumes the
 ## Next Step
 
 - If `compliant` or `warning`, proceed to
-  [`../cli-forge-publish/SKILL.md`](../cli-forge-publish/SKILL.md) (or
-  `../cli-forge-distribute/SKILL.md` if npm only).
+  [`../cli-forge-publish/SKILL.md`](../cli-forge-publish/SKILL.md).
 - If `non_compliant`, return to Scaffold, Extend, or Design to fix the
   underlying issues.

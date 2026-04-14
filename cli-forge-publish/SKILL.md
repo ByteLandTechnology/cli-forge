@@ -1,22 +1,33 @@
 ---
 name: cli-forge-publish
-description: "Publish stage for the cli-forge skill family: manage the repository-native GitHub Release automation for a generated skill."
+description: "Publish stage for the cli-forge skill family: manage the GitHub Release and multi-package npm publication automation for a generated skill."
 ---
 
 # cli-forge Publish
 
 Use this stage when a compliant generated CLI skill needs to adopt standard
-release automation, prepare a new version, or execute its repository-native
-GitHub Release.
+release automation, prepare a new version, or execute the paired GitHub
+Release + multi-package npm publication flow.
 
 ## Purpose
 
-Manage the repository-native release pipeline for a generated `cli-forge` skill.
+Manage the release pipeline for a generated `cli-forge` skill.
 
-This stage is strictly focused on **repository-native GitHub Release**.
-It executes semantic versioning, builds cross-platform binaries, generates
-checksums and release evidence, and creates the GitHub Release payload. It does
-not publish to npm; that is the distinct responsibility of the Distribute stage.
+This stage owns the paired publication flow: **repo-native GitHub Release plus
+platform-split npm publication** from the same semantic-release event. One
+release produces:
+
+- git tag `v<version>` + GitHub Release (archive + sha256 per target)
+- 6 per-platform npm packages (`<pkg>-darwin-arm64` / `-darwin-x64` /
+  `-linux-arm64` / `-linux-x64` / `-win32-arm64` / `-win32-x64`) carrying the
+  native binaries
+- 1 main npm package (JS shim, `optionalDependencies` pinned to the same
+  version)
+- `CHANGELOG.md` entry + `chore(release): <version> [skip ci]` commit
+
+All npm packages publish in one semantic-release run and share the
+version with the git tag + GitHub Release. The total count is
+`1 + config.targets.length` (default: 7).
 
 ## Canonical References
 
@@ -33,76 +44,83 @@ not publish to npm; that is the distinct responsibility of the Distribute stage.
 | 1   | `validation-report.yml` exists and `result == compliant` or `warning` | Validate      |
 | 2   | Target repository path is explicitly known                            | Router / User |
 | 3   | Requested publish mode is explicit                                    | Router / User |
-| 4   | The command hierarchy `caller -> agent -> skill -> package` is clear  | User          |
+| 4   | npm package name, CLI name, and scope decision are explicit           | User          |
+
+Scope decision is a required input at this stage. Ask the user whether the
+npm package should publish as **unscoped** (`<name>`) or **scoped**
+(`@<scope>/<name>`), and collect the scope string in the latter case. The same
+decision applies uniformly to the main package and all six platform packages.
 
 ## Required Inputs
 
 - Validation outcome (refusal to publish if `non_compliant` or stale)
-- Publish mode: `report_only`, `dry_run`, `rehearsal`, or `live_release`
+- Publish mode: `report_only`, `dry_run`, or `live_release`
 - Source project path
+- `cliName` — the CLI binary name
+- `packageName` — the main npm package name (with scope prefix if scoped)
+- `npmScope` — `null` for unscoped, or the scope string
+- `sourceRepository` — `owner/repo` on GitHub
 
 ## Workflow
 
-1. Read [`./planning-brief.md`](./planning-brief.md) to load the
-   publish-specific planning and execution constraints.
-2. Accept the inbound `validation-report.yml`. Do not re-run validation here.
-   If validation failed, refuse to proceed.
-3. If the skill project lacks the release automation assets, adopt them by
-   copying the contents of `./templates/` to the project root. Note:
-   this template pack DOES NOT contain project source templates (like
-   `main.rs.tpl`); those are consumed during Scaffold. The adopted release
-   assets include both `.github/workflows/release.yml` and the local composite
-   action at `.github/actions/setup-build-env/action.yml`.
-4. Verify the required target repository configuration (`GITHUB_TOKEN`, write
-   access, GitHub Actions enabled).
-5. Follow the mode-specific execution path defined in
+1. Read [`./planning-brief.md`](./planning-brief.md) for publish-specific
+   planning constraints.
+2. Accept the inbound `validation-report.yml`. Refuse to proceed if validation
+   failed; do not re-run validation here.
+3. Ask the user for the inputs listed above if not already collected. If the
+   mode is `report_only`, skip to step 7.
+4. If the skill project lacks the release automation assets, adopt them by
+   copying the contents of `./templates/` to the project root. The adopted
+   asset pack does NOT contain Scaffold-stage source templates (`*.tpl`).
+5. Fill `release/config.json` and `npm/main/package.json` with the collected
+   inputs.
+6. Verify the target repository has:
+   - GitHub Actions enabled on a GitHub-hosted runner with `id-token: write`
+   - npm trusted publishing configured on npmjs.com for the main package and
+     for each of the 6 platform packages, every entry pointing at `release.yml`
+7. Follow the mode path defined in
    [`./instructions/release/skill-release-runbook.md`](./instructions/release/skill-release-runbook.md):
-   - `report_only`: Validate environment, report pending version changes, do
-     not alter the repository.
-   - `dry_run`: Execute local packaging and test hooks but do not push tags or
-     communicate with external registries.
-   - `rehearsal`: Verify release workflow execution against a staging
-     environment or a release branch without affecting the production tag
-     line.
-   - `live_release`: Execute the permanent semantic release hook, tagging the
-     repository, creating the GitHub Release, and uploading the binary asset
-     pack.
-6. Verify the outcome of the requested mode (e.g., verifying the tag and assets
-   were created for `live_release`).
-7. Generate `.cli-forge/release-receipt.yml` using the template at
+   - `report_only`: audit readiness only. Read config and repository state,
+     report blockers and next actions. Do NOT copy files, fill placeholders,
+     or alter the repository in any way.
+   - `dry_run`: run `npm run release:rehearse` locally. This builds every
+     target, syncs platform packages, and runs `npm publish --dry-run` for
+     each. No tag, no GitHub Release, no real npm publication.
+   - `live_release`: push to `main` (or `workflow_dispatch`) so
+     `.github/workflows/release.yml` drives the end-to-end run.
+8. Generate `.cli-forge/release-receipt.yml` from the template at
    [`./contracts/release-receipt.yml.tpl`](./contracts/release-receipt.yml.tpl).
 
 ## Outputs
 
-- A verified GitHub Release with metadata and binaries (if `live_release`)
-- `scripts/install-current-release.sh` generated in target
+- A verified GitHub Release with archives + checksums (if `live_release`)
+- 1 main + N platform npm packages published at the same version (if `live_release`)
+- Updated `CHANGELOG.md` and release commit on `main`
 - `.cli-forge/release-receipt.yml`
 
 ## Exit Gate
 
-| #   | Check                                                              |
-| --- | ------------------------------------------------------------------ |
-| 1   | The requested mode (report, dry_run, rehearsal, live) was executed |
-| 2   | Code base and automation assets are correctly aligned              |
-| 3   | Asset pack was adopted if it was missing                           |
-| 4   | Version tag and evidence match                                     |
-| 5   | `release-receipt.yml` generated                                    |
+| #   | Check                                                                   |
+| --- | ----------------------------------------------------------------------- |
+| 1   | The requested mode was executed                                         |
+| 2   | For `report_only`: no files were written to the target repository       |
+| 3   | For `dry_run` / `live_release`: asset pack adopted and filled           |
+| 4   | For `live_release`: version, tag, main package, platform packages agree |
+| 5   | `release-receipt.yml` generated                                         |
 
 ## Guardrails
 
-- This stage is exclusively for the repository-native GitHub Release. It must
-  explicitly enforce that boundary by refusing to implement npm publication
-  directives.
-- The `publish/` asset pack copied to the target root must not contain `.tpl`
-  source files from the Scaffold stage. The release asset pack may include
-  repository-owned automation files such as `package-lock.json` and
-  `.github/actions/setup-build-env/action.yml`. Scaffold assets live in the
-  Scaffold stage's bundled `./templates/` directory.
+- All npm packages (main + platforms) MUST share the version chosen by
+  semantic-release. The two release scripts enforce this by consuming
+  `${nextRelease.version}` from semantic-release hooks.
 - Do not bypass stale validation. If the codebase changed since the last
   validation report, route back to Validate.
+- Do not hand-bump `npm/main/package.json#version`, hand-edit `CHANGELOG.md`
+  release entries, or create tags outside semantic-release.
+- The asset pack's `npm/platforms/` directory is generated at release time.
+  Do not check generated platform package directories into source control
+  beyond the `.gitkeep` placeholder.
 
 ## Next Step
 
-- If the design contract specified optional npm distribution, continue to
-  [`../cli-forge-distribute/SKILL.md`](../cli-forge-distribute/SKILL.md).
-- Otherwise, this is a terminal stage.
+This is a terminal stage.

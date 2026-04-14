@@ -23,9 +23,9 @@ When creating a brand-new skill contract:
    - `README.md` → header description paragraph
    - Help text → summary line in `--help` and structured `help`
    - Release notes → summary paragraph (when publish is in scope)
-   - npm package → description field (when distribute is in scope)
-5. Ask whether the user wants repo-native release only, or also optional npm
-   distribution.
+   - npm package → description field (when publish is in scope)
+5. Record that the Publish stage owns both the repo-native GitHub Release and
+   npm publication when release work is later adopted.
 6. Generate `design-contract.yml` from the template at
    `contracts/design-contract.yml.tpl`.
 7. Present the contract to the user for approval using a dialog-based chooser

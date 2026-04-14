@@ -2,235 +2,213 @@
 
 ## Purpose
 
-This runbook defines the supported release-facing behavior for target CLI skill
-repositories that adopt the `cli-forge-publish` release automation asset pack.
+Defines the supported release behavior for target CLI skill repositories that
+adopt the `cli-forge-publish` asset pack.
 
-The current `cli-forge` skill-family repository is the source of this release
-pattern. It is not the thing being published by these instructions.
-This runbook covers the target repository's repo-native GitHub Release path,
-not optional npm publication of the shipped CLI command.
+One semantic-release run produces all release surfaces:
+
+- git tag `v<version>` + GitHub Release page (tar.gz archive + sha256 per target)
+- `N` per-platform npm packages carrying the native binaries
+- `1` main npm package (tiny JS shim, `optionalDependencies` pin all platform
+  packages to the same version)
+- `CHANGELOG.md` entry
+- `chore(release): <version> [skip ci]` commit
 
 ## Asset Pack Model
 
-`cli-forge-publish/templates/` is a portable asset pack. Its contents are meant
-to be copied into the root of a target CLI skill repository.
+`cli-forge-publish/templates/` is a portable asset pack. Contents are copied to
+the root of a target CLI skill repository:
 
-The target repository should receive these files at its own root:
-
-- `package.json`
-- `package-lock.json`
+- `package.json` — devDependencies only (semantic-release + plugins)
+- `CHANGELOG.md`
 - `.releaserc.json`
 - `.github/actions/setup-build-env/action.yml`
 - `.github/workflows/release.yml`
-- `release/skill-release.config.json`
-- `scripts/release/*`
+- `release/config.json`
+- `npm/main/` (package.json, bin/cli.js, README.md)
+- `npm/platforms/` (generated at release time)
+- `scripts/release/build-binaries.mjs`
+- `scripts/release/validate-config.mjs`
+- `scripts/release/sync-platform-packages.mjs`
+- `scripts/release/publish-npm-packages.mjs`
+- `scripts/release/rehearse.mjs`
 - `scripts/install-current-release.sh`
-- `templates/*`
 
-The `templates/` directory inside the asset pack is repository-owned support
-data for release quality gates and rehearsal flows. It is not the target
-project's runtime deliverable.
+The root `package.json` is not published. The main published wrapper is
+`npm/main/package.json`.
 
 ## Command Execution Context
 
-Every command in this runbook is executed from the target CLI skill repository
-root after the contents of `templates/` have been copied there.
-
-Examples:
-
-```bash
-npm ci --omit=optional
-npm run release:verify-config
-npm run release:quality-gates
-npm run release:build-all
-GITHUB_TOKEN=<valid token> npm run release:dry-run
-```
-
-Do not run these commands from `cli-forge-publish/` inside this skill-family
-repository. They are only supported from the target CLI skill repository root
-after the asset pack has been copied there.
-
-## Release Contract
-
-Every supported release should align these surfaces to the same version:
-
-1. repository version chosen by semantic-release
-2. git tag `v<version>`
-3. GitHub Release page for that tag
-4. CLI binary archives attached to the GitHub Release
-5. `release-evidence.json` and `.release-manifest.json`
-6. `scripts/install-current-release.sh` for clone-first installation
-
-Shared-destination publication remains optional secondary follow-up only.
-Optional npm publication is handled separately through
-`cli-forge-publish-npm`, using the same released CLI version as the
-repo-native release surfaces.
-
-## Release Evidence And Authoritative Version
-
-The repo-native release chain identifies the authoritative released skill
-version for any optional npm follow-through:
-
-1. semantic-release selects the repository version
-2. the target repository publishes tag `v<version>`
-3. the GitHub Release assets and checksums attach to that same tag
-4. `release-evidence.json` and `.release-manifest.json` record that same
-   released version
-
-If a later npm publication path is used, it must read the authoritative
-released skill version from the released tag and matching release evidence
-instead of inventing a separate package-set version.
+All commands run from the target CLI skill repository root after the asset
+pack has been copied. Do not run them from inside this skill-family repository.
 
 ## Required Configuration
 
-After copying the asset pack into the target repository, update
-`release/skill-release.config.json`:
+After copying the asset pack:
 
-- replace `REPLACE_WITH_SKILL_ID`
-- replace `REPLACE_WITH_OWNER/REPO`
-- replace `REPLACE_WITH_DESCRIPTION`
-- replace `REPLACE_WITH_AUTHOR_OR_TEAM`
-- confirm `githubRelease.installScriptPath`
-- confirm required artifact targets
-- leave `optionalSecondaryPublication.enabled` as `false` unless that mirror is
-  explicitly required
-
-The release config is intentionally generic until the target repository fills
-those placeholders in.
+1. Edit `release/config.json`:
+   - `cliName`
+   - `packageName` (with scope prefix if used)
+   - `npmScope` (`null` for unscoped, string otherwise)
+   - `sourceRepository` (`owner/repo`)
+2. Edit `npm/main/package.json`:
+   - `name` — must match `release/config.json#packageName`
+   - `bin` — must use `cliName`
+   - `description`, `license`
+3. On npmjs.com, configure **GitHub Actions trusted publishing** for the main
+   package and for each of the six platform packages. Every entry points at
+   `release.yml` in this repository.
+4. Keep `id-token: write` on the publishing job. Do not set `NPM_TOKEN`.
 
 ## Publish Modes
 
 ### `report_only`
 
-Use when the workflow has reached `publish`, but the user did not ask to run
-release commands yet.
-
-- summarize readiness, blockers, and next actions
-- confirm the target repository has adopted the asset pack correctly
-- point to `dry_run`, `rehearsal`, and `live_release` as explicit follow-ups
+Audit-only. Read the repository state and report readiness, blockers, and next
+actions. Do NOT adopt the asset pack, fill placeholders, or write any files.
 
 ### `dry_run`
 
-Run from the target repository root:
+The recommended local validation path. From the target repository root:
 
 ```bash
-npm run release:verify-config
-npm run release:quality-gates
-npm run release:build-all
-GITHUB_TOKEN=<valid token> npm run release:dry-run
+npm ci
+npm run release:rehearse
 ```
 
-Review whether semantic-release reports a real release or a no-release outcome.
-Do not describe this as a production publish.
+This drives `scripts/release/rehearse.mjs`, which:
 
-### `rehearsal`
+1. Builds every configured target into `dist/<rustTarget>/`.
+2. Runs `sync-platform-packages.mjs` with a rehearsal version `0.0.0-rehearsal`,
+   generating `npm/platforms/*` and stamping `npm/main/package.json`.
+3. Runs `npm publish --dry-run --access=public` for every platform package and
+   the main package.
+4. Cleans up generated `npm/platforms/*` and restores `npm/main/package.json`.
 
-Run from the target repository root:
+Nothing is pushed to GitHub or npm. This validates the full build → sync →
+publish path.
 
-```bash
-npm run release:verify-config
-npm run release:quality-gates
-npm run release:build-all
-node scripts/release/publish-skill-to-target-repo.mjs \
-  0.0.0-local \
-  v0.0.0-local \
-  "$(git rev-parse HEAD)"
-```
-
-Then inspect:
-
-- `.work/release/github-release/`
-- `.work/release/github-release/release-evidence.json`
-- `.work/release/last-publication-receipt.json`
-- `.release-manifest.json`
-- versioned archives and checksum files
+`npm run release:dry-run` is also available and drives `semantic-release
+--dry-run --no-ci`, which reports the version that semantic-release _would_
+choose and the release notes it _would_ generate. It does NOT exercise the
+custom prepare/publish hooks (semantic-release skips those phases in dry-run).
 
 ### `live_release`
 
-The supported production path is the target repository's
-`.github/workflows/release.yml`.
+Push a release-eligible commit to `main`; `.github/workflows/release.yml` runs
+the release job. The job:
 
-That workflow should:
+1. Checks out with full history
+2. Sets up Node 24, Rust (with all configured targets), and the composite
+   `setup-build-env` action (zig + llvm-mingw for macOS-led cross-build)
+3. Installs devDependencies (`npm ci`)
+4. Builds every target into `dist/<rustTarget>/<binary>` and produces
+   `dist/<cli>-<rustTarget>.tar.gz` + `.sha256`
+5. Runs `npx semantic-release`, which:
+   - Selects the version from conventional commits
+   - Writes `CHANGELOG.md`
+   - **`prepare` → `build-binaries.mjs`**: bumps `Cargo.toml#version`, builds every
+     target, produces `dist/<cli>-<rustTarget>.tar.gz` + `.sha256`, writes
+     `dist/provenance.json`
+   - **`prepare` → `sync-platform-packages.mjs`**: stamps `npm/main/package.json`
+     `optionalDependencies` and materializes `npm/platforms/<suffix>/package.json`
+     - copies binaries into each platform package
+   - **`prepare` → `@semantic-release/npm`**: bumps `npm/main/package.json`
+     `version`
+   - **`prepare` → `@semantic-release/git`**: commit `CHANGELOG.md`,
+     `Cargo.toml`, `Cargo.lock`, `npm/main/package.json` as
+     `chore(release): <version> [skip ci]` and push
+   - semantic-release core pushes the tag `v<version>`
+   - **`publish` → `publish-npm-packages.mjs`**: `npm publish` every platform
+     package and the main package (trusted publishing via OIDC); each call is
+     guarded by `npm view` so a rerun at the same version skips anything that
+     already made it to the registry
+   - **`publish` → `@semantic-release/github`**: attach the archives + sha256
+     to the GitHub Release for the just-pushed tag
 
-1. verify release config
-2. install the configured Rust target set
-3. apply `.github/actions/setup-build-env`
-4. run release quality gates
-5. build configured target artifacts from macOS
-6. run semantic-release
-7. attach version-matched archives and evidence to the repo's GitHub Release
+`@semantic-release/npm` runs with `npmPublish: false`; it only bumps
+`npm/main/package.json#version` during `prepare`. All `npm publish` calls are
+owned by `publish-npm-packages.mjs`.
 
-## Clone-First Install Flow
+## Install Paths
 
-The supported user-facing install path is:
+### npm (default)
+
+```bash
+npm install -g <package-name>
+<cli-name> ...
+```
+
+npm resolves the matching platform package via `optionalDependencies` + `os` +
+`cpu` metadata. No postinstall download.
+
+### Clone-first (optional)
+
+For users who already have the repository checked out and prefer installing a
+binary directly from the tagged GitHub Release:
 
 ```bash
 git clone https://github.com/<owner>/<repo>.git
 cd <repo>
 git checkout v<version>
-./scripts/install-current-release.sh <version>
+./scripts/install-current-release.sh
 ```
 
-This helper must resolve the archive for the checked out release version instead
-of downloading an arbitrary latest asset.
+Reads `release/config.json`, downloads the tagged `tar.gz` from the GitHub
+Release, installs the binary to `INSTALL_DIR` (default `.local/bin`). Requires
+Node.js to parse the config file. Supports darwin + linux; Windows users
+should use npm.
 
-This flow is for the repo-native release channel only. It does not describe the
-optional npm install surface.
+## What This Pipeline Does Not Do
 
-## Quality Gates
-
-From the target repository root:
-
-```bash
-npm run release:verify-config
-npm run release:quality-gates
-npm run release:build-all
-```
-
-These checks should confirm:
-
-- release config placeholders were replaced
-- required artifact targets are declared
-- the generated fixture and support assets are structurally valid
-- the target CLI invocation contract is coherent with the shipped skill docs
-- `scripts/install-current-release.sh` exists and the generated docs mention it
-- the generated docs mention `release-evidence.json`
-- any optional npm wording remains clearly secondary to the repo-native release
-  path
-
-## Package Boundary
-
-Keep this distinction explicit:
-
-- generated skill outputs:
-  - compiled CLI binary
-  - skill docs and runtime behavior
-- repository-owned release automation:
-  - `package.json`
-  - `package-lock.json`
-  - `.releaserc.json`
-  - `.github/actions/setup-build-env/action.yml`
-  - `.github/workflows/release.yml`
-  - `release/`
-  - `scripts/release/`
-  - `scripts/install-current-release.sh`
-  - `templates/` used by release support flows
-
-Repository-owned automation supports the target project repository. It is not
-part of the final shipped CLI binary interface.
+- No custom audit JSON (`release-evidence.json`, `.release-manifest.json`,
+  `last-publication-receipt.json`) is produced. GitHub Release + npm registry +
+  workflow run logs are the authoritative record.
+- No mirror-repository secondary publication.
 
 ## Failure Recovery
 
-When release work fails, check these categories first:
+Common failure categories:
 
-- placeholders in `release/skill-release.config.json` were not replaced
-- required build outputs are absent
-- repo version, tag, release page, and release evidence disagree
-- the install helper points at the wrong version or wrong target
-- semantic-release found no releasable changes
-- the target project's CLI contract or docs drifted from the expected release
-  surface
-- optional secondary publication assumptions leaked into the default workflow
-- npm package names, platform coverage, or package-set alignment checks were
-  mixed into the repo-native runbook instead of being handled by
-  `cli-forge-publish-npm`
+- `release/config.json` still has placeholders → fill and retry
+- `release/config.json#packageName` scope mismatches `npmScope` →
+  `validate-config.mjs` hard-fails with a pointer to the offending
+  field before any external write
+- Platform package trusted publisher not configured on npmjs.com → the first
+  release of that package fails; configure the publisher entry and re-run
+- semantic-release reports "no releasable changes" → commits since last tag
+  don't match any release rule; nothing to do
+
+### Wedged mid-release (tag pushed, some `npm publish` failed)
+
+If the release commit and tag reached the origin but some `npm publish` calls
+failed, pushing a new commit to `main` will not re-drive the same version
+(commit-analyzer sees no new commits). Use the **recover** path instead:
+
+1. Go to **Actions → Release → Run workflow** on GitHub.
+2. Set **recover-version** to the version string (e.g. `1.2.3`).
+3. Run the workflow.
+
+The recover path reuses the same job but skips semantic-release entirely. It:
+
+1. Builds every target via `build-binaries.mjs` (producing `dist/` fresh), or
+   downloads the original build artifacts if `recover-run-id` is provided.
+2. Runs `sync-platform-packages.mjs` (generating `npm/platforms/*`).
+3. Runs `publish-npm-packages.mjs`, which skips every package already on the
+   registry and publishes only the missing ones.
+
+This works because `publish-npm-packages.mjs` is idempotent: every `npm
+publish` is preceded by `npm view <pkg>@<version>`, and an already-published
+version is skipped cleanly.
+
+If you prefer to recover locally (CI unavailable), the same three steps work
+from a tag checkout:
+
+```bash
+git checkout v<version>
+npm ci
+# Build all targets first
+node scripts/release/build-binaries.mjs <version>
+node scripts/release/sync-platform-packages.mjs <version>
+node scripts/release/publish-npm-packages.mjs <version>
+```

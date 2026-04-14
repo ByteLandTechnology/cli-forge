@@ -13,11 +13,13 @@ sync_surfaces:
   - "README.md header and description"
   - "help text summary line"
   - "release notes summary (when publish is in scope)"
-  - "npm package description (when distribute is in scope)"
+  - "npm package description (when publish is in scope)"
 
-publish_channels:
-  primary: "repo_native"
-  secondary: "{{npm|none}}"
+publish_contract:
+  stage: "publish"
+  channels:
+    - "repo_native"
+    - "npm"
 
 approved_by: "{{user}}"
 approved_at: "{{iso8601_timestamp}}"

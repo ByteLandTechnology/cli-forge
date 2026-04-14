@@ -2,14 +2,13 @@
 
 Use this brief as the authoritative planning-stage contract for any `cli-forge`
 workflow. It is the single source of truth for planning decisions across all
-stages. Stage-specific supplements exist only in `cli-forge-publish/` and
-`cli-forge-distribute/`.
+stages. The active stage-specific supplement lives in `cli-forge-publish/`;
+`cli-forge-distribute/` remains archived reference material only.
 
 ## Purpose And Scope
 
 - Plan Rust-based CLI Skills that will be designed, planned, scaffolded,
-  extended, validated, published, or distributed through the `cli-forge` stage
-  skills.
+  extended, validated, and published through the `cli-forge` stage skills.
 - Lock the user-visible CLI contract before implementation starts.
 - Surface risks early enough that the workflow can choose scope, sequencing, and
   acceptance criteria deliberately instead of discovering them mid-build.
@@ -30,8 +29,8 @@ Every plan must explicitly lock these decisions:
   recovery rules when daemon capability is in scope
 - which optional capabilities are in scope: `stream`, `repl`, `daemon`, or
   publish/release follow-through
-- whether publish-oriented work is about the default repo-native release path,
-  the optional npm channel, or both with repo-native release remaining primary
+- whether publish-oriented work is in scope, with Publish responsible for the
+  paired repo-native GitHub Release and npm publication from one release event
 
 If a plan cannot answer one of those items, it is not ready to move past the
 planning stage.
@@ -72,11 +71,12 @@ planning stage.
 - Repository-owned automation and release plumbing must stay outside generated
   skill packages unless a stage explicitly handles publish concerns.
 - When publish concerns are in scope, plans must keep repo-native GitHub
-  Release publication primary and treat clone-first installation and release
-  evidence as repository-owned surfaces.
-- Validation should confirm publish-channel context is explicit, but the choice
-  between repo-native and npm publication still belongs to the relevant publish
-  or distribute child skill.
+  Release publication and npm publication tied to the same semantic-release
+  version, while treating clone-first installation as a repository-owned
+  surface. GitHub Release + npm registry + workflow run logs are the
+  authoritative release evidence; no custom audit JSON is produced.
+- Validation should confirm publish context is explicit, but release execution
+  belongs to Publish instead of being split across separate release stages.
 
 ## Output, Stream, REPL, And Help
 
@@ -118,9 +118,9 @@ Plans should include the expected generated structure and validation evidence:
 - accidental leakage of repository-owned automation into generated packages
 - release credentials, target artifacts, and destination configuration when
   publish work is in scope
-- repo version, git tag, release page, binary assets, and release evidence
-  drifting apart when publish work is in scope
-- validation reporting failing to distinguish repo-native release checks from
-  optional npm package-set checks
-- publish-channel confusion where repo-native release and npm publication are
-  mixed into one undefined path
+- repo version, git tag, GitHub Release assets, and npm packages drifting
+  apart when publish work is in scope
+- validation reporting failing to distinguish generated-CLI compliance from
+  release-pipeline readiness checks
+- publish-contract confusion where GitHub Release and npm publication drift
+  into different versions or partially executed flows

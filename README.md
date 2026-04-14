@@ -16,27 +16,24 @@ graph LR
     R -->|handoff.yml| E[4. Extend]
     R -->|handoff.yml| V[5. Validate]
     R -->|handoff.yml| P[6. Publish]
-    R -->|handoff.yml| X[7. Distribute]
     D -->|design-contract.yml| PL[2. Plan]
     PL -->|cli-plan.yml| S[3. Scaffold]
     S -->|scaffold-receipt.yml| V
     E -->|extend-receipt.yml| V
     V -->|validation-report.yml| P
-    P -->|release-receipt.yml| X
 ```
 
-## The 8 Stages
+## The 7 Active Stages
 
-| Stage             | Path                      | Purpose                                                                                                                   | Key Artifact                       |
-| ----------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
-| **0. Router**     | `./cli-forge/`            | Classify user intent, assemble inputs, and explicitly route to the next incomplete stage.                                 | `.cli-forge/handoff.yml`           |
-| **1. Design**     | `./cli-forge-design/`     | Define the high-level description, purpose, positioning, and required sync surfaces.                                      | `.cli-forge/design-contract.yml`   |
-| **2. Plan**       | `./cli-forge-plan/`       | Translate the design into a detailed CLI contract (commands, flags, capabilities, daemon contract).                       | `.cli-forge/cli-plan.yml`          |
-| **3. Scaffold**   | `./cli-forge-scaffold/`   | Generate the baseline Rust project exclusively using the rules defined in `cli-plan.yml` and the authoritative templates. | `.cli-forge/scaffold-receipt.yml`  |
-| **4. Extend**     | `./cli-forge-extend/`     | Add optional features (`stream`, `repl`) to an existing project and update the plan.                                      | `.cli-forge/extend-receipt.yml`    |
-| **5. Validate**   | `./cli-forge-validate/`   | Run 46 compliance checks against the projected generated codebase to block invalid artifacts from release.                | `.cli-forge/validation-report.yml` |
-| **6. Publish**    | `./cli-forge-publish/`    | Manage the primary repo-native GitHub Release pipeline and automation assets.                                             | `.cli-forge/release-receipt.yml`   |
-| **7. Distribute** | `./cli-forge-distribute/` | (Optional) Execute secondary npm publication using a platform-specific package model.                                     | _N/A (terminal stage)_             |
+| Stage           | Path                    | Purpose                                                                                                                   | Key Artifact                       |
+| --------------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
+| **0. Router**   | `./cli-forge/`          | Classify user intent, assemble inputs, and explicitly route to the next incomplete stage.                                 | `.cli-forge/handoff.yml`           |
+| **1. Design**   | `./cli-forge-design/`   | Define the high-level description, purpose, positioning, and required sync surfaces.                                      | `.cli-forge/design-contract.yml`   |
+| **2. Plan**     | `./cli-forge-plan/`     | Translate the design into a detailed CLI contract (commands, flags, capabilities, daemon contract).                       | `.cli-forge/cli-plan.yml`          |
+| **3. Scaffold** | `./cli-forge-scaffold/` | Generate the baseline Rust project exclusively using the rules defined in `cli-plan.yml` and the authoritative templates. | `.cli-forge/scaffold-receipt.yml`  |
+| **4. Extend**   | `./cli-forge-extend/`   | Add optional features (`stream`, `repl`) to an existing project and update the plan.                                      | `.cli-forge/extend-receipt.yml`    |
+| **5. Validate** | `./cli-forge-validate/` | Run 46 compliance checks against the projected generated codebase to block invalid artifacts from release.                | `.cli-forge/validation-report.yml` |
+| **6. Publish**  | `./cli-forge-publish/`  | Manage the release automation that produces the GitHub Release, binaries, release evidence, and npm publication together. | `.cli-forge/release-receipt.yml`   |
 
 ## Artifact Policy
 
@@ -53,8 +50,8 @@ Each `cli-forge-*` stage directory now carries the resources it needs locally
 so the installed skills remain self-contained:
 
 1. **Local planning briefs**: every stage that needs the shared planning rules
-   ships its own `planning-brief.md` copy, and publish/distribute also carry
-   their stage-specific briefs.
+   ships its own `planning-brief.md` copy; Publish also carries its active
+   stage-specific brief, and Distribute keeps an archived historical brief.
 2. **Local contracts**: every stage that writes pipeline artifacts ships the
    specific `contracts/*.tpl` files it needs inside its own `contracts/`
    directory.
@@ -65,6 +62,12 @@ This layout intentionally favors installability over a shared root asset pool:
 the repository structure mirrors the expected installed-skill shape so no stage
 depends on root-level `contracts/`, `templates/`, or `planning-brief.md` files
 at runtime.
+
+## Archived Reference
+
+`./cli-forge-distribute/` is retained only as archived reference material from
+the earlier split-stage release design. New workflows should not route there:
+npm publication now belongs to Publish.
 
 ## Daemon Design
 

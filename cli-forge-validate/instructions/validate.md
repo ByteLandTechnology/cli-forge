@@ -11,8 +11,9 @@ baseline files must exist, enabled capability overlays may add package-local
 support files, and repository-owned CI/release automation must not be treated
 as required generated output. When a target repository has adopted the publish
 asset pack, validate repo-native release/install surfaces as repository
-automation rather than generated package files, and keep any optional npm
-publication wording clearly secondary. If the project exposes daemon
+automation rather than generated package files, and confirm any npm
+publication surface stays aligned with the same released version and publish
+contract. If the project exposes daemon
 behavior, validate it against the daemon contract declared in `cli-plan.yml`
 rather than against a hard-coded managed-background assumption. Until a
 dedicated `DAEMON-*` ruleset exists, use the shared help/runtime/error checks
@@ -216,22 +217,42 @@ record the following:
    - Confirm default REPL output favors readability while any explicit
      structured result modes stay documented and consistent.
 
-### Step 8: Run Repo-Native Publish Checks When Present
+### Step 8: Run Publish Checks When Present
 
 If the repository being validated has adopted repo-owned publish automation,
-inspect and record the following in the validation narrative:
+inspect and record the following in the validation narrative.
 
-1. `scripts/install-current-release.sh` exists at repository root and resolves
-   version-matched installation from the same repository's GitHub Release.
-2. Release docs mention clone `->` checkout released tag `->`
-   `scripts/install-current-release.sh`.
-3. Release docs mention release evidence and checksum expectations together.
-4. The released tag and matching release evidence identify one coherent
-   repo-native released version.
-5. Optional npm publication, if present, is described as a secondary follow-up
-   rather than the default path, and the validation narrative points package-set
-   alignment work to `cli-forge-publish-npm` instead of trying to complete that
-   check here.
+#### Pre-release readiness checks (always run when publish assets are present)
+
+1. `scripts/install-current-release.sh` exists at repository root and the
+   release docs describe clone `->` checkout released tag `->`
+   `scripts/install-current-release.sh` as an optional install path.
+2. `release/config.json` is present with all placeholder values replaced
+   (`cliName`, `packageName`, `sourceRepository`), and `npmScope` is internally
+   consistent with `packageName` (scoped name ⇔ non-null scope).
+3. `npm/main/package.json` has `name`, `description`, and `bin` fields all set
+   (no `REPLACE_WITH_` placeholders).
+4. `.releaserc.json` + `.github/workflows/release.yml` drive one
+   semantic-release run with platform-split npm publishing.
+5. `npm/main/bin/cli.js` exists and resolves the correct platform package name
+   from `process.platform` + `process.arch`.
+
+These checks must pass before the first release can proceed. They validate the
+automation is correctly configured without requiring any existing releases.
+
+#### Post-release audit checks (only when a released tag exists)
+
+If the most recent git tag `v<version>` exists on the default branch, also
+verify:
+
+6. The matching GitHub Release page carries per-target archives and `.sha256`
+   checksums.
+7. The main npm package and every per-platform npm package are published at
+   that same `<version>`.
+8. Treat the GitHub Release page, the workflow run URL, and the npm registry
+   entries as the authoritative evidence. Do not require locally generated
+   release-evidence JSON or manifest artifacts — the current release pipeline
+   does not produce them.
 
 ### Daemon-Specific Validation Overlay
 
