@@ -40,7 +40,12 @@ Before running the ruleset:
 2. If the path does not exist, stop and report that the directory was not found.
 3. If the path exists but is not a directory, stop and report that `project_path` must be a directory.
 4. If `Cargo.toml` is missing, stop and report that the target is not a valid Skill project.
-5. If `src/main.rs` is missing, continue only far enough to record the structural failure and skip build commands that require a compilable project.
+5. If `.cli-forge/cli-plan.yml` is missing, stop before behavioral validation:
+   - if `.cli-forge/design-contract.yml` exists, route to Plan so the approved
+     design wording can be carried forward into the missing plan
+   - otherwise, route to Takeover so the missing contract baseline can be
+     reconstructed from the current implementation
+6. If `src/main.rs` is missing, continue only far enough to record the structural failure and skip build commands that require a compilable project.
 
 ## Severity Levels
 

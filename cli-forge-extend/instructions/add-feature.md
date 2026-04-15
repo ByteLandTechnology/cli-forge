@@ -2,8 +2,9 @@
 
 ## Purpose
 
-Add either streaming output support or REPL mode to an existing scaffolded CLI
-Skill project by expanding the matching template and applying the documented
+Add either streaming output support or REPL mode to an existing scaffolded or
+scaffold-compatible takeover-adopted CLI Skill project by expanding the
+matching template and applying the documented
 source patches. Feature additions must preserve the generated runtime
 conventions already present in the scaffold, including the four help scenarios
 (leaf default structured failure, non-leaf default human-readable help,
@@ -20,13 +21,15 @@ stage before continuing with this operation.
 | Input          | Required | Format             | Default | Description                                    |
 | -------------- | -------- | ------------------ | ------- | ---------------------------------------------- |
 | `feature`      | Yes      | `stream` or `repl` | —       | Which optional capability to add.              |
-| `project_path` | Yes      | Directory path     | —       | Path to the existing scaffolded Skill project. |
+| `project_path` | Yes      | Directory path     | —       | Path to the existing scaffolded or takeover-adopted Skill project. |
 
 ## Prerequisites
 
-- `project_path` must already contain a scaffolded Rust CLI Skill created from this Skill package or an equivalent structure.
+- `project_path` must already contain a scaffolded Rust CLI Skill created from
+  this Skill package or a takeover-adopted project that already matches the
+  same scaffold-compatible structure.
 - The project must include `Cargo.toml`, `SKILL.md`, `src/main.rs`,
-  `src/lib.rs`, and `src/help.rs`.
+  `src/lib.rs`, `src/help.rs`, and `src/context.rs`.
 - The Agent must be able to read templates from this Skill package and write files into the target project.
 
 ## Pre-Checks
@@ -35,17 +38,42 @@ Before making any edits:
 
 1. Resolve `project_path` to an absolute path.
 2. Confirm `Cargo.toml` and `SKILL.md` exist at the project root. If either is missing, stop: this is not a valid Skill project.
-3. Confirm `src/main.rs`, `src/lib.rs`, and `src/help.rs` exist. If any are
-   missing, stop and explain which scaffolded file is absent.
-4. Validate `feature` is exactly `stream` or `repl`. Reject any other value.
-5. Detect existing features:
+3. Confirm `src/main.rs`, `src/lib.rs`, `src/help.rs`, and `src/context.rs`
+   exist. If any are missing, stop and explain which scaffold-compatible file
+   is absent.
+4. Confirm at least one baseline receipt exists in `.cli-forge/`:
+   `scaffold-receipt.yml` or `takeover-receipt.yml`. If neither is present,
+   stop and route the project through Takeover for baseline establishment or
+   refresh first, even when `design-contract.yml` and `cli-plan.yml` already
+   exist.
+5. If the project only has `takeover-receipt.yml`, also confirm the rest of
+   the scaffold-compatible patch surface and overlay-required API/dependency
+   surface exist:
+   - `Cargo.toml`
+   - `SKILL.md`
+   - `src/context.rs`
+   - `tests/cli_test.rs` when the feature workflow is expected to patch the
+     generated integration tests directly
+   - `src/context.rs` must expose the scaffold-style context/runtime helpers
+     the overlays call directly, including `resolve_runtime_locations`
+   - for `repl`, `Cargo.toml` must already carry `rustyline`, and
+     `src/context.rs` must expose the context API used by `repl.rs.tpl`
+   If these files or required surfaces are missing, stop and tell the user
+   normalization to the scaffold-compatible layout/surface, or manual feature
+   implementation, is required.
+6. Validate `feature` is exactly `stream` or `repl`. Reject any other value.
+7. Detect existing features:
    - If `feature == stream` and `src/stream.rs` already exists, stop and tell the user streaming is already present.
    - If `feature == repl` and `src/repl.rs` already exists, stop and tell the user REPL is already present.
 
 ## Common Procedure
 
 1. Read the target project's current `Cargo.toml`, `src/main.rs`, `src/lib.rs`,
-   `src/help.rs`, `SKILL.md`, and `tests/cli_test.rs` if it exists.
+   `src/help.rs`, `src/context.rs`, `SKILL.md`, and `tests/cli_test.rs` when
+   present. If a takeover-adopted project is missing any file or overlay API/
+   dependency surface that the documented patches modify or call directly, stop
+   and tell the user this stage cannot safely apply the templates until the
+   repository is normalized or the feature is implemented manually.
 2. Identify the crate name from `[package].name`; use the snake_case crate path already present in `src/main.rs`.
 3. Expand the matching template from this Skill package:
    - `templates/stream.rs.tpl` -> `src/stream.rs`
@@ -317,7 +345,8 @@ pub mod stream;
 | -------------------------------------------------- | ----------------------------------------------------- |
 | `feature` is not `stream` or `repl`                | Reject the request and ask for a supported feature.   |
 | `project_path` does not exist                      | Stop and report the missing path.                     |
-| `project_path` is not a scaffolded Skill project   | Stop and explain which required file is missing.      |
+| `project_path` lacks any baseline receipt | Stop and route the project through Takeover first. |
+| Takeover baseline exists but required scaffold-compatible files are missing | Stop and tell the user normalization or manual feature implementation is required. |
 | Requested feature file already exists              | Stop and tell the user no changes were made.          |
 | Template file is missing from this Skill package   | Stop and report that the Skill package is incomplete. |
 | Build/lint/format fails after applying the feature | Fix the project before reporting success.             |

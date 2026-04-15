@@ -9,6 +9,16 @@ project_path: "{{project_path}}"
 cli_plan_ref: "./cli-plan.yml"
 timestamp: "{{iso8601_timestamp}}"
 
+provenance:
+  design_contract_ref: "./design-contract.yml"
+  design_contract_receipt: "{{design_contract_receipt}}"
+  cli_plan_receipt: "{{cli_plan_receipt}}"
+  baseline_receipt_ref: "{{./scaffold-receipt.yml|./takeover-receipt.yml}}"
+  baseline_receipt: "{{baseline_receipt}}"
+  extend_receipt_ref: "{{./extend-receipt.yml|none}}"
+  extend_receipt: "{{extend_receipt_or_none}}"
+  contract_set_receipt: "{{contract_set_receipt}}"
+
 result: "{{compliant|warning|non_compliant}}"
 
 checks:

@@ -4,15 +4,17 @@
 # downstream stage. Stored at: <target-project>/.cli-forge/handoff.yml
 
 stage_from: "router"
-stage_to: "{{next_stage}}"           # design | plan | scaffold | extend | validate | publish
+stage_to: "{{next_stage}}"           # design | takeover | plan | scaffold | extend | validate | publish
 timestamp: "{{iso8601_timestamp}}"
-classification: "{{classification}}" # design | plan | scaffold | extend | validate | publish
+classification: "{{classification}}" # design | takeover | plan | scaffold | extend | validate | publish
 
 inputs:
   skill_name: "{{skill_name}}"
   project_path: "{{project_path}}"
   feature: "{{feature}}"             # stream | repl (for extend); daemon requests route to plan
   publish_mode: "{{mode}}"           # report_only | dry_run | live_release (only for publish)
+  post_adoption_objective: "{{post_adoption_objective}}" # validate | extend | publish | general_adoption
+  takeover_mode: "{{takeover_mode}}" # first_adoption | baseline_establishment | contract_refresh
 
 validation_status: "{{current|stale|missing}}"
 notes: "{{free_text}}"

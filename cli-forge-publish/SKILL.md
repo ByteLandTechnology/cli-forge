@@ -41,7 +41,7 @@ version with the git tag + GitHub Release. The total count is
 
 | #   | Check                                                                 | Source        |
 | --- | --------------------------------------------------------------------- | ------------- |
-| 1   | `validation-report.yml` exists and `result == compliant` or `warning` | Validate      |
+| 1   | `validation-report.yml` exists, is fresh, and `result == compliant` or `warning` | Validate      |
 | 2   | Target repository path is explicitly known                            | Router / User |
 | 3   | Requested publish mode is explicit                                    | Router / User |
 | 4   | npm package name, CLI name, and scope decision are explicit           | User          |
@@ -53,7 +53,7 @@ decision applies uniformly to the main package and all six platform packages.
 
 ## Required Inputs
 
-- Validation outcome (refusal to publish if `non_compliant` or stale)
+- Validation outcome plus provenance snapshot (refusal to publish if `non_compliant`, stale, or provenance-mismatched)
 - Publish mode: `report_only`, `dry_run`, or `live_release`
 - Source project path
 - `cliName` — the CLI binary name
@@ -67,18 +67,29 @@ decision applies uniformly to the main package and all six platform packages.
    planning constraints.
 2. Accept the inbound `validation-report.yml`. Refuse to proceed if validation
    failed; do not re-run validation here.
-3. Ask the user for the inputs listed above if not already collected. If the
+3. Verify validation freshness before any publish-mode action:
+   - compare the current `.cli-forge/design-contract.yml`,
+     `.cli-forge/cli-plan.yml`, baseline receipt (`scaffold-receipt.yml` or
+     `takeover-receipt.yml`), and optional `extend-receipt.yml` against the
+     provenance snapshot recorded in `validation-report.yml`
+   - for takeover-adopted baselines, require the report provenance to match the
+     current adopted contract + receipt set exactly; do not rely only on the
+     aggregate validation result
+   - if any required baseline artifact is missing, has a different receipt, or
+     takeover recorded contract/baseline rewrites after validation, stop and
+     route back to Validate
+4. Ask the user for the inputs listed above if not already collected. If the
    mode is `report_only`, skip to step 7.
-4. If the skill project lacks the release automation assets, adopt them by
+5. If the skill project lacks the release automation assets, adopt them by
    copying the contents of `./templates/` to the project root. The adopted
    asset pack does NOT contain Scaffold-stage source templates (`*.tpl`).
-5. Fill `release/config.json` and `npm/main/package.json` with the collected
+6. Fill `release/config.json` and `npm/main/package.json` with the collected
    inputs.
-6. Verify the target repository has:
+7. Verify the target repository has:
    - GitHub Actions enabled on a GitHub-hosted runner with `id-token: write`
    - npm trusted publishing configured on npmjs.com for the main package and
      for each of the 6 platform packages, every entry pointing at `release.yml`
-7. Follow the mode path defined in
+8. Follow the mode path defined in
    [`./instructions/release/skill-release-runbook.md`](./instructions/release/skill-release-runbook.md):
    - `report_only`: audit readiness only. Read config and repository state,
      report blockers and next actions. Do NOT copy files, fill placeholders,
@@ -88,7 +99,7 @@ decision applies uniformly to the main package and all six platform packages.
      each. No tag, no GitHub Release, no real npm publication.
    - `live_release`: push to `main` (or `workflow_dispatch`) so
      `.github/workflows/release.yml` drives the end-to-end run.
-8. Generate `.cli-forge/release-receipt.yml` from the template at
+9. Generate `.cli-forge/release-receipt.yml` from the template at
    [`./contracts/release-receipt.yml.tpl`](./contracts/release-receipt.yml.tpl).
 
 ## Outputs
@@ -115,6 +126,9 @@ decision applies uniformly to the main package and all six platform packages.
   `${nextRelease.version}` from semantic-release hooks.
 - Do not bypass stale validation. If the codebase changed since the last
   validation report, route back to Validate.
+- For takeover-adopted repositories, freshness checks MUST verify provenance
+  against the current contract + receipt set, not just `validation-report.yml`
+  aggregate status or timestamp.
 - Do not hand-bump `npm/main/package.json#version`, hand-edit `CHANGELOG.md`
   release entries, or create tags outside semantic-release.
 - The asset pack's `npm/platforms/` directory is generated at release time.

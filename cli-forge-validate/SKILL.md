@@ -1,18 +1,18 @@
 ---
 name: cli-forge-validate
-description: "Validate stage for the cli-forge skill family: run the 46-check compliance ruleset against an existing skill project and compare any daemon surface against the declared CLI plan."
+description: "Validate stage for the cli-forge skill family: run the 46-check compliance ruleset against a scaffolded, takeover-adopted, or extended skill project and compare any daemon surface against the declared CLI plan."
 ---
 
 # cli-forge Validate
 
-Use this stage to verify that a generated Rust CLI Skill project complies with
-all structural, content, and code constraints before it proceeds to publication
-or whenever a fresh audit is needed.
+Use this stage to verify that a generated or takeover-adopted Rust CLI Skill
+project complies with all structural, content, and code constraints before it
+proceeds to publication or whenever a fresh audit is needed.
 
 ## Purpose
 
-Run the authoritative 46-check compliance ruleset against a scaffolded or
-extended project.
+Run the authoritative 46-check compliance ruleset against a scaffolded,
+takeover-adopted, or extended project.
 
 This stage acts as the final gatekeeper before release. It consumes the
 `cli-plan.yml` to define _what_ should be checked, and produces a structured
@@ -70,6 +70,8 @@ This stage acts as the final gatekeeper before release. It consumes the
    - `non_compliant` (>= 1 fail)
 7. Generate `.cli-forge/validation-report.yml` using the template at
    [`./contracts/validation-report.yml.tpl`](./contracts/validation-report.yml.tpl).
+   The report must snapshot the contract/receipt provenance Publish will later
+   compare against the current `.cli-forge/` baseline set.
 8. Present the validation outcome and any next-stage options using a
    dialog-based chooser. Do not require the user to type an exact phrase to
    continue to Publish or a fix-up stage, and do not present
@@ -92,11 +94,16 @@ This stage acts as the final gatekeeper before release. It consumes the
 - `WARN` results do not block publication; they highlight where the `cli-forge`
   standard advises a better path but the skill operates safely.
 - `FAIL` results MUST block any publication or npm distribution attempt. The
-  workflow must return to Scaffold or Extend to correct the issue.
+  workflow must return to Takeover, Scaffold, Extend, or Design to correct the
+  issue.
 - If `cli-plan.yml` marks daemon behavior `in_scope`, validate the declared
   daemon contract rather than silently downgrading to older managed-daemon
   assumptions. If the project still implements an older surface, call that
   mismatch out explicitly.
+- If a pre-existing project lacks `.cli-forge/cli-plan.yml`, do not improvise a
+  plan inside Validate. If `.cli-forge/design-contract.yml` already exists,
+  route to Plan so the approved design wording stays authoritative. Otherwise,
+  route to Takeover to reconstruct the missing baseline.
 - **Do not publish automatically.** Ensure the user has the chance to review the
   validation report before handing off to the Publish stage. Use a dialog-based
   handoff, never replace it with numbered text input, and if dialog tooling is
@@ -107,5 +114,5 @@ This stage acts as the final gatekeeper before release. It consumes the
 
 - If `compliant` or `warning`, proceed to
   [`../cli-forge-publish/SKILL.md`](../cli-forge-publish/SKILL.md).
-- If `non_compliant`, return to Scaffold, Extend, or Design to fix the
+- If `non_compliant`, return to Takeover, Scaffold, Extend, or Design to fix the
   underlying issues.

@@ -1,6 +1,6 @@
 ---
 name: cli-forge
-description: "Router for the cli-forge skill family: classify the request, check filesystem state, gather inputs, and route to the earliest incomplete stage."
+description: "Router for the cli-forge skill family: classify the request, detect missing contract baselines, check filesystem state, and route to the earliest incomplete or takeover stage."
 ---
 
 # cli-forge Router
@@ -17,8 +17,8 @@ child skill.
 
 Act as the intake layer and traffic controller.
 
-- Classify requests into one of six downstream stages: Design, Plan, Scaffold,
-  Extend, Validate, or Publish.
+- Classify requests into one of seven downstream stages: Design, Takeover,
+  Plan, Scaffold, Extend, Validate, or Publish.
 - Check the current filesystem state (presence of directories, base files,
   validation reports).
 - Assemble inputs and generate the `handoff.yml` contract.
@@ -38,7 +38,12 @@ Act as the intake layer and traffic controller.
 ## Required Inputs
 
 - The user request (explicit or ambiguous)
-- Target directory path. **CRITICAL**: If the user does not provide the project path, you MUST actively search the workspace for `.cli-forge/` directories to locate the active project, or explicitly ask the user for the path. Do not assume the root directory is the target project.
+- Target directory path. **CRITICAL**: If the user does not provide the project
+  path, you MUST actively search the workspace for `.cli-forge/` directories to
+  locate the active project. If the request appears to target a pre-existing
+  Rust CLI project that has not yet adopted `cli-forge`, search for likely
+  project roots such as `Cargo.toml` plus `src/main.rs`, or explicitly ask the
+  user for the path. Do not assume the root directory is the target project.
 
 ## Workflow
 
@@ -46,22 +51,31 @@ Act as the intake layer and traffic controller.
 2. Inspect the filesystem to disambiguate the stage:
    - Missing target directory + new request -> Design
    - `design-contract.yml` exists but no `cli-plan.yml` -> Plan
+   - Existing project with source files already present + missing
+     `.cli-forge/design-contract.yml` -> Takeover
+   - Existing project with source files already present + missing both
+     `.cli-forge/design-contract.yml` and `.cli-forge/cli-plan.yml` -> Takeover
    - `cli-plan.yml` exists but no source files -> Scaffold
-   - Existing project + feature request (`stream` or `repl`) -> Extend
+   - Existing project + feature request (`stream` or `repl`) + scaffold-compatible
+     baseline -> Extend
    - Existing project + daemon capability request -> Plan
    - Existing project + audit request (or post-edit verification) -> Validate
    - Passed validation + release request (including npm publication) ->
      Publish
 3. Confirm the required inputs for the chosen path:
    - Scaffold: `skill_name`
+   - Takeover: `project_path`, `post_adoption_objective`, and `takeover_mode`
    - Extend: `project_path` and `feature` (`stream` or `repl`)
    - Plan: daemon capability requests, daemon contract changes, or daemon scope updates
    - Validate: `project_path`
    - Publish: `publish_mode`
-4. Use the template at `contracts/handoff.yml.tpl` to generate
+4. Ensure the target project's `.cli-forge/` directory exists before writing
+   any router artifact. This first-write barrier also applies to
+   first-adoption repositories that do not yet carry any pipeline files.
+5. Use the template at `contracts/handoff.yml.tpl` to generate
    `.cli-forge/handoff.yml` in the target project directory. This explicitly
    records the classification and inputs for downstream consumption.
-5. Provide a clear handoff response specifying which child skill should be
+6. Provide a clear handoff response specifying which child skill should be
    invoked next. Use a dialog-based chooser for the next-step handoff
    (for example, `request_user_input`). Do not require the user to type an
    exact phrase or skill name, and do not present numbered options that expect
@@ -87,24 +101,44 @@ Act as the intake layer and traffic controller.
 - **CRITICAL DIRECTIVE TO THE ASSISTANT**: You MUST STOP and yield to the user after generating `handoff.yml` and explaining the next steps. Do not invoke the next stage autonomously. Use a dialog-based selection for the handoff, never require the user to explicitly type the next skill name, and never replace the chooser with numbered text input.
 - The Router must stay thin. Do not execute templates, run compilation steps, or define CLI contracts here.
 - Never force a workflow forward if an earlier stage is incomplete. For
-  example, if the user asks to "validate" but the project is missing the
-  scaffold baseline, route back to Scaffold.
+  example, if the user asks to "validate" but the project is a pre-existing
+  repository with no usable contract baseline, route to Takeover before
+  Validate. If `design-contract.yml` already exists but `cli-plan.yml` does
+  not, resume Plan instead of rebuilding contracts from implementation. If the
+  user has an approved `cli-plan.yml` but no generated source tree yet, route
+  to Scaffold.
 - If the user asks for a release but validation is missing or stale, route to
   Validate first.
 - If the user asks to add daemon support to an existing project, route to Plan
   first so the daemon capability contract can be updated explicitly. Do not
   send daemon requests to Extend until dedicated daemon implementation support
   exists there.
+- If an existing Rust CLI project with source files already present lacks a
+  usable contract baseline, do not send it directly to Design, Scaffold,
+  Extend, or Validate. Route it to Takeover only when the repository is
+  missing `.cli-forge/design-contract.yml`, or when the user explicitly asks
+  to refresh the adopted contracts, or when a downstream stage needs
+  takeover baseline establishment because the contracts exist but no usable
+  baseline receipt does. If `design-contract.yml` is already approved,
+  preserve that Design -> Plan resume path instead of routing back through
+  Takeover unless the user explicitly asked for takeover refresh or baseline
+  establishment.
+- Do not route arbitrary takeover-adopted projects to Extend. Extend is only
+  valid when the current project layout already matches the scaffold-compatible
+  files that the feature templates patch directly.
 - Do not route new work to `cli-forge-distribute`. npm publication is part of
   Publish, and `cli-forge-distribute` is retained only as archived reference
   material.
-- If the target project directory is unknown, you MUST ask the user or search for `.cli-forge/` folders. Do not assume the current working directory applies.
+- If the target project directory is unknown, you MUST ask the user or search
+  for `.cli-forge/` folders. When takeover is likely, also search for probable
+  Rust CLI project roots. Do not assume the current working directory applies.
 
 ## Next Step
 
 Route to one of:
 
 - [`../cli-forge-design/SKILL.md`](../cli-forge-design/SKILL.md)
+- [`../cli-forge-takeover/SKILL.md`](../cli-forge-takeover/SKILL.md)
 - [`../cli-forge-plan/SKILL.md`](../cli-forge-plan/SKILL.md)
 - [`../cli-forge-scaffold/SKILL.md`](../cli-forge-scaffold/SKILL.md)
 - [`../cli-forge-extend/SKILL.md`](../cli-forge-extend/SKILL.md)
