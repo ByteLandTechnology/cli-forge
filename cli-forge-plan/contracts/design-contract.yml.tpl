@@ -11,9 +11,25 @@ sync_surfaces:
   - "Cargo.toml package.description"
   - "SKILL.md purpose section"
   - "README.md header and description"
-  - "help text summary line"
+  - "help text summary line across non-leaf auto-help, `--help`, and structured `help`"
   - "release notes summary (when publish is in scope)"
   - "npm package description (when publish is in scope)"
+
+help_contract:
+  leaf_missing_required_input: "structured_error"
+  non_leaf_default: "human_readable_help"
+  help_flag: "human_readable_help"
+  help_subcommand: "structured_help"
+  human_readable_help:
+    style: "man_like"
+    section_order:
+      - "NAME"
+      - "SYNOPSIS"
+      - "DESCRIPTION"
+      - "OPTIONS"
+      - "FORMATS"
+      - "EXAMPLES"
+      - "EXIT CODES"
 
 publish_contract:
   stage: "publish"

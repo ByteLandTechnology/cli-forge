@@ -10,6 +10,28 @@ use std::path::Path;
 use std::process::{Command as StdCommand, Output, Stdio};
 use tempfile::TempDir;
 
+fn assert_man_like_help(stdout: &str) {
+    let required_sections = [
+        "NAME",
+        "SYNOPSIS",
+        "DESCRIPTION",
+        "OPTIONS",
+        "FORMATS",
+        "EXAMPLES",
+        "EXIT CODES",
+    ];
+
+    let lines: Vec<&str> = stdout.lines().collect();
+    let mut next_line_index = 0;
+    for section in required_sections {
+        let relative_index = lines[next_line_index..]
+            .iter()
+            .position(|line| *line == section)
+            .unwrap_or_else(|| panic!("missing help section {section:?}"));
+        next_line_index += relative_index + 1;
+    }
+}
+
 fn cmd() -> Command {
     Command::cargo_bin(env!("CARGO_PKG_NAME")).expect("binary should exist")
 }
@@ -68,28 +90,32 @@ fn test_{{SKILL_NAME_SNAKE}}_version_prints_semver() {
 
 #[test]
 fn test_{{SKILL_NAME_SNAKE}}_top_level_auto_help_exits_zero() {
-    cmd()
-        .assert()
-        .success()
-        .stdout(predicate::str::contains("NAME"))
-        .stdout(predicate::str::contains("Available subcommands"))
-        .stdout(predicate::str::contains("--version"))
-        .stdout(predicate::str::contains("run"));
+    let output = cmd().output().expect("failed to execute");
+
+    assert!(output.status.success(), "expected exit 0");
+
+    let stdout = String::from_utf8(output.stdout).expect("non-utf8 output");
+    assert_man_like_help(&stdout);
+    assert!(stdout.contains("Available subcommands"));
+    assert!(stdout.contains("--version"));
+    assert!(stdout.contains("run"));
 }
 
 #[test]
 fn test_{{SKILL_NAME_SNAKE}}_non_leaf_auto_help_exits_zero() {
-    cmd()
-        .arg("context")
-        .assert()
-        .success()
-        .stdout(predicate::str::contains("Available subcommands"))
-        .stdout(predicate::str::contains("show"))
-        .stdout(predicate::str::contains("use"));
+    let output = cmd().arg("context").output().expect("failed to execute");
+
+    assert!(output.status.success(), "expected exit 0");
+
+    let stdout = String::from_utf8(output.stdout).expect("non-utf8 output");
+    assert_man_like_help(&stdout);
+    assert!(stdout.contains("Available subcommands"));
+    assert!(stdout.contains("show"));
+    assert!(stdout.contains("use"));
 }
 
 #[test]
-fn test_{{SKILL_NAME_SNAKE}}_help_flag_stays_plain_text_even_with_json_format() {
+fn test_{{SKILL_NAME_SNAKE}}_help_flag_stays_human_readable_even_with_json_format() {
     let output = cmd()
         .args(["run", "--help", "--format", "json"])
         .output()
@@ -98,7 +124,7 @@ fn test_{{SKILL_NAME_SNAKE}}_help_flag_stays_plain_text_even_with_json_format() 
     assert!(output.status.success(), "expected exit 0");
 
     let stdout = String::from_utf8(output.stdout).expect("non-utf8 output");
-    assert!(stdout.contains("NAME"));
+    assert_man_like_help(&stdout);
     assert!(!stdout.trim_start().starts_with('{'));
 }
 
@@ -176,6 +202,7 @@ fn test_{{SKILL_NAME_SNAKE}}_missing_leaf_input_returns_structured_yaml_error() 
             .unwrap()
             .contains("requires <INPUT>")
     );
+    assert!(!stderr.contains("NAME\n"));
 }
 
 #[test]
@@ -198,6 +225,7 @@ fn test_{{SKILL_NAME_SNAKE}}_missing_leaf_input_returns_structured_json_error() 
             .unwrap()
             .contains("requires <INPUT>")
     );
+    assert!(!stderr.contains("NAME\n"));
 }
 
 #[test]

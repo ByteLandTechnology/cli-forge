@@ -84,7 +84,11 @@ Plans must state the intended behavior for:
 - default structured output format: YAML unless the plan justifies otherwise
 - explicit `--format yaml|json|toml` support
 - structured errors on `stderr` with stable machine-readable fields
-- plain-text `--help` vs structured `help` behavior
+- four help scenarios: leaf default structured failure, non-leaf default
+  man-like human-readable help, `--help` man-like human-readable help, and
+  structured `help`
+- the required man-like human-readable help section order:
+  `NAME -> SYNOPSIS -> DESCRIPTION -> OPTIONS -> FORMATS -> EXAMPLES -> EXIT CODES`
 - daemon lifecycle states, routing semantics, timeout semantics, and recovery
   messaging when daemon is enabled
 - `--stream` framing rules if streaming is in scope

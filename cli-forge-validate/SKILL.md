@@ -50,7 +50,7 @@ This stage acts as the final gatekeeper before release. It consumes the
    - `DEPS-*` and `META-*` (dependencies and Cargo metadata)
    - `SKILL-*` (the `SKILL.md` contract)
    - `BUILD-*` (build, clippy, and format verification)
-   - `HELP-*` (plain-text and structured help behavior)
+   - `HELP-*` (leaf/non-leaf/`--help`/`help` behavior plus man-like formatting)
    - `DIR-*` (runtime directory documentation)
    - `CTX-*` (Active Context behavior and precedence)
    - `ERR-*` (structured error behavior)

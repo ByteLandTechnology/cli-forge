@@ -84,7 +84,12 @@ Plans must state the intended behavior for:
 - default structured output format: YAML unless the plan justifies otherwise
 - explicit `--format yaml|json|toml` support
 - structured errors on `stderr` with stable machine-readable fields
-- plain-text `--help` vs structured `help` behavior
+- the four help scenarios: leaf default structured failure, non-leaf default
+  human-readable help, `--help` human-readable help, and `help` structured
+  help
+- the required man-like human-readable help sections and their canonical order:
+  `NAME`, `SYNOPSIS`, `DESCRIPTION`, `OPTIONS`, `FORMATS`, `EXAMPLES`,
+  `EXIT CODES`
 - daemon lifecycle states, routing semantics, timeout semantics, and recovery
   messaging when daemon is enabled
 - `--stream` framing rules if streaming is in scope
@@ -108,6 +113,7 @@ Plans should include the expected generated structure and validation evidence:
 ## Risks To Check Explicitly In Every Plan
 
 - drift between `SKILL.md`, help text, and actual CLI behavior
+- human-readable help drifting away from the required man-like section order
 - daemon wording drifting between design, plan, scaffold, extend, and validate
   surfaces
 - unclear default output vs explicit `--format` behavior

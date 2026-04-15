@@ -5,10 +5,14 @@
 Create a new CLI Skill project directory with all required files, correct
 structure, and working boilerplate that compiles and passes linting without any
 manual modification. The scaffolded CLI must include the shared runtime
-conventions from this Skill package: plain-text `--help`, structured `help`,
-stable structured errors, runtime-directory helpers, and Active Context
-boilerplate. This operation consumes the description contract approved by the
-earlier `description` stage; it does not invent a competing skill summary.
+conventions from this Skill package: four explicit help behaviors (leaf
+default structured failure, non-leaf default human-readable help, `--help`
+human-readable help, and structured `help`), stable structured errors,
+runtime-directory helpers, and Active Context boilerplate. Human-readable help
+must be rendered in a man-like format with the required section order
+`NAME -> SYNOPSIS -> DESCRIPTION -> OPTIONS -> FORMATS -> EXAMPLES -> EXIT CODES`.
+This operation consumes the description contract approved by the earlier
+`description` stage; it does not invent a competing skill summary.
 The current scaffold baseline does not implement the planned daemon app-server
 capability.
 
@@ -97,7 +101,7 @@ The expanded files must reuse one approved description contract:
 - `Cargo.toml` package description
 - `SKILL.md` frontmatter and `## Description`
 - `README.md` overview
-- structured and plain-text help summaries
+- structured and human-readable help summaries
 
 The expanded files must also preserve the invocation contract:
 
@@ -150,7 +154,12 @@ After writing all files, verify:
 5. **Tests pass**: Run `cargo test`. Must pass.
 
 6. **Runtime contract is present**:
-   - Top-level invocation should auto-display plain-text help and exit `0`.
+   - Top-level invocation and non-leaf invocation should auto-display
+     human-readable man-like help and exit `0`.
+   - `--help` should render the same human-readable man-like help regardless
+     of `--format`.
+   - Leaf validation failures such as missing required input should stay
+     structured and must not auto-display help.
    - `help run --format yaml` should return structured help.
    - `paths` should document user-scoped runtime directories.
    - `context show` should expose the generated Active Context surface.

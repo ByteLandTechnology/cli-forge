@@ -49,14 +49,22 @@ contract (commands, flags, formats) belongs to the Plan stage downstream.
    - `Cargo.toml` package.description
    - `SKILL.md` purpose section
    - `README.md` header and description
-   - Help text summary line
+   - Help text summary line across non-leaf auto-help, `--help`, and
+     structured `help`
    - Release notes summary (when publish is in scope)
    - npm package description (when publish is in scope)
-6. Record the publish contract for later release work: Publish owns both the
+6. Record the downstream help contract for later stages:
+   - leaf defaults stay structured failures instead of auto-help
+   - non-leaf defaults auto-render man-like human-readable help
+   - `--help` renders man-like human-readable help
+   - `help` returns structured output
+   - human-readable help preserves `NAME -> SYNOPSIS -> DESCRIPTION ->
+     OPTIONS -> FORMATS -> EXAMPLES -> EXIT CODES`
+7. Record the publish contract for later release work: Publish owns both the
    repo-native GitHub Release and npm publication.
-7. Generate `.cli-forge/design-contract.yml` using the format defined in
+8. Generate `.cli-forge/design-contract.yml` using the format defined in
    [`./contracts/design-contract.yml.tpl`](./contracts/design-contract.yml.tpl).
-8. Request user approval of the design contract before moving forward. Use a
+9. Request user approval of the design contract before moving forward. Use a
    dialog-based chooser (for example, `request_user_input`) so the user can
    select `approve and continue`, `request changes`, or `stop for now`. Do not
    require an exact reply string, and do not ask for numbered or manually typed
@@ -73,8 +81,9 @@ contract (commands, flags, formats) belongs to the Plan stage downstream.
 | 1   | Single-line purpose summary is approved         |
 | 2   | Positioning statement is approved               |
 | 3   | Sync surfaces list is complete                  |
-| 4   | Publish contract is recorded                    |
-| 5   | `design-contract.yml` is generated and approved |
+| 4   | Help contract is recorded                       |
+| 5   | Publish contract is recorded                    |
+| 6   | `design-contract.yml` is generated and approved |
 
 ## Guardrails
 

@@ -5,12 +5,15 @@
 Add either streaming output support or REPL mode to an existing scaffolded CLI
 Skill project by expanding the matching template and applying the documented
 source patches. Feature additions must preserve the generated runtime
-conventions already present in the scaffold, including plain-text `--help`,
-structured `help`, user-scoped runtime directories, Active Context support,
-and accurate structured-help metadata for newly enabled features. When a
-feature request also changes the generated skill's user-facing purpose or
-positioning, route through the `description` stage before continuing with this
-operation.
+conventions already present in the scaffold, including the four help scenarios
+(leaf default structured failure, non-leaf default human-readable help,
+`--help` human-readable help, and structured `help`), user-scoped runtime
+directories, Active Context support, and accurate structured-help metadata for
+newly enabled features. Human-readable help must remain man-like with the
+canonical section order `NAME -> SYNOPSIS -> DESCRIPTION -> OPTIONS -> FORMATS
+-> EXAMPLES -> EXIT CODES`. When a feature request also changes the generated
+skill's user-facing purpose or positioning, route through the `description`
+stage before continuing with this operation.
 
 ## Inputs
 
@@ -58,6 +61,11 @@ Before making any edits:
      command surfaces already scaffolded into the project.
    - Keep `src/help.rs` synchronized by updating the global option list and
      `FeatureAvailability` values for the newly enabled feature.
+   - Preserve the four help scenarios exactly: leaf defaults stay structured,
+     non-leaf defaults auto-render man-like help, `--help` stays man-like, and
+     `help` stays structured.
+   - Keep the man-like section sequence intact whenever feature-specific help
+     text is added.
    - Do not replace or bypass a project's declared daemon contract when the
      project also exposes daemon behavior. Preserve the daemon command surface,
      routing flags, transport choices, recovery semantics, and documented
@@ -159,8 +167,8 @@ Update every `FeatureAvailability` block so streaming is marked as enabled:
 ```
 
 Also add `--stream` to the global options rendered for the top-level and leaf
-command paths so both plain-text and structured help stay accurate after the
-feature is added.
+command paths so man-like human-readable help and structured help both stay
+accurate after the feature is added.
 
 ### `SKILL.md` Patch Snippet
 
@@ -245,8 +253,8 @@ Update every `FeatureAvailability` block so REPL is marked as enabled:
 ```
 
 Also add `--repl` to the global options rendered for the top-level and leaf
-command paths so both plain-text and structured help stay accurate after the
-feature is added.
+command paths so man-like human-readable help and structured help both stay
+accurate after the feature is added.
 
 ### `lib.rs` Patch Snippet
 

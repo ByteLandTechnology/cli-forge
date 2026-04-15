@@ -39,7 +39,7 @@ as the final installed skill interface.
 | Flag              | Type                       | Default                   | Description                                                        |
 | ----------------- | -------------------------- | ------------------------- | ------------------------------------------------------------------ |
 | `--format`, `-f`  | `yaml` \| `json` \| `toml` | `yaml`                    | Structured output format for one-shot commands and structured help |
-| `--help`, `-h`    | —                          | —                         | Plain-text help only; never emits YAML/JSON/TOML                   |
+| `--help`, `-h`    | —                          | —                         | Man-like human-readable help only; never emits YAML/JSON/TOML      |
 | `--config-dir`    | `PATH`                     | platform default          | Override the configuration directory                               |
 | `--data-dir`      | `PATH`                     | platform default          | Override the durable data directory                                |
 | `--state-dir`     | `PATH`                     | derived from data         | Override the runtime state directory                               |
@@ -72,11 +72,17 @@ written to `stderr`.
 
 ### Help Channels
 
-- `--help` is the plain-text help channel. It always prints text and exits `0`.
+- Leaf commands never auto-display help. Missing required input stays a
+  structured validation failure in the selected output format.
+- Top-level invocation and non-leaf invocation (for example `context`) display
+  man-like human-readable help automatically and exit `0`.
+- `--help` is the man-like human-readable help channel. It always prints text
+  and exits `0`, regardless of `--format`.
 - `help` is the structured help channel. It supports `yaml`, `json`, and
   `toml`, with YAML as the default.
-- Top-level invocation and non-leaf invocation (for example `context`) display
-  plain-text help automatically and exit `0`.
+- Human-readable help is a required man-like surface with these sections in
+  order: `NAME`, `SYNOPSIS`, `DESCRIPTION`, `OPTIONS`, `FORMATS`, `EXAMPLES`,
+  `EXIT CODES`.
 
 ### Structured Results
 
@@ -133,7 +139,7 @@ override_mechanisms:
 
 | Exit Code | Meaning                              |
 | --------- | ------------------------------------ |
-| `0`       | Success or plain-text help           |
+| `0`       | Success or human-readable help       |
 | `1`       | Unexpected runtime failure           |
 | `2`       | Structured usage or validation error |
 
@@ -145,7 +151,7 @@ Example structured error (`--format json`):
 ```json
 {
   "code": "run.missing_input",
-  "message": "the run command requires <INPUT>; use --help for plain-text help",
+  "message": "the run command requires <INPUT>; use --help for man-like human-readable help",
   "source": "leaf_validation",
   "format": "json"
 }
@@ -153,12 +159,20 @@ Example structured error (`--format json`):
 
 ## Examples
 
-Plain-text discovery:
+Human-readable discovery:
 
 ```text
 $ {{SKILL_NAME}}
 NAME
   {{SKILL_NAME}} - {{DESCRIPTION}}
+```
+
+`--help` discovery:
+
+```text
+$ {{SKILL_NAME}} run --help
+NAME
+  {{SKILL_NAME}} run - Execute the generated leaf command
 ```
 
 Structured help:

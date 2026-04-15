@@ -38,7 +38,7 @@ struct Cli {
     #[arg(long, short, value_enum, global = true, default_value_t = OutputFormat::Yaml)]
     format: OutputFormat,
 
-    /// Render plain-text help for the selected command path
+    /// Render man-like human-readable help for the selected command path
     #[arg(long, short = 'h', global = true, action = ArgAction::SetTrue)]
     help: bool,
 
@@ -194,6 +194,11 @@ fn run_cli() -> std::result::Result<(), AppExit> {
 
     let runtime_overrides = cli_runtime_overrides(&cli);
 
+    // The help contract is explicit:
+    // - `--help` always renders man-like help
+    // - top-level and non-leaf paths auto-render man-like help
+    // - leaf validation failures stay structured
+    // - `help` stays the structured help channel
     match cli.command {
         None => render_plain_text_help_for_path(&[]),
         Some(Command::Help(command)) => render_structured_help(&command.path, format),
@@ -379,7 +384,7 @@ fn execute_run(
     let Some(input) = command.input else {
         let error = StructuredError::new(
             "run.missing_input",
-            "the run command requires <INPUT>; use --help for plain-text help",
+            "the run command requires <INPUT>; use --help for man-like human-readable help",
             "leaf_validation",
             format,
         )

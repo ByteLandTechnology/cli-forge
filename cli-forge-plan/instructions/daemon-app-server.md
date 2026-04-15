@@ -287,8 +287,14 @@ not fork into a separate schema just because it ran remotely.
 
 When daemon capability is enabled:
 
-- `--help` remains plain text only
+- leaf daemonizable commands still fail with structured errors instead of
+  auto-help when required input is missing
+- non-leaf daemon command paths auto-render human-readable help by default
+- `--help` renders human-readable help
 - `help daemon ...` remains structured
+- human-readable help remains man-like and preserves the canonical section
+  order `NAME -> SYNOPSIS -> DESCRIPTION -> OPTIONS -> FORMATS -> EXAMPLES ->
+  EXIT CODES`
 - help must describe both server mode and client routing flags
 - help must explain which commands are daemonizable and which always remain
   local

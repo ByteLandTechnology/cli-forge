@@ -54,12 +54,31 @@ explicitly unsupported if streaming TOML is impractical.
 
 ## Step 4: Lock Help Behavior
 
-Define two distinct help surfaces:
+Define four explicit help scenarios and record all of them in `cli-plan.yml`:
 
-1. **Plain-text help**: `<skill-name> --help` or `<skill-name> <command> --help`
-   produces human-readable text on stdout.
-2. **Structured help**: `<skill-name> help` or `<skill-name> help <command>`
-   produces machine-readable output in the format specified by `--format`.
+1. **Leaf default behavior**: invoking a leaf command without required input
+   must fail with a structured error in the selected `--format`; it must not
+   auto-render help text.
+2. **Non-leaf default behavior**: invoking the top level or any non-leaf
+   command path without selecting a leaf command must render human-readable
+   help on stdout and exit `0`.
+3. **`--help` flag behavior**: `<skill-name> --help` or
+   `<skill-name> <command> --help` must render human-readable help on stdout
+   and exit `0`, regardless of `--format`.
+4. **`help` subcommand behavior**: `<skill-name> help` or
+   `<skill-name> help <command>` must return structured help in the format
+   selected by `--format`.
+
+Human-readable help is not free-form prose. It must be locked as a man-like
+surface with these required sections in this exact order:
+
+- `NAME`
+- `SYNOPSIS`
+- `DESCRIPTION`
+- `OPTIONS`
+- `FORMATS`
+- `EXAMPLES`
+- `EXIT CODES`
 
 ## Step 5: Lock Capability Scope
 

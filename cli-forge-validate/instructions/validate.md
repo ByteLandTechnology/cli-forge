@@ -87,9 +87,9 @@ truth and do not omit any of them.
 | `BUILD-001`  | build          | VI        | error    | `cargo build` succeeds.                                                                                                        |
 | `BUILD-002`  | build          | VI        | error    | `cargo clippy -- -D warnings` succeeds.                                                                                        |
 | `BUILD-003`  | build          | VI        | error    | `cargo fmt --check` succeeds.                                                                                                  |
-| `HELP-001`   | help           | III-D     | error    | `--help` remains plain-text only and exits `0`.                                                                                |
-| `HELP-002`   | help           | III-D     | error    | Structured help is available through `help` only.                                                                              |
-| `HELP-003`   | help           | III-D     | error    | Top-level and non-leaf auto-help exits `0` and lists subcommands.                                                              |
+| `HELP-001`   | help           | III-D     | error    | `--help` remains human-readable only, exits `0`, and stays man-like with `NAME`, `SYNOPSIS`, `DESCRIPTION`, `OPTIONS`, `FORMATS`, `EXAMPLES`, `EXIT CODES` in order. |
+| `HELP-002`   | help           | III-D     | error    | Structured help is available through `help` only; leaf validation failures do not auto-fall back to help.                      |
+| `HELP-003`   | help           | III-D     | error    | Top-level and non-leaf auto-help exits `0`, stays human-readable/man-like, and lists subcommands when applicable.              |
 | `HELP-004`   | help           | III-D     | error    | Structured `help` output documents command path, options, defaults, output formats, runtime directories, and Active Context.   |
 | `DIR-001`    | runtime_dirs   | III       | error    | Config/data/state/cache are documented separately.                                                                             |
 | `DIR-002`    | runtime_dirs   | III       | error    | Runtime directory defaults are user-scoped unless explicitly overridden.                                                       |
@@ -186,10 +186,16 @@ When the project exposes the generated runtime-conventions surface, inspect and
 record the following:
 
 1. **Help channels**
-   - Confirm `--help` stays plain-text.
+   - Confirm `--help` stays human-readable and ignores structured formatting
+     requests such as `--format json`.
+   - Confirm `--help`, top-level auto-help, and non-leaf auto-help all use the
+     required man-like section order: `NAME`, `SYNOPSIS`, `DESCRIPTION`,
+     `OPTIONS`, `FORMATS`, `EXAMPLES`, `EXIT CODES`.
    - Confirm `help --format yaml|json|toml` returns structured help.
    - Confirm top-level or non-leaf invocation without a leaf command returns
-     plain-text help with subcommands and exit `0`.
+     human-readable man-like help with subcommands and exit `0`.
+   - Confirm leaf-command validation failures return structured errors in the
+     selected format instead of auto-rendering help.
    - If daemon behavior is in scope according to `cli-plan.yml`, confirm help
      documents the daemon surface declared in the plan, including lifecycle
      commands, any client-routing flags, and which commands remain local-only.

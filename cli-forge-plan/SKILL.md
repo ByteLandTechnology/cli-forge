@@ -61,9 +61,14 @@ and Validate uses as the compliance baseline.
    - Shipped: `<skill-name> ...`
    - Dev: `cargo run -- ...`
    - Release binary: `./target/release/<skill-name> ...`
-7. Lock the help behavior:
-   - Plain-text: `--help` flag on any command
+7. Lock the help behavior as four explicit scenarios:
+   - Leaf default: missing required leaf input stays a structured failure, not auto-help
+   - Non-leaf default: top-level and non-leaf command paths auto-render human-readable help
+   - Flag-driven: `--help` on any command path renders human-readable help
    - Structured: `help` subcommand with `--format`
+   - Human-readable help must be man-like, with `NAME`, `SYNOPSIS`,
+     `DESCRIPTION`, `OPTIONS`, `FORMATS`, `EXAMPLES`, and `EXIT CODES`
+     in that order
 8. Lock capability scope — for each of `stream`, `repl`, and `daemon`,
    explicitly state `in_scope` or `out_of_scope`.
 9. If daemon is in scope, lock the daemon app-server contract:
@@ -91,7 +96,7 @@ continue`, `request changes`, or `stop for now`. Do not require an exact
 | 1   | Command tree is fully defined                                                  |
 | 2   | Every command has its flags listed with types and defaults                     |
 | 3   | Output format strategy is locked                                               |
-| 4   | Help behavior (plain-text and structured) is defined                           |
+| 4   | Help behavior (leaf/non-leaf/`--help`/`help`) is defined with man-like output  |
 | 5   | Each optional feature capability is explicitly marked in_scope or out_of_scope |
 | 6   | The daemon capability contract is locked or explicitly out of scope            |
 | 7   | Runtime directory and Active Context behavior are defined                      |

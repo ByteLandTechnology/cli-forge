@@ -151,7 +151,7 @@ fn top_level_help() -> HelpDocument {
                 name: "--help".to_string(),
                 value_name: "-".to_string(),
                 default_value: "false".to_string(),
-                description: "Render plain-text help for the selected command path".to_string(),
+                description: "Render man-like human-readable help for the selected command path".to_string(),
             },
             HelpOption {
                 name: "--version, -V".to_string(),
@@ -182,7 +182,7 @@ fn top_level_help() -> HelpDocument {
         exit_behavior: vec![
             ExitCodeSpec {
                 code: 0,
-                meaning: "Success or plain-text help".to_string(),
+                meaning: "Success or human-readable help".to_string(),
             },
             ExitCodeSpec {
                 code: 2,
@@ -530,6 +530,8 @@ pub fn render_plain_text_help(doc: &HelpDocument) -> String {
     };
 
     let mut out = String::new();
+    // Human-readable help is intentionally man-like so top-level/non-leaf
+    // auto-help and explicit `--help` share one stable contract.
     out.push_str("NAME\n");
     out.push_str(&format!("  {} - {}\n\n", command_name, doc.purpose));
 

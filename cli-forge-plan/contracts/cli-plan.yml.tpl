@@ -36,8 +36,21 @@ commands:
         description: "Output format for structured help"
 
 help:
-  plain_text: "--help flag on any command"
-  structured: "help subcommand with --format"
+  leaf_default: "Leaf commands never auto-render help; validation failures stay structured in the selected output format."
+  non_leaf_default: "Top-level and non-leaf command paths auto-render human-readable help and exit 0."
+  flag: "--help on any command path renders human-readable help and exits 0."
+  subcommand: "`help [COMMAND_PATH ...]` renders structured help in yaml/json/toml."
+  human_readable_format:
+    style: "man_like"
+    required_sections:
+      - "NAME"
+      - "SYNOPSIS"
+      - "DESCRIPTION"
+      - "OPTIONS"
+      - "FORMATS"
+      - "EXAMPLES"
+      - "EXIT CODES"
+    section_order: "NAME -> SYNOPSIS -> DESCRIPTION -> OPTIONS -> FORMATS -> EXAMPLES -> EXIT CODES"
 
 capabilities:
   stream: "{{in_scope|out_of_scope}}"
