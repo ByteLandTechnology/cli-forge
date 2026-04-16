@@ -15,6 +15,10 @@ invocation:
 commands:
   - name: "{{command_name}}"
     description: "{{command_description}}"
+    # Record each invocable command path only once.
+    # Shared prefixes such as `context` or `daemon` may act as non-leaf
+    # containers, but they must not also define their own runnable leaf
+    # behavior on the same path.
     flags:
       - name: "{{--flag-name}}"
         type: "{{string|path|bool|enum|int}}"

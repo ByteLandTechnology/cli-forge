@@ -52,6 +52,8 @@ and Validate uses as the compliance baseline.
    - Subcommands (if any)
    - The `help` subcommand (always present)
    - The `daemon` subcommand group when daemon capability is in scope
+   - Every command path must be classified as either a runnable leaf command or
+     a non-leaf container for child subcommands, never both
 5. For each command, lock:
    - Required flags with types, defaults, and descriptions
    - Optional flags with types, defaults, and descriptions
@@ -94,13 +96,14 @@ continue`, `request changes`, or `stop for now`. Do not require an exact
 | #   | Check                                                                          |
 | --- | ------------------------------------------------------------------------------ |
 | 1   | Command tree is fully defined                                                  |
-| 2   | Every command has its flags listed with types and defaults                     |
-| 3   | Output format strategy is locked                                               |
-| 4   | Help behavior (leaf/non-leaf/`--help`/`help`) is defined with man-like output  |
-| 5   | Each optional feature capability is explicitly marked in_scope or out_of_scope |
-| 6   | The daemon capability contract is locked or explicitly out of scope            |
-| 7   | Runtime directory and Active Context behavior are defined                      |
-| 8   | `cli-plan.yml` is generated and approved                                       |
+| 2   | No command path is both a leaf command and a container for subcommands         |
+| 3   | Every command has its flags listed with types and defaults                     |
+| 4   | Output format strategy is locked                                               |
+| 5   | Help behavior (leaf/non-leaf/`--help`/`help`) is defined with man-like output  |
+| 6   | Each optional feature capability is explicitly marked in_scope or out_of_scope |
+| 7   | The daemon capability contract is locked or explicitly out of scope            |
+| 8   | Runtime directory and Active Context behavior are defined                      |
+| 9   | `cli-plan.yml` is generated and approved                                       |
 
 ## Guardrails
 
@@ -111,6 +114,9 @@ continue`, `request changes`, or `stop for now`. Do not require an exact
   source files.
 - Every decision in `cli-plan.yml` must be traceable to the planning brief
   constraints.
+- Do not define a hybrid command path that is both a runnable leaf and a
+  parent for subcommands. Every command path must be exactly one of those
+  shapes.
 - If `stream`, `repl`, or `daemon` is out of scope, say so explicitly. Do not
   leave the optional feature set undefined.
 - The daemon app-server design is documented in

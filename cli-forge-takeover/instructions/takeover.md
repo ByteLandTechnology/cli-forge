@@ -89,6 +89,9 @@ Do not continue to plan reconstruction until the design contract is approved.
 ## Step 3: Reconstruct the CLI Plan
 
 1. Derive the command tree from code, help output, and tests.
+   Treat any observed command path that is both a runnable leaf and a parent
+   for child subcommands as a blocking inconsistency that must be surfaced to
+   the user, not silently adopted into the recovered plan.
 2. Derive flags, types, defaults, descriptions, and output formats per command.
 3. Recover the four help scenarios exactly as implemented today.
 4. Recover runtime directory behavior and Active Context behavior from code,
@@ -109,6 +112,8 @@ Do not continue to plan reconstruction until the design contract is approved.
 This gate passes only when:
 
 - every command and flag is either evidenced or user-confirmed
+- no command path is adopted in a hybrid leaf-plus-container state; any such
+  path must be normalized or redesigned before recovery can continue
 - capability scope is explicit
 - runtime behavior is described without hidden assumptions
 - the user approves the reconstructed plan
@@ -204,6 +209,9 @@ than guessing.
 - When behavior exists but violates `cli-forge` standards, preserve the actual
   current behavior in the backfilled contract and warn the user that Validate
   is expected to surface the mismatch.
+- Do not silently preserve a hybrid leaf-plus-container command path. Surface
+  it as a blocking plan inconsistency and stop for user direction on how the
+  command tree should be normalized.
 - When takeover rewrites `cli-plan.yml`, treat any pre-existing
   `validation-report.yml` as stale for Publish gating until Validate runs
   again against the refreshed plan.

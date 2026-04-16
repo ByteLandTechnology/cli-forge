@@ -51,7 +51,7 @@ graph LR
 | **3. Scaffold** | `./cli-forge-scaffold/` | Generate the baseline Rust project exclusively using the rules defined in `cli-plan.yml` and the authoritative templates. | `.cli-forge/scaffold-receipt.yml`  |
 | **Takeover**    | `./cli-forge-takeover/` | Adopt an existing project that lacks a usable `cli-forge` contract baseline by reconstructing the required pipeline files from its implementation and choosing the next stage from the recorded objective. | `.cli-forge/takeover-receipt.yml`  |
 | **4. Extend**   | `./cli-forge-extend/`   | Add optional features (`stream`, `repl`) to an existing project that already matches the scaffold-compatible layout and the overlay API/dependency surface those templates require, then update the plan. | `.cli-forge/extend-receipt.yml`    |
-| **5. Validate** | `./cli-forge-validate/` | Run 46 compliance checks against the projected generated codebase to block invalid artifacts from release.                | `.cli-forge/validation-report.yml` |
+| **5. Validate** | `./cli-forge-validate/` | Run 47 compliance checks against the projected generated codebase, including an explicit command-tree audit that forbids hybrid leaf-plus-container paths, to block invalid artifacts from release. | `.cli-forge/validation-report.yml` |
 | **6. Publish**  | `./cli-forge-publish/`  | Manage the release automation that produces the GitHub Release, binaries, release evidence, and npm publication together. | `.cli-forge/release-receipt.yml`   |
 
 ## Artifact Policy

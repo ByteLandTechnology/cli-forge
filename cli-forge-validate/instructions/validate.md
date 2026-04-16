@@ -58,7 +58,7 @@ Before running the ruleset:
 
 Run every rule below in order and record one output row per rule. Some task
 prose still says "27 checks", "28 checks", or "29 checks", but the current
-ruleset enumerates 46 concrete checks; use the table below as the source of
+ruleset enumerates 47 concrete checks; use the table below as the source of
 truth and do not omit any of them.
 
 | Check ID     | Category       | Principle | Severity | What to Verify                                                                                                                 |
@@ -92,6 +92,7 @@ truth and do not omit any of them.
 | `BUILD-001`  | build          | VI        | error    | `cargo build` succeeds.                                                                                                        |
 | `BUILD-002`  | build          | VI        | error    | `cargo clippy -- -D warnings` succeeds.                                                                                        |
 | `BUILD-003`  | build          | VI        | error    | `cargo fmt --check` succeeds.                                                                                                  |
+| `TREE-001`   | command_tree   | III-D     | error    | No command path is both a runnable leaf command and a container for child subcommands.                                        |
 | `HELP-001`   | help           | III-D     | error    | `--help` remains human-readable only, exits `0`, and stays man-like with `NAME`, `SYNOPSIS`, `DESCRIPTION`, `OPTIONS`, `FORMATS`, `EXAMPLES`, `EXIT CODES` in order. |
 | `HELP-002`   | help           | III-D     | error    | Structured help is available through `help` only; leaf validation failures do not auto-fall back to help.                      |
 | `HELP-003`   | help           | III-D     | error    | Top-level and non-leaf auto-help exits `0`, stays human-readable/man-like, and lists subcommands when applicable.              |
@@ -190,7 +191,12 @@ For each command:
 When the project exposes the generated runtime-conventions surface, inspect and
 record the following:
 
-1. **Help channels**
+1. **Command tree integrity**
+   - Confirm each command path is exactly one shape in both the plan and the
+     implemented CLI surface: leaf or container.
+   - Fail `TREE-001` if any path both performs a runnable leaf action and owns
+     child subcommands.
+2. **Help channels**
    - Confirm `--help` stays human-readable and ignores structured formatting
      requests such as `--format json`.
    - Confirm `--help`, top-level auto-help, and non-leaf auto-help all use the
@@ -206,23 +212,23 @@ record the following:
      commands, any client-routing flags, and which commands remain local-only.
    - If daemon behavior is marked `out_of_scope`, confirm help does not claim
      daemon support.
-2. **Runtime directories**
+3. **Runtime directories**
    - Confirm config/data/state/cache are documented separately.
    - Confirm user-scoped defaults are documented.
    - If logging is supported, confirm the log path is documented separately.
-3. **Active Context**
+4. **Active Context**
    - Confirm there is a visible way to inspect the current Active Context.
    - Confirm there is a visible way to switch or persist it.
    - Confirm explicit per-invocation overrides take precedence and do not
      silently mutate the persisted context.
-4. **Errors**
+5. **Errors**
    - Confirm missing leaf-command inputs return a structured error in the
      selected output format rather than raw help text.
    - Confirm structured errors include at least `code` and `message`.
    - If daemon behavior is present, confirm daemon lifecycle failures and
      routed-command errors stay structured and keep recovery guidance aligned
      with the daemon contract declared in `cli-plan.yml`.
-5. **REPL**
+6. **REPL**
    - If REPL mode is present, confirm REPL help is plain text only.
    - Confirm REPL history and tab completion are available.
    - Confirm default REPL output favors readability while any explicit

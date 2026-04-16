@@ -28,6 +28,9 @@ also list the `daemon` subcommand group: `daemon run`, `daemon start`,
 `daemon stop`, `daemon restart`, and `daemon status`. Plans that enable daemon
 should also identify which leaf commands are daemonizable and therefore accept
 client-routing flags such as `--via daemon` and `--ensure-daemon`.
+Do not define a hybrid path such as a command that both performs its own leaf
+action and also owns child subcommands. Each command path must be either a
+leaf or a container, never both.
 
 ## Step 2: Define Flags Per Command
 
@@ -155,6 +158,7 @@ text entry.
 This instruction is complete only when:
 
 - Every command and its flags are fully defined
+- No command path is both a leaf and a container
 - Output format strategy is locked with no ambiguity
 - Every optional feature capability is explicitly scoped
 - The daemon capability contract is locked or explicitly out of scope

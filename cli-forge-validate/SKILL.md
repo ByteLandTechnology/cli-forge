@@ -1,6 +1,6 @@
 ---
 name: cli-forge-validate
-description: "Validate stage for the cli-forge skill family: run the 46-check compliance ruleset against a scaffolded, takeover-adopted, or extended skill project and compare any daemon surface against the declared CLI plan."
+description: "Validate stage for the cli-forge skill family: run the 47-check compliance ruleset against a scaffolded, takeover-adopted, or extended skill project and compare any daemon surface against the declared CLI plan."
 ---
 
 # cli-forge Validate
@@ -11,7 +11,7 @@ proceeds to publication or whenever a fresh audit is needed.
 
 ## Purpose
 
-Run the authoritative 46-check compliance ruleset against a scaffolded,
+Run the authoritative 47-check compliance ruleset against a scaffolded,
 takeover-adopted, or extended project.
 
 This stage acts as the final gatekeeper before release. It consumes the
@@ -44,12 +44,13 @@ This stage acts as the final gatekeeper before release. It consumes the
    baseline planning limits.
 2. Execute the rule set defined in
    [`./instructions/validate.md`](./instructions/validate.md). The baseline
-   includes 46 checks across these categories:
+   includes 47 checks across these categories:
    - `STRUCT-*` (structure and pipeline-artifact ignore policy)
    - `NAME-*` (directory and package naming)
    - `DEPS-*` and `META-*` (dependencies and Cargo metadata)
    - `SKILL-*` (the `SKILL.md` contract)
    - `BUILD-*` (build, clippy, and format verification)
+   - `TREE-*` (command-tree contract integrity)
    - `HELP-*` (leaf/non-leaf/`--help`/`help` behavior plus man-like formatting)
    - `DIR-*` (runtime directory documentation)
    - `CTX-*` (Active Context behavior and precedence)
@@ -85,7 +86,7 @@ This stage acts as the final gatekeeper before release. It consumes the
 
 | #   | Check                                                     |
 | --- | --------------------------------------------------------- |
-| 1   | All 46 checks executed                                    |
+| 1   | All 47 checks executed                                    |
 | 2   | Final result aggregated (compliant/warning/non_compliant) |
 | 3   | `validation-report.yml` written                           |
 
