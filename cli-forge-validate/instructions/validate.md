@@ -245,14 +245,19 @@ inspect and record the following in the validation narrative.
    release docs describe clone `->` checkout released tag `->`
    `scripts/install-current-release.sh` as an optional install path.
 2. `release/config.json` is present with all placeholder values replaced
-   (`cliName`, `packageName`, `sourceRepository`), and `npmScope` is internally
-   consistent with `packageName` (scoped name ⇔ non-null scope).
+   (`cliName`, `mainPackageName`, `sourceRepository`), `mainNpmScope` is
+   internally consistent with `mainPackageName`, and `platformNpmScope`
+   produces a valid derived package name for every configured target suffix.
 3. `npm/main/package.json` has `name`, `description`, and `bin` fields all set
    (no `REPLACE_WITH_` placeholders).
-4. `.releaserc.json` + `.github/workflows/release.yml` drive one
+4. Release docs describe the required local `prepublish` bootstrap step,
+   including the interactive `npm login` checkpoint and browser verification
+   URL guidance when local auth is missing.
+5. `.releaserc.json` + `.github/workflows/release.yml` drive one
    semantic-release run with platform-split npm publishing.
-5. `npm/main/bin/cli.js` exists and resolves the correct platform package name
-   from `process.platform` + `process.arch`.
+6. `npm/main/bin/cli.js` exists and resolves the correct platform package name
+   from `optionalDependencies` plus `process.platform` + `process.arch`, even
+   when the main package and platform packages use different scopes.
 
 These checks must pass before the first release can proceed. They validate the
 automation is correctly configured without requiring any existing releases.
@@ -262,9 +267,9 @@ automation is correctly configured without requiring any existing releases.
 If the most recent git tag `v<version>` exists on the default branch, also
 verify:
 
-6. The matching GitHub Release page carries per-target archives and `.sha256`
+7. The matching GitHub Release page carries per-target archives and `.sha256`
    checksums.
-7. The main npm package and every per-platform npm package are published at
+8. The main npm package and every per-platform npm package are published at
    that same `<version>`.
 8. Treat the GitHub Release page, the workflow run URL, and the npm registry
    entries as the authoritative evidence. Do not require locally generated

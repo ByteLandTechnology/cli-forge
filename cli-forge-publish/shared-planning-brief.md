@@ -72,9 +72,11 @@ planning stage.
   skill packages unless a stage explicitly handles publish concerns.
 - When publish concerns are in scope, plans must keep repo-native GitHub
   Release publication and npm publication tied to the same semantic-release
-  version, while treating clone-first installation as a repository-owned
-  surface. GitHub Release + npm registry + workflow run logs are the
-  authoritative release evidence; no custom audit JSON is produced.
+  version for the production release, while treating clone-first installation
+  as a repository-owned surface. A pre-CI npm prepublish bootstrap step may
+  use a dedicated prerelease version before the first live release. GitHub Release +
+  npm registry + workflow run logs are the authoritative release evidence; no
+  custom audit JSON is produced.
 - Validation should confirm publish context is explicit, but release execution
   belongs to Publish instead of being split across separate release stages.
 

@@ -12,7 +12,7 @@ inputs:
   skill_name: "{{skill_name}}"
   project_path: "{{project_path}}"
   feature: "{{feature}}"             # stream | repl (for extend); daemon requests route to plan
-  publish_mode: "{{mode}}"           # report_only | dry_run | live_release (only for publish)
+  publish_mode: "{{mode}}"           # report_only | dry_run | prepublish | live_release (only for publish)
   post_adoption_objective: "{{post_adoption_objective}}" # validate | extend | publish | general_adoption
   takeover_mode: "{{takeover_mode}}" # first_adoption | baseline_establishment | contract_refresh
 

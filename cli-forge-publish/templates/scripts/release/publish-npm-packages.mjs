@@ -14,6 +14,11 @@ import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import {
+  buildMainPackageName,
+  readReleaseConfig,
+} from "./release-config.mjs";
+
 const rootDir = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   "..",
@@ -24,9 +29,7 @@ if (!version) {
   throw new Error("Usage: publish-npm-packages.mjs <version>");
 }
 
-const config = JSON.parse(
-  readFileSync(path.join(rootDir, "release/config.json"), "utf8"),
-);
+const config = readReleaseConfig(rootDir);
 const platformsDir = path.join(rootDir, "npm/platforms");
 const mainPkgDir = path.join(rootDir, "npm/main");
 
@@ -93,5 +96,5 @@ for (const target of config.targets) {
 const mainOutcome = publishPackage(mainPkgDir, "main");
 
 console.log(
-  `npm publish: platform=${platformPublished} published, ${platformSkipped} skipped; main=${mainOutcome}.`,
+  `npm publish: main=${buildMainPackageName(config)} => ${mainOutcome}; platform=${platformPublished} published, ${platformSkipped} skipped.`,
 );

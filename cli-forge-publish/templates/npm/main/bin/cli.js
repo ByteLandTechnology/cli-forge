@@ -10,7 +10,18 @@ const pkg = JSON.parse(
   readFileSync(path.join(here, "..", "package.json"), "utf8"),
 );
 
-const platformPackage = `${pkg.name}-${process.platform}-${process.arch}`;
+const platformSuffix = `-${process.platform}-${process.arch}`;
+const platformCandidates = Object.keys(pkg.optionalDependencies || {}).filter(
+  (name) => name.endsWith(platformSuffix),
+);
+if (platformCandidates.length !== 1) {
+  console.error(
+    `Unsupported platform ${process.platform}-${process.arch}. ` +
+      `Expected exactly one optionalDependency ending in ${platformSuffix}, found ${platformCandidates.length}.`,
+  );
+  process.exit(1);
+}
+const platformPackage = platformCandidates[0];
 const binEntries = Object.keys(pkg.bin || {});
 if (!binEntries.length) {
   console.error("package.json has no bin entry.");

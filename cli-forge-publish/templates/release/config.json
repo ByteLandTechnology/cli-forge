@@ -1,7 +1,8 @@
 {
   "cliName": "REPLACE_WITH_CLI_NAME",
-  "packageName": "REPLACE_WITH_PACKAGE_NAME",
-  "npmScope": null,
+  "mainPackageName": "REPLACE_WITH_MAIN_PACKAGE_NAME",
+  "mainNpmScope": null,
+  "platformNpmScope": null,
   "sourceRepository": "REPLACE_WITH_OWNER/REPO",
   "targets": [
     {

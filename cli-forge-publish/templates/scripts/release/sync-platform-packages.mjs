@@ -20,6 +20,12 @@ import { spawnSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import {
+  buildMainPackageName,
+  buildPlatformPackageName,
+  readReleaseConfig,
+} from "./release-config.mjs";
+
 const rootDir = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   "..",
@@ -30,9 +36,7 @@ if (!version) {
   throw new Error("Usage: sync-platform-packages.mjs <version>");
 }
 
-const config = JSON.parse(
-  readFileSync(path.join(rootDir, "release/config.json"), "utf8"),
-);
+const config = readReleaseConfig(rootDir);
 
 // Delegate all field/scope validation to the shared script so the checks
 // are identical in CI (release.yml) and local runs (sync-platform-packages).
@@ -45,7 +49,8 @@ if (validateResult.status !== 0) {
   throw new Error("Config validation failed.");
 }
 
-const { cliName, packageName } = config;
+const { cliName } = config;
+const mainPackageName = buildMainPackageName(config);
 
 const mainPkgPath = path.join(rootDir, "npm/main/package.json");
 const mainPkg = JSON.parse(readFileSync(mainPkgPath, "utf8"));
@@ -57,7 +62,7 @@ mkdirSync(platformsDir, { recursive: true });
 const optionalDeps = {};
 
 for (const target of config.targets) {
-  const pkgName = `${packageName}-${target.packageSuffix}`;
+  const pkgName = buildPlatformPackageName(config, target);
   const pkgDir = path.join(platformsDir, target.packageSuffix);
   const binDir = path.join(pkgDir, "bin");
 
@@ -93,16 +98,16 @@ for (const target of config.targets) {
     `${JSON.stringify(pkgManifest, null, 2)}\n`,
     "utf8",
   );
-  writeFileSync(
+    writeFileSync(
     path.join(pkgDir, "README.md"),
-    `# ${pkgName}\n\n${target.os}-${target.cpu} binary for \`${cliName}\`.\nRuntime dependency of \`${packageName}\`.\n`,
+    `# ${pkgName}\n\n${target.os}-${target.cpu} binary for \`${cliName}\`.\nRuntime dependency of \`${mainPackageName}\`.\n`,
     "utf8",
   );
 
   optionalDeps[pkgName] = version;
 }
 
-mainPkg.name = packageName;
+mainPkg.name = mainPackageName;
 mainPkg.version = version;
 mainPkg.bin = { [cliName]: "bin/cli.js" };
 mainPkg.optionalDependencies = optionalDeps;
@@ -113,7 +118,7 @@ const mainReadmePath = path.join(rootDir, "npm/main/README.md");
 if (existsSync(mainReadmePath)) {
   let readme = readFileSync(mainReadmePath, "utf8");
   readme = readme
-    .replace(/REPLACE_WITH_PACKAGE_NAME/g, packageName)
+    .replace(/REPLACE_WITH_PACKAGE_NAME/g, mainPackageName)
     .replace(/REPLACE_WITH_CLI_NAME/g, cliName);
   if (/REPLACE_WITH_/.test(readme)) {
     throw new Error(
@@ -124,5 +129,5 @@ if (existsSync(mainReadmePath)) {
 }
 
 console.log(
-  `Synced ${config.targets.length} platform packages for ${packageName}@${version}.`,
+  `Synced ${config.targets.length} platform packages for ${mainPackageName}@${version}.`,
 );

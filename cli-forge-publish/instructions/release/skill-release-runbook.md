@@ -5,7 +5,9 @@
 Defines the supported release behavior for target CLI skill repositories that
 adopt the `cli-forge-publish` asset pack.
 
-One semantic-release run produces all release surfaces:
+Before the first production release, perform one real npm prepublish step to
+bootstrap package visibility and local auth. After that, one semantic-release
+run produces all production release surfaces:
 
 - git tag `v<version>` + GitHub Release page (tar.gz archive + sha256 per target)
 - `N` per-platform npm packages carrying the native binaries
@@ -32,6 +34,8 @@ the root of a target CLI skill repository:
 - `scripts/release/sync-platform-packages.mjs`
 - `scripts/release/publish-npm-packages.mjs`
 - `scripts/release/rehearse.mjs`
+- `scripts/release/prepublish.mjs`
+- `scripts/release/ensure-npm-login.mjs`
 - `scripts/install-current-release.sh`
 
 The root `package.json` is not published. The main published wrapper is
@@ -48,17 +52,21 @@ After copying the asset pack:
 
 1. Edit `release/config.json`:
    - `cliName`
-   - `packageName` (with scope prefix if used)
-   - `npmScope` (`null` for unscoped, string otherwise)
+   - `mainPackageName` (with scope prefix if used)
+   - `mainNpmScope` (`null` for unscoped, string otherwise)
+   - `platformNpmScope` (`null` for unscoped platform packages, string otherwise)
    - `sourceRepository` (`owner/repo`)
 2. Edit `npm/main/package.json`:
-   - `name` — must match `release/config.json#packageName`
+   - `name` — must match `release/config.json#mainPackageName`
    - `bin` — must use `cliName`
    - `description`, `license`
-3. On npmjs.com, configure **GitHub Actions trusted publishing** for the main
+3. Platform package names are derived automatically from the main package body
+   plus `-<target-suffix>`. The main package and platform packages may use
+   different scopes, but only the scope may differ.
+4. On npmjs.com, configure **GitHub Actions trusted publishing** for the main
    package and for each of the six platform packages. Every entry points at
    `release.yml` in this repository.
-4. Keep `id-token: write` on the publishing job. Do not set `NPM_TOKEN`.
+5. Keep `id-token: write` on the publishing job. Do not set `NPM_TOKEN`.
 
 ## Publish Modes
 
@@ -93,6 +101,37 @@ publish path.
 choose and the release notes it _would_ generate. It does NOT exercise the
 custom prepare/publish hooks (semantic-release skips those phases in dry-run).
 
+### `prepublish`
+
+The required local bootstrap step before the first production CI release. From
+the target repository root:
+
+```bash
+npm ci
+npm run release:prepublish
+```
+
+This drives `scripts/release/prepublish.mjs`, which:
+
+1. Verifies `release/config.json` and derives all package names with the split
+   scope policy.
+2. Ensures local npm auth is ready. If not, it runs `npm login` and relays the
+   verification URL so the operator can open it in a browser and finish
+   authentication.
+3. Selects or accepts a bootstrap prerelease version in the form
+   `0.0.0-prepublish.N`.
+4. Builds every configured target into `dist/<rustTarget>/`.
+5. Runs `sync-platform-packages.mjs` with that prepublish version.
+6. Temporarily removes npm provenance from the local package manifests so the
+   prepublish step does not pretend to be a CI-backed provenance build.
+7. Publishes every platform package with `npm publish --access=public`.
+8. Publishes the main package last with `npm publish --access=public`.
+9. Restores local generated files so the working tree returns to its pre-run
+   state.
+
+`prepublish` does **not** create a git tag, changelog entry, release commit,
+or GitHub Release.
+
 ### `live_release`
 
 Push a release-eligible commit to `main`; `.github/workflows/release.yml` runs
@@ -125,6 +164,10 @@ the release job. The job:
      already made it to the registry
    - **`publish` → `@semantic-release/github`**: attach the archives + sha256
      to the GitHub Release for the just-pushed tag
+
+`live_release` is the production path only. It assumes the prepublish bootstrap has
+already completed and continues to rely on trusted publishing in CI rather than
+interactive local `npm login`.
 
 `@semantic-release/npm` runs with `npmPublish: false`; it only bumps
 `npm/main/package.json#version` during `prepare`. All `npm publish` calls are
@@ -161,6 +204,7 @@ should use npm.
 
 ## What This Pipeline Does Not Do
 
+- A prepublish bootstrap step does not create a production release record.
 - No custom audit JSON (`release-evidence.json`, `.release-manifest.json`,
   `last-publication-receipt.json`) is produced. GitHub Release + npm registry +
   workflow run logs are the authoritative record.
@@ -171,9 +215,12 @@ should use npm.
 Common failure categories:
 
 - `release/config.json` still has placeholders → fill and retry
-- `release/config.json#packageName` scope mismatches `npmScope` →
+- `release/config.json#mainPackageName` scope mismatches `mainNpmScope`, or the
+  platform scope policy is malformed →
   `validate-config.mjs` hard-fails with a pointer to the offending
   field before any external write
+- Local prepublish needs interactive auth → run `npm login`, open the
+  verification URL it prints, and re-run `npm run release:prepublish`
 - Platform package trusted publisher not configured on npmjs.com → the first
   release of that package fails; configure the publisher entry and re-run
 - semantic-release reports "no releasable changes" → commits since last tag

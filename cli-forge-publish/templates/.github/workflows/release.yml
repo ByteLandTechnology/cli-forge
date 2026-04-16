@@ -149,11 +149,11 @@ jobs:
               exit 1
             fi
             # Check all npm packages
-            node -e "
-              const c = require('./release/config.json');
-              const { spawnSync } = require('child_process');
+            node --input-type=module -e "
+              import { spawnSync } from 'node:child_process';
+              import { buildAllPackageNames, readReleaseConfig } from './scripts/release/release-config.mjs';
               const v = '${version}';
-              const names = [c.packageName, ...c.targets.map(t => c.packageName + '-' + t.packageSuffix)];
+              const names = buildAllPackageNames(readReleaseConfig(process.cwd()));
               for (const name of names) {
                 const r = spawnSync('npm', ['view', name + '@' + v, 'version'], { encoding: 'utf8', stdio: 'pipe', shell: true });
                 if (r.status === 0) {

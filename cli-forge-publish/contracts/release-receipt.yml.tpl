@@ -11,18 +11,23 @@ project: "{{skill_name}}"
 project_path: "{{project_path}}"
 timestamp: "{{iso8601_timestamp}}"
 
-release_mode: "{{report_only|dry_run|live_release}}"
+release_mode: "{{report_only|dry_run|prepublish|live_release}}"
 
-# Only present for dry_run and live_release
+# Present for prepublish, dry_run, and live_release when a concrete version
+# was exercised.
 version: "{{semver|null}}"
 git_tag: "{{v_semver|null}}"
 workflow_run_url: "{{github_actions_run_url|null}}"
 
 npm:
-  main_package: "{{package_name}}"
-  scope: "{{null_or_scope_string}}"
+  main_package: "{{main_package_name}}"
+  main_scope: "{{null_or_main_scope_string}}"
+  platform_scope: "{{null_or_platform_scope_string}}"
   platform_package_count: "{{target_count}}"
+  prepublish_completed: "{{true|false}}"
+  prepublish_version: "{{prepublish_semver_or_null}}"
+  login_method: "{{npm_login|trusted_publishing|not_needed|null}}"
 
 validation_report_ref: "./validation-report.yml"
 
-outcome: "{{success|dry_run_reviewed|report_delivered}}"
+outcome: "{{success|prepublished|dry_run_reviewed|report_delivered}}"

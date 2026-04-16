@@ -15,6 +15,8 @@ import { spawnSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { readReleaseConfig } from "./release-config.mjs";
+
 const rootDir = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   "..",
@@ -25,9 +27,7 @@ if (!version) {
   throw new Error("Usage: build-binaries.mjs <version>");
 }
 
-const config = JSON.parse(
-  readFileSync(path.join(rootDir, "release/config.json"), "utf8"),
-);
+const config = readReleaseConfig(rootDir);
 const cliName = config.cliName;
 
 // --- Bump Cargo.toml [package].version so the binary embeds the correct version ---

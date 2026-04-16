@@ -13,9 +13,14 @@ Release + multi-package npm publication flow.
 
 Manage the release pipeline for a generated `cli-forge` skill.
 
-This stage owns the paired publication flow: **repo-native GitHub Release plus
-platform-split npm publication** from the same semantic-release event. One
-release produces:
+This stage owns the bootstrap + production publication flow:
+
+- a required local **prepublish** step for the main package plus all platform
+  packages
+- the paired **repo-native GitHub Release plus platform-split npm
+  publication** from the later semantic-release event
+
+One production release produces:
 
 - git tag `v<version>` + GitHub Release (archive + sha256 per target)
 - 6 per-platform npm packages (`<pkg>-darwin-arm64` / `-darwin-x64` /
@@ -44,21 +49,23 @@ version with the git tag + GitHub Release. The total count is
 | 1   | `validation-report.yml` exists, is fresh, and `result == compliant` or `warning` | Validate      |
 | 2   | Target repository path is explicitly known                            | Router / User |
 | 3   | Requested publish mode is explicit                                    | Router / User |
-| 4   | npm package name, CLI name, and scope decision are explicit           | User          |
+| 4   | npm package naming contract, CLI name, and scope decisions are explicit | User        |
 
-Scope decision is a required input at this stage. Ask the user whether the
-npm package should publish as **unscoped** (`<name>`) or **scoped**
-(`@<scope>/<name>`), and collect the scope string in the latter case. The same
-decision applies uniformly to the main package and all six platform packages.
+Scope decisions are required inputs at this stage. Collect the main package
+name plus the scope policy for both the main package and the platform
+packages. The main package and platform packages may use different scopes, but
+platform names must still derive from the main package body plus
+`-<target-suffix>`.
 
 ## Required Inputs
 
 - Validation outcome plus provenance snapshot (refusal to publish if `non_compliant`, stale, or provenance-mismatched)
-- Publish mode: `report_only`, `dry_run`, or `live_release`
+- Publish mode: `report_only`, `dry_run`, `prepublish`, or `live_release`
 - Source project path
 - `cliName` — the CLI binary name
-- `packageName` — the main npm package name (with scope prefix if scoped)
-- `npmScope` — `null` for unscoped, or the scope string
+- `mainPackageName` — the main npm package name (with scope prefix if scoped)
+- `mainNpmScope` — `null` for unscoped, or the scope string for the main package
+- `platformNpmScope` — `null` for unscoped platform packages, or a separate scope string
 - `sourceRepository` — `owner/repo` on GitHub
 
 ## Workflow
@@ -84,7 +91,8 @@ decision applies uniformly to the main package and all six platform packages.
    copying the contents of `./templates/` to the project root. The adopted
    asset pack does NOT contain Scaffold-stage source templates (`*.tpl`).
 6. Fill `release/config.json` and `npm/main/package.json` with the collected
-   inputs.
+   inputs. `release/config.json` must explicitly record `mainPackageName`,
+   `mainNpmScope`, and `platformNpmScope`.
 7. Verify the target repository has:
    - GitHub Actions enabled on a GitHub-hosted runner with `id-token: write`
    - npm trusted publishing configured on npmjs.com for the main package and
@@ -97,15 +105,23 @@ decision applies uniformly to the main package and all six platform packages.
    - `dry_run`: run `npm run release:rehearse` locally. This builds every
      target, syncs platform packages, and runs `npm publish --dry-run` for
      each. No tag, no GitHub Release, no real npm publication.
+   - `prepublish`: run `npm run release:prepublish` locally. This performs a
+     real public npm bootstrap publish for every platform package and the main
+     package using a dedicated bootstrap prerelease version. If local auth is
+     missing, pause for interactive `npm login`, surface the verification URL,
+     and continue only after the user completes browser verification.
    - `live_release`: push to `main` (or `workflow_dispatch`) so
-     `.github/workflows/release.yml` drives the end-to-end run.
+     `.github/workflows/release.yml` drives the end-to-end run. Do not proceed
+     to `live_release` until prepublish bootstrap has completed for the configured
+     package set.
 9. Generate `.cli-forge/release-receipt.yml` from the template at
    [`./contracts/release-receipt.yml.tpl`](./contracts/release-receipt.yml.tpl).
 
 ## Outputs
 
+- A verified prepublish bootstrap for 1 main + N platform npm packages (if `prepublish`)
 - A verified GitHub Release with archives + checksums (if `live_release`)
-- 1 main + N platform npm packages published at the same version (if `live_release`)
+- 1 main + N platform npm packages published at the same production version (if `live_release`)
 - Updated `CHANGELOG.md` and release commit on `main`
 - `.cli-forge/release-receipt.yml`
 
@@ -115,15 +131,20 @@ decision applies uniformly to the main package and all six platform packages.
 | --- | ----------------------------------------------------------------------- |
 | 1   | The requested mode was executed                                         |
 | 2   | For `report_only`: no files were written to the target repository       |
-| 3   | For `dry_run` / `live_release`: asset pack adopted and filled           |
-| 4   | For `live_release`: version, tag, main package, platform packages agree |
-| 5   | `release-receipt.yml` generated                                         |
+| 3   | For `dry_run` / `prepublish` / `live_release`: asset pack adopted and filled |
+| 4   | For `prepublish`: the bootstrap npm prerelease completed without creating a tag or GitHub Release |
+| 5   | For `live_release`: version, tag, main package, platform packages agree |
+| 6   | `release-receipt.yml` generated                                         |
 
 ## Guardrails
 
 - All npm packages (main + platforms) MUST share the version chosen by
   semantic-release. The two release scripts enforce this by consuming
   `${nextRelease.version}` from semantic-release hooks.
+- The bootstrap prepublish step MUST use a dedicated prerelease version such as
+  `0.0.0-prepublish.N`. It is not a production release.
+- Main and platform packages may differ only by scope. Do not introduce
+  arbitrary per-platform package base names.
 - Do not bypass stale validation. If the codebase changed since the last
   validation report, route back to Validate.
 - For takeover-adopted repositories, freshness checks MUST verify provenance
@@ -131,6 +152,8 @@ decision applies uniformly to the main package and all six platform packages.
   aggregate status or timestamp.
 - Do not hand-bump `npm/main/package.json#version`, hand-edit `CHANGELOG.md`
   release entries, or create tags outside semantic-release.
+- Interactive `npm login` guidance belongs only to local `prepublish`.
+  Production CI publication must continue to rely on trusted publishing.
 - The asset pack's `npm/platforms/` directory is generated at release time.
   Do not check generated platform package directories into source control
   beyond the `.gitkeep` placeholder.

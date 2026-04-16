@@ -10,7 +10,8 @@
   },
   "scripts": {
     "release:dry-run": "npx --yes semantic-release --dry-run --no-ci",
-    "release:rehearse": "node scripts/release/rehearse.mjs"
+    "release:rehearse": "node scripts/release/rehearse.mjs",
+    "release:prepublish": "node scripts/release/prepublish.mjs"
   },
   "devDependencies": {
     "@semantic-release/changelog": "^6.0.3",
