@@ -88,8 +88,12 @@ platform names must still derive from the main package body plus
 4. Ask the user for the inputs listed above if not already collected. If the
    mode is `report_only`, skip to step 7.
 5. If the skill project lacks the release automation assets, adopt them by
-   copying the contents of `./templates/` to the project root. The adopted
-   asset pack does NOT contain Scaffold-stage source templates (`*.tpl`).
+   copying the contents of `./templates/` to the project root while restoring
+   the install-safe `dot-*` resource aliases to their real dot-prefixed target
+   paths (`dot-releaserc.json -> .releaserc.json`,
+   `dot-github/ -> .github/`, `npm/platforms/dot-gitkeep -> .gitkeep`). The
+   adopted asset pack does NOT contain Scaffold-stage source templates
+   (`*.tpl`).
 6. Fill `release/config.json` and `npm/main/package.json` with the collected
    inputs. `release/config.json` must explicitly record `mainPackageName`,
    `mainNpmScope`, and `platformNpmScope`.
@@ -110,10 +114,12 @@ platform names must still derive from the main package body plus
      package using a dedicated bootstrap prerelease version. If local auth is
      missing, pause for interactive `npm login`, surface the verification URL,
      and continue only after the user completes browser verification.
-   - `live_release`: push to `main` (or `workflow_dispatch`) so
-     `.github/workflows/release.yml` drives the end-to-end run. Do not proceed
-     to `live_release` until prepublish bootstrap has completed for the configured
-     package set.
+   - `live_release`: push to `main` (or `workflow_dispatch`) so the target
+     repository's `.github/workflows/release.yml`, restored from the
+     installer-safe asset-pack resource
+     `dot-github/workflows/release.yml`, drives the end-to-end run. Do not
+     proceed to `live_release` until prepublish bootstrap has completed for the
+     configured package set.
 9. Generate `.cli-forge/release-receipt.yml` from the template at
    [`./contracts/release-receipt.yml.tpl`](./contracts/release-receipt.yml.tpl).
 
@@ -154,6 +160,8 @@ platform names must still derive from the main package body plus
   release entries, or create tags outside semantic-release.
 - Interactive `npm login` guidance belongs only to local `prepublish`.
   Production CI publication must continue to rely on trusted publishing.
+- Do not leave `dot-*` alias names in the target repository. Those names exist
+  only inside this skill package so `.agents` installers preserve the assets.
 - The asset pack's `npm/platforms/` directory is generated at release time.
   Do not check generated platform package directories into source control
   beyond the `.gitkeep` placeholder.

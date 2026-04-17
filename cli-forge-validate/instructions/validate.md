@@ -253,8 +253,11 @@ inspect and record the following in the validation narrative.
 4. Release docs describe the required local `prepublish` bootstrap step,
    including the interactive `npm login` checkpoint and browser verification
    URL guidance when local auth is missing.
-5. `.releaserc.json` + `.github/workflows/release.yml` drive one
-   semantic-release run with platform-split npm publishing.
+5. The target repository contains `.releaserc.json` +
+   `.github/workflows/release.yml`, restored during Publish-stage adoption from
+   the installer-safe skill-package resources `dot-releaserc.json` and
+   `dot-github/workflows/release.yml`, and they drive one semantic-release run
+   with platform-split npm publishing.
 6. `npm/main/bin/cli.js` exists and resolves the correct platform package name
    from `optionalDependencies` plus `process.platform` + `process.arch`, even
    when the main package and platform packages use different scopes.

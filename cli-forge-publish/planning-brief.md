@@ -15,8 +15,11 @@ stage. It must be read in addition to the root `planning-brief.md`.
   publish receipt, but no custom audit JSON is produced.
 - **Target Independence**: The generated skill repository must contain its own
   copy of the release automation (`package.json`, `.github/` workflows,
-  `scripts/`). `cli-forge` does not deploy skills for the user; it outfits the
-  user's skill repository to deploy itself.
+  `scripts/`). Inside this skill package, dot-prefixed repo assets are stored
+  under install-safe non-dot `dot-*` aliases; when adopting the asset pack,
+  restore those aliases back to the real dot-prefixed repo paths. `cli-forge`
+  does not deploy skills for the user; it outfits the user's skill repository
+  to deploy itself.
 - **Unified Publication**: npm publication is part of `publish`, not a later
   child stage. A successful live release means the GitHub Release, binary
   assets, and npm packages all align on one semantic version.

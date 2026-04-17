@@ -118,6 +118,11 @@ The helper requires Node.js to read `release/config.json`. Prefer
 
 ## Files
 
+The dot-prefixed repo files listed here are the final target-repository paths.
+Inside the `cli-forge-publish` skill package they are stored under
+installer-safe aliases (`dot-releaserc.json` and `dot-github/...`) and must be
+restored to these dot-prefixed names when the asset pack is adopted.
+
 - `.releaserc.json` — semantic-release plugin chain
 - `.github/workflows/release.yml` — single release job
 - `.github/actions/setup-build-env/action.yml` — macOS cross-build toolchain

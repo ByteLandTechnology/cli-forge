@@ -60,9 +60,10 @@ The `.cli-forge/` directory contains intermediate pipeline contract files
 (`handoff.yml`, `design-contract.yml`, `cli-plan.yml`, receipts, reports). These
 files are **transient build-time artifacts** and **must not** be committed to
 git — neither in this repository nor in any generated target project. Both this
-repository's `.gitignore` and the scaffold template's `.gitignore.tpl` enforce
-this rule automatically, and the Takeover stage must add the ignore entry when
-adopting older repositories that do not already have it.
+repository's `.gitignore` and the scaffold template resource
+`dot-gitignore.tpl` (an installer-safe alias that expands to target
+`.gitignore`) enforce this rule automatically, and the Takeover stage must add
+the ignore entry when adopting older repositories that do not already have it.
 
 ## Bundled Stage Assets
 
@@ -76,7 +77,10 @@ so the installed skills remain self-contained:
    specific `contracts/*.tpl` files it needs inside its own `contracts/`
    directory.
 3. **Local templates**: stages that expand code or release assets ship their
-   own `templates/` directory inside that stage package.
+   own `templates/` directory inside that stage package. Dot-prefixed target
+   files that would otherwise be stripped by `.agents` installers are stored
+   under install-safe `dot-*` resource names inside the skill package and must
+   be restored to their real dot-prefixed output paths when expanded.
 
 This layout intentionally favors installability over a shared root asset pool:
 the repository structure mirrors the expected installed-skill shape so no stage

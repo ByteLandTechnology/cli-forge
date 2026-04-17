@@ -45,7 +45,8 @@ provided by the Plan stage.
    name, verify `cli-plan.yml`, and refuse to overwrite an existing directory.
 2. Create the directory structure.
 3. Expand the templates from `./templates/` EXACTLY as defined by
-   `cli-plan.yml` and the instruction file.
+   `cli-plan.yml` and the instruction file, restoring any install-safe
+   `dot-*` resource alias to its intended dot-prefixed output path.
 4. Verify that no `{{token}}` placeholders remain unresolved.
 5. Run the required verification commands from the generated project root:
    - `cargo build`
@@ -78,6 +79,8 @@ provided by the Plan stage.
 
 - Use templates EXCLUSIVELY from the bundled `./templates/` directory for this
   stage. Do not reach outside this skill package for scaffold templates.
+- Treat `dot-*` resource names inside `./templates/` as install-safe aliases
+  only. Generated outputs must restore the intended dot-prefixed filename.
 - Do not improvise project structure or dependencies. Everything must be tied
   back to the `cli-plan.yml`.
 - The current scaffold baseline does not implement the planned daemon

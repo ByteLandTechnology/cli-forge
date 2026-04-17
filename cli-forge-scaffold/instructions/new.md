@@ -80,11 +80,18 @@ copied into generated skill directories by default.
 
 ### Step 2: Expand Templates
 
-For each template file, read it from the `templates/` directory in this Skill package, replace all `{{TOKEN_NAME}}` placeholders with actual values, and write the expanded file to the target path.
+For each template file, read it from the `templates/` directory in this Skill
+package, replace all `{{TOKEN_NAME}}` placeholders with actual values, and
+write the expanded file to the target path.
 
-| Template                    | Write To                         |
-| --------------------------- | -------------------------------- |
-| `templates/.gitignore.tpl`  | `{skill_name}/.gitignore`        |
+Dot-prefixed generated files are stored inside this skill package under
+install-safe non-dot resource names such as `dot-gitignore.tpl` so `.agents`
+installers do not strip them. When expanding a `dot-*` resource, restore the
+leading dot in the generated target-repo output path.
+
+| Installer-Safe Template       | Generated Target-Repo Path      |
+| ----------------------------- | -------------------------------- |
+| `templates/dot-gitignore.tpl` | `{skill_name}/.gitignore`      |
 | `templates/Cargo.toml.tpl`  | `{skill_name}/Cargo.toml`        |
 | `templates/main.rs.tpl`     | `{skill_name}/src/main.rs`       |
 | `templates/lib.rs.tpl`      | `{skill_name}/src/lib.rs`        |

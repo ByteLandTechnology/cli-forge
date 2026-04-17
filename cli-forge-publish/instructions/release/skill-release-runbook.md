@@ -18,8 +18,19 @@ run produces all production release surfaces:
 
 ## Asset Pack Model
 
-`cli-forge-publish/templates/` is a portable asset pack. Contents are copied to
-the root of a target CLI skill repository:
+`cli-forge-publish/templates/` is a portable asset pack. Dot-prefixed repo
+assets are stored inside this skill package under install-safe non-dot aliases
+so `.agents` installers preserve them. When adopting the asset pack, restore
+those aliases to the real target paths:
+
+- `dot-releaserc.json` -> `.releaserc.json`
+- `dot-github/actions/setup-build-env/action.yml` ->
+  `.github/actions/setup-build-env/action.yml`
+- `dot-github/workflows/release.yml` -> `.github/workflows/release.yml`
+- `npm/platforms/dot-gitkeep` -> `npm/platforms/.gitkeep`
+
+After restoring those alias-backed paths, the adopted target CLI skill
+repository contains:
 
 - `package.json` — devDependencies only (semantic-release + plugins)
 - `CHANGELOG.md`
@@ -67,6 +78,9 @@ After copying the asset pack:
    package and for each of the six platform packages. Every entry points at
    `release.yml` in this repository.
 5. Keep `id-token: write` on the publishing job. Do not set `NPM_TOKEN`.
+
+Never leave the install-safe `dot-*` aliases in the target repository. They
+are packaging-only names, not part of the target repo contract.
 
 ## Publish Modes
 
