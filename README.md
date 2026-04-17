@@ -110,9 +110,11 @@ Hey, I want to use cli-forge to create a new Rust tool that formats JSON.
 ```
 
 The Router will classify the intent as `design` and hand you over to the Design
-stage using a dialog-based next-step choice instead of asking you to type a
-skill name or reply to a numbered text menu. If interrupted, you can resume at
-any time:
+stage using a dialog-based next-step choice when dialogs are available and
+there are multiple legal next steps, or a numbered text menu with an `Other:`
+escape hatch when dialogs are unavailable or only one legal continuation
+remains, instead of asking you to type a skill name. If interrupted, you can
+resume at any time:
 
 ```text
 Continue with the cli-forge workflow.
@@ -123,8 +125,9 @@ Rust CLI project layout when the contracts are missing, and route you
 automatically to the next incomplete or takeover stage. If
 `design-contract.yml` already exists but `cli-plan.yml` does not, it resumes
 Plan instead of re-running Takeover. It then presents dialog-style approval or
-continuation options instead of requiring exact-text replies or typed
-sequence-number input.
+continuation options when there are 2 or 3 legal choices, or a numbered text
+menu (`1..N` plus `Other:` for text fallback) when dialogs are unavailable or
+only one legal continuation remains, without requiring exact-text replies.
 
 For an existing repository that already contains a Rust CLI project but lacks
 the `cli-forge` contracts, the Router should classify the work as `takeover`,

@@ -74,9 +74,18 @@ This stage acts as the final gatekeeper before release. It consumes the
    The report must snapshot the contract/receipt provenance Publish will later
    compare against the current `.cli-forge/` baseline set.
 8. Present the validation outcome and any next-stage options using a
-   dialog-based chooser. Do not require the user to type an exact phrase to
-   continue to Publish or a fix-up stage, and do not present
-   numbered options that expect typed input.
+   dialog-based chooser when dialog tooling is available and there are 2 or 3
+   legal next-stage options. If dialogs are unavailable, or if only one legal
+   follow-up path remains, present a numbered text menu with 1 to 3 next-stage
+   options using the smallest valid set. When only one follow-up path remains
+   legal, show a single `1.` option for that path. Put the recommended path
+   first and add `Other: explain a different follow-up request` as an escape
+   hatch. Accept only the exact digits that correspond to the numbered options
+   actually shown, or `Other: ...`. Do not auto-map plain-language replies
+   onto numbered options. If a numeric reply includes additional text, or if an
+   `Other:` reply conflicts with the validation guardrails, ask for
+   clarification before proceeding. Do not require the user to type an exact
+   phrase to continue to Publish or a fix-up stage.
 
 ## Outputs
 
@@ -107,9 +116,10 @@ This stage acts as the final gatekeeper before release. It consumes the
   route to Takeover to reconstruct the missing baseline.
 - **Do not publish automatically.** Ensure the user has the chance to review the
   validation report before handing off to the Publish stage. Use a dialog-based
-  handoff, never replace it with numbered text input, and if dialog tooling is
-  unavailable, stop and report the blocker instead of accepting a typed
-  fallback response.
+  handoff when available and when there are 2 or 3 legal next-stage options.
+  If dialogs are unavailable, or if only one legal follow-up path remains, use
+  the standardized numbered text fallback with `Other: explain a different
+  follow-up request`.
 
 ## Next Step
 

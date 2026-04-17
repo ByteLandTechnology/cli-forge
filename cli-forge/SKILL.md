@@ -76,11 +76,21 @@ Act as the intake layer and traffic controller.
    `.cli-forge/handoff.yml` in the target project directory. This explicitly
    records the classification and inputs for downstream consumption.
 6. Provide a clear handoff response specifying which child skill should be
-   invoked next. Use a dialog-based chooser for the next-step handoff
-   (for example, `request_user_input`). Do not require the user to type an
-   exact phrase or skill name, and do not present numbered options that expect
-   a typed reply. If dialog tooling is unavailable, stop and report that the
-   workflow requires a dialog-capable handoff surface.
+   invoked next. Prefer a dialog-based chooser for the next-step handoff
+   (for example, `request_user_input`) when dialog tooling is available and
+   there are 2 or 3 legal next-stage options. If dialogs are unavailable, or
+   if only one legal next stage remains, present a numbered text menu with 1 to
+   3 explicit next-stage options drawn only from the stages that remain valid
+   under the current filesystem state. Use the smallest valid set, and when
+   only one legal next stage exists, show a single `1.` option for that stage.
+   Put the recommended path first and add `Other: explain a routing concern` as
+   an escape hatch. Accept only the exact digits that correspond to the
+   numbered options actually shown, or `Other: ...`. Do not auto-map
+   plain-language replies onto numbered options. If a numeric reply includes
+   additional text, or if an `Other:` reply asks for a stage that conflicts
+   with the pipeline guardrails, ask for clarification and keep the handoff
+   within the valid stage set. Do not require the user to type an exact phrase
+   or skill name.
 
 ## Outputs
 
@@ -98,7 +108,7 @@ Act as the intake layer and traffic controller.
 ## Guardrails
 
 - **CRITICAL DIRECTIVE TO THE ASSISTANT**: You MUST NOT bypass the staged pipeline. Do not write, generate, or scaffold code yourself during this stage.
-- **CRITICAL DIRECTIVE TO THE ASSISTANT**: You MUST STOP and yield to the user after generating `handoff.yml` and explaining the next steps. Do not invoke the next stage autonomously. Use a dialog-based selection for the handoff, never require the user to explicitly type the next skill name, and never replace the chooser with numbered text input.
+- **CRITICAL DIRECTIVE TO THE ASSISTANT**: You MUST STOP and yield to the user after generating `handoff.yml` and explaining the next steps. Do not invoke the next stage autonomously. Use a dialog-based selection for the handoff when available and when there are 2 or 3 legal next-stage options. If dialogs are unavailable, or if only one legal next stage remains, use the standardized numbered text fallback with `Other: explain a routing concern`. Never require the user to explicitly type the next skill name, and never let fallback input bypass the valid stage set computed from repository state.
 - The Router must stay thin. Do not execute templates, run compilation steps, or define CLI contracts here.
 - Never force a workflow forward if an earlier stage is incomplete. For
   example, if the user asks to "validate" but the project is a pre-existing

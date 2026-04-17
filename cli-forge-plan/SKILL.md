@@ -83,9 +83,13 @@ and Validate uses as the compliance baseline.
 11. Generate `.cli-forge/cli-plan.yml` using the format defined in
     [`./contracts/cli-plan.yml.tpl`](./contracts/cli-plan.yml.tpl).
 12. Present the CLI plan to the user for approval. Use a dialog-based chooser
-    (for example, `request_user_input`) so the user can select `approve and
-continue`, `request changes`, or `stop for now`. Do not require an exact
-    reply string, and do not ask for numbered or manually typed menu input.
+    (for example, `request_user_input`) when dialog tooling is available so the
+    user can select `approve and continue`, `request changes`, or `stop for
+    now`. If dialogs are unavailable, present the same approval paths as a
+    numbered text menu and add `Other: <custom response>` as the fallback
+    escape hatch. Accept exact replies `1`, `2`, or `3`, or `Other: ...`. If a
+    numeric reply includes additional text, ask for clarification before
+    proceeding. Do not require the user to type the full option label.
 
 ## Outputs
 
@@ -107,7 +111,7 @@ continue`, `request changes`, or `stop for now`. Do not require an exact
 
 ## Guardrails
 
-- **CRITICAL DIRECTIVE TO THE ASSISTANT**: You MUST STOP execution and ask for the user's explicit approval after generating `cli-plan.yml`. Do NOT proceed to the Scaffold stage autonomously. Use a dialog-based approval prompt, never require the user to type the literal word `approved`, and never replace the chooser with numbered text input.
+- **CRITICAL DIRECTIVE TO THE ASSISTANT**: You MUST STOP execution and ask for the user's explicit approval after generating `cli-plan.yml`. Do NOT proceed to the Scaffold stage autonomously. Use a dialog-based approval prompt when available, or the standardized numbered text fallback with `Other: <custom response>` when dialogs are unavailable. Never require the user to type the literal word `approved`.
 - Do not change the skill's purpose or positioning here. That work was done in
   the Design stage and is locked in `design-contract.yml`.
 - Do not begin implementing code. This stage produces a plan document, not

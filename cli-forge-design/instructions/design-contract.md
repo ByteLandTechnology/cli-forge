@@ -39,10 +39,12 @@ When creating a brand-new skill contract:
 8. Generate `design-contract.yml` from the template at
    `contracts/design-contract.yml.tpl`.
 9. Present the contract to the user for approval using a dialog-based chooser
-   before proceeding. Do not require an exact reply string, and do not fall
-   back to numbered or free-form typed approval input. If dialog tooling is
-   unavailable, stop and report that approval is blocked until a dialog-capable
-   surface is available.
+   when dialog tooling is available. If dialogs are unavailable, use a
+   numbered text menu with `1. approve and continue`, `2. request changes`,
+   `3. stop for now`, and `Other: <custom response>`. Accept exact replies
+   `1`, `2`, or `3`, or `Other: ...`. If a numeric reply includes additional
+   text such as `1 - <note>`, ask for clarification before proceeding. Do not
+   require the user to type the full option label before proceeding.
 
 ## For Existing Skills (Refresh)
 
@@ -57,10 +59,12 @@ When refreshing the contract of an existing skill:
    order.
 6. Generate an updated `design-contract.yml`.
 7. Present the changes to the user for approval using a dialog-based chooser
-   before proceeding. Do not require an exact reply string, and do not fall
-   back to numbered or free-form typed approval input. If dialog tooling is
-   unavailable, stop and report that approval is blocked until a dialog-capable
-   surface is available.
+   when dialog tooling is available. If dialogs are unavailable, use a
+   numbered text menu with `1. approve and continue`, `2. request changes`,
+   `3. stop for now`, and `Other: <custom response>`. Accept exact replies
+   `1`, `2`, or `3`, or `Other: ...`. If a numeric reply includes additional
+   text such as `1 - <note>`, ask for clarification before proceeding. Do not
+   require the user to type the full option label before proceeding.
 
 ## Contract Format
 

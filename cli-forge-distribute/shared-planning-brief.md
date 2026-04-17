@@ -38,17 +38,39 @@ planning stage.
 ## Approval And Handoff UX
 
 - When a stage needs user approval or needs to hand work to the next stage, use
-  a dialog-based chooser (for example, `request_user_input`). This is required
-  for every approval and handoff step.
-- Offer 2 or 3 explicit options with the recommended path first, such as
-  approve and continue, request changes, or stop for now.
+  a dialog-based chooser (for example, `request_user_input`) whenever the
+  current runtime can render dialogs.
+- When dialog tooling is available and there are 2 or 3 meaningful options,
+  offer those explicit options with the recommended path first, such as approve
+  and continue, request changes, or stop for now.
+- If only one legal continuation remains, do not invent filler dialog choices.
+  Use the numbered text fallback with a single `1.` option instead, even when
+  dialog tooling is available.
+- If dialog tooling is unavailable in the current runtime, use a numbered text
+  fallback instead of blocking the workflow.
+- In numbered fallback mode, display 1 to 3 explicit options. Use the smallest
+  valid set, and when guardrails leave only one legal continuation, a single
+  `1.` option is allowed.
+- In numbered fallback mode, add `Other: <custom response>` as an escape
+  hatch. Do not add an explicit `Other` choice to dialog-based choosers;
+  dialog tooling already provides its own free-form path when supported.
+- In numbered fallback mode, number the visible options contiguously starting
+  at `1.` and accept only the exact digits that correspond to the options
+  actually shown.
+- Treat `Other: <custom response>` as feedback or a request to revisit the
+  offered options. It must not authorize a path that violates the current
+  stage guardrails.
+- If a numeric reply includes additional text such as `1 - <note>`, treat it
+  as ambiguous feedback and ask for clarification instead of proceeding
+  automatically.
 - Never require the user to type an exact phrase, a skill name, or the literal
   word `approved` just to continue.
-- Never present a numbered menu or ask the user to reply with a digit,
-  sequence number, or manually typed option label.
-- If dialog tooling is unavailable in the current runtime, stop and report that
-  the workflow is waiting for a dialog-capable handoff surface. Do not fall
-  back to free-form or numbered text input.
+- In numbered fallback mode, do not auto-map plain-language replies such as
+  `approve and continue` or `plan` onto numbered options. Accept only the
+  displayed digits or `Other: ...`.
+- If the user replies with plain language instead of a displayed digit, or if
+  an `Other:` reply conflicts with the current stage guardrails, restate the
+  numbered menu and ask for clarification instead of proceeding autonomously.
 
 ## CLI And Skill Expectations
 

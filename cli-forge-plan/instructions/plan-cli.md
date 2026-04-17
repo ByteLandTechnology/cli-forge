@@ -147,11 +147,13 @@ Write the file to `.cli-forge/cli-plan.yml`.
 ## Step 9: User Approval
 
 Present the complete CLI plan to the user using a dialog-based chooser when
-a dialog-capable surface is available. The plan must be approved before the
-Scaffold stage can proceed, but the user must not be required to type an exact
-phrase, the literal word `approved`, or any numbered menu response. If dialog
-tooling is unavailable, stop and report the blocker instead of falling back to
-text entry.
+a dialog-capable surface is available. If dialogs are unavailable, use a
+numbered text menu with `1. approve and continue`, `2. request changes`,
+`3. stop for now`, and `Other: <custom response>`. Accept exact replies `1`,
+`2`, or `3`, or `Other: ...`. If a numeric reply includes additional text such
+as `1 - <note>`, ask for clarification before proceeding. The plan must be
+approved before the Scaffold stage can proceed, but the user must not be
+required to type an exact phrase or the literal word `approved`.
 
 ## Done Condition
 
