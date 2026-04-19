@@ -83,14 +83,23 @@ provided by the Plan stage.
   only. Generated outputs must restore the intended dot-prefixed filename.
 - Do not improvise project structure or dependencies. Everything must be tied
   back to the `cli-plan.yml`.
-- The current scaffold baseline does not implement the planned daemon
-  app-server capability. If `cli-plan.yml` marks `daemon` `in_scope`, stop and
-  report that scaffold support for daemon must be implemented before
-  generation can proceed.
+- The scaffold baseline generates a working one-shot CLI only. Optional
+  capabilities (`repl`, `stream`, `daemon`) are not included in the baseline
+  and must be added by the **Extend** stage
+  ([`../cli-forge-extend/SKILL.md`](../cli-forge-extend/SKILL.md)) after the
+  baseline project is verified. If `cli-plan.yml` marks any capability as
+  `in_scope`, proceed with baseline generation, record the deferred
+  capabilities in `scaffold-receipt.yml` under `deferred_capabilities`, and
+  inform the user which features require the Extend stage next.
 - If any Cargo verification step fails, block the workflow and fix the
   scaffolded files before handing the work forward.
 
 ## Next Step
 
-Continue with [`../cli-forge-validate/SKILL.md`](../cli-forge-validate/SKILL.md)
+If `scaffold-receipt.yml` lists deferred capabilities, inform the user which
+capabilities require the Extend stage and provide the exact invocation
+patterns (see `instructions/new.md` Capability Deferral). The user or
+orchestrating agent decides when to run
+[`../cli-forge-extend/SKILL.md`](../cli-forge-extend/SKILL.md). Otherwise,
+continue with [`../cli-forge-validate/SKILL.md`](../cli-forge-validate/SKILL.md)
 to run the full compliance rule set.

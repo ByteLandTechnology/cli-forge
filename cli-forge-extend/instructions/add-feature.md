@@ -2,10 +2,10 @@
 
 ## Purpose
 
-Add either streaming output support or REPL mode to an existing scaffolded or
-scaffold-compatible takeover-adopted CLI Skill project by expanding the
-matching template and applying the documented
-source patches. Feature additions must preserve the generated runtime
+Add streaming output support, REPL mode, or daemon app-server capability to an
+existing scaffolded or scaffold-compatible takeover-adopted CLI Skill project
+by expanding the matching template and applying the documented source patches.
+Feature additions must preserve the generated runtime
 conventions already present in the scaffold, including the four help scenarios
 (leaf default structured failure, non-leaf default human-readable help,
 `--help` human-readable help, and structured `help`), user-scoped runtime
@@ -20,7 +20,7 @@ stage before continuing with this operation.
 
 | Input          | Required | Format             | Default | Description                                    |
 | -------------- | -------- | ------------------ | ------- | ---------------------------------------------- |
-| `feature`      | Yes      | `stream` or `repl` | —       | Which optional capability to add.              |
+| `feature`      | Yes      | `stream`, `repl`, or `daemon` | —       | Which optional capability to add.              |
 | `project_path` | Yes      | Directory path     | —       | Path to the existing scaffolded or takeover-adopted Skill project. |
 
 ## Prerequisites
@@ -61,10 +61,12 @@ Before making any edits:
    If these files or required surfaces are missing, stop and tell the user
    normalization to the scaffold-compatible layout/surface, or manual feature
    implementation, is required.
-6. Validate `feature` is exactly `stream` or `repl`. Reject any other value.
+6. Validate `feature` is exactly `stream`, `repl`, or `daemon`. Reject any
+   other value.
 7. Detect existing features:
    - If `feature == stream` and `src/stream.rs` already exists, stop and tell the user streaming is already present.
    - If `feature == repl` and `src/repl.rs` already exists, stop and tell the user REPL is already present.
+   - If `feature == daemon` and `src/daemon.rs` already exists, stop and tell the user daemon is already present.
 
 ## Common Procedure
 
@@ -78,6 +80,7 @@ Before making any edits:
 3. Expand the matching template from this Skill package:
    - `templates/stream.rs.tpl` -> `src/stream.rs`
    - `templates/repl.rs.tpl` -> `src/repl.rs`
+   - `templates/daemon.rs.tpl` -> `src/daemon.rs`
 4. Apply the code snippets below to the target files.
    - If the project already has the other optional feature, keep exactly one
      output-construction block inside `execute_run` and place feature-specific
@@ -191,6 +194,7 @@ Update every `FeatureAvailability` block so streaming is marked as enabled:
 -    streaming: "optional add-on".to_string(),
 +    streaming: "enabled".to_string(),
      repl: "optional add-on".to_string(),
+     daemon: "optional add-on".to_string(),
  }
 ```
 
@@ -277,6 +281,7 @@ Update every `FeatureAvailability` block so REPL is marked as enabled:
      streaming: "optional add-on".to_string(),
 -    repl: "optional add-on".to_string(),
 +    repl: "enabled".to_string(),
+     daemon: "optional add-on".to_string(),
  }
 ```
 
@@ -315,20 +320,282 @@ Insert this section immediately after `## Output` and before `## Errors`:
 - Per-command errors are written to stderr and do not terminate the REPL.
 ```
 
+## Feature: `daemon`
+
+### Step-by-Step
+
+1. Expand `templates/daemon.rs.tpl` to `src/daemon.rs`.
+2. Add the daemon subcommand tree and routing flags to `src/main.rs`.
+3. Add `pub mod daemon;` to `src/lib.rs`.
+4. Add `uuid = { version = "1", features = ["v4"] }` to `Cargo.toml` under
+   `[dependencies]`.
+5. Update `src/help.rs` so daemon commands, routing flags, and
+   `FeatureAvailability.daemon` are documented.
+6. Update `SKILL.md` with a `Daemon Mode` section between `Output` (or
+   `REPL Mode` if present) and `Errors`.
+
+### `main.rs` Patch Snippet
+
+Add the daemon subcommand enum:
+
+```diff
+ #[derive(Subcommand, Debug)]
+ enum Command {
+     Help(HelpCommand),
+     Run(RunCommand),
+     Paths(PathsCommand),
+     Context(ContextCommand),
++    #[command(subcommand)]
++    Daemon(DaemonCommand),
+ }
+
++#[derive(Subcommand, Debug)]
++enum DaemonCommand {
++    /// Run the daemon server in the foreground (blocks terminal)
++    Run,
++    /// Start the daemon server in the background
++    Start,
++    /// Stop the running daemon server
++    Stop,
++    /// Restart the daemon server
++    Restart,
++    /// Report daemon health, endpoint, pid, uptime, and next action
++    Status,
++}
+```
+
+Add `--via` and `--ensure-daemon` flags to the `Cli` struct:
+
+```diff
+ struct Cli {
+     ...
++    /// Route execution through the daemon instead of local process
++    #[arg(long, global = true, value_name = "MODE")]
++    r#via: Option<String>,
++
++    /// Auto-start the daemon if not running (only valid with --via daemon)
++    #[arg(long, global = true)]
++    ensure_daemon: bool,
+ }
+```
+
+Add the daemon command dispatch branch inside `match cli.command`. The
+`execute_run` line may or may not already carry a `stream` argument depending
+on whether the stream feature has been added first. Match whatever is already
+present and do not add or remove arguments to `execute_run` at this point.
+
+```diff
+         Some(Command::Context(command)) => execute_context(runtime_overrides, command, format),
++        Some(Command::Daemon(cmd)) => execute_daemon(runtime_overrides, cmd, format),
+     }
+```
+
+Also add daemon paths to the `render_plain_text_help_for_cli` match block:
+
+```diff
+         Some(Command::Context(ContextCommand {
+             command: Some(ContextSubcommand::Use(_)),
+         })) => vec!["context".to_string(), "use".to_string()],
++        Some(Command::Daemon(DaemonCommand::Run)) => vec!["daemon".to_string(), "run".to_string()],
++        Some(Command::Daemon(DaemonCommand::Start)) => vec!["daemon".to_string(), "start".to_string()],
++        Some(Command::Daemon(DaemonCommand::Stop)) => vec!["daemon".to_string(), "stop".to_string()],
++        Some(Command::Daemon(DaemonCommand::Restart)) => vec!["daemon".to_string(), "restart".to_string()],
++        Some(Command::Daemon(DaemonCommand::Status)) => vec!["daemon".to_string(), "status".to_string()],
+     };
+```
+
+Add the `execute_daemon` function:
+
+```rust
+fn execute_daemon(
+    overrides: RuntimeOverrides,
+    command: DaemonCommand,
+    format: Format,
+) -> std::result::Result<(), AppExit> {
+    let runtime = <crate_name>::context::resolve_runtime_locations(&overrides, false)
+        .map_err(AppExit::from)?;
+    let state_dir = &runtime.state_dir;
+    let skill_name = "<skill-name>";
+    let version = env!("CARGO_PKG_VERSION");
+
+    match command {
+        DaemonCommand::Run => {
+            <crate_name>::daemon::run_daemon(state_dir, skill_name, version)
+                .map_err(AppExit::from)
+        }
+        DaemonCommand::Start => {
+            let status = <crate_name>::daemon::start_daemon(
+                state_dir, skill_name, std::time::Duration::from_secs(30),
+            ).map_err(AppExit::from)?;
+            let stdout = std::io::stdout();
+            let mut out = stdout.lock();
+            serialize_value(&mut out, &status, format).map_err(AppExit::from)
+        }
+        DaemonCommand::Stop => {
+            <crate_name>::daemon::stop_daemon(
+                state_dir, std::time::Duration::from_secs(10),
+            ).map_err(AppExit::from)
+        }
+        DaemonCommand::Restart => {
+            let status = <crate_name>::daemon::restart_daemon(
+                state_dir, skill_name, std::time::Duration::from_secs(30),
+            ).map_err(AppExit::from)?;
+            let stdout = std::io::stdout();
+            let mut out = stdout.lock();
+            serialize_value(&mut out, &status, format).map_err(AppExit::from)
+        }
+        DaemonCommand::Status => {
+            let status = <crate_name>::daemon::query_status(state_dir)
+                .map_err(AppExit::from)?;
+            let stdout = std::io::stdout();
+            let mut out = stdout.lock();
+            serialize_value(&mut out, &status, format).map_err(AppExit::from)
+        }
+    }
+}
+```
+
+Add daemon routing inside `execute_run`, after input validation succeeds and
+before the default one-shot serialization. The `via` and `ensure_daemon`
+values come from the `Cli` struct — extract them in `run_cli` and pass them
+through to `execute_run` as new parameters:
+
+In `run_cli`, after `let runtime_overrides = cli_runtime_overrides(&cli);`
+(and after the `--repl` early branch if present), extract:
+
+```rust
+    let via = cli.r#via.clone();
+    let ensure_daemon = cli.ensure_daemon;
+```
+
+Update the `execute_run` call in the match arm to forward these:
+
+```rust
+    Some(Command::Run(command)) => execute_run(
+        runtime_overrides, command, format,
+        /* existing args like `stream` if present, then: */
+        via, ensure_daemon,
+    ),
+```
+
+Then extend `execute_run`'s signature with the two new parameters:
+
+```rust
+fn execute_run(
+    overrides: RuntimeOverrides,
+    command: RunCommand,
+    format: Format,
+    // ... any existing params from stream/repl ...
+    via: Option<String>,
+    ensure_daemon: bool,
+) -> std::result::Result<(), AppExit> {
+```
+
+Inside `execute_run`, after constructing `let output = RunResponse { ... };`
+and **before** any existing `--stream` branch, add the daemon routing:
+
+```rust
+    if via.as_deref() == Some("daemon") {
+        if ensure_daemon && !<crate_name>::daemon::is_daemon_running(&runtime.state_dir) {
+            <crate_name>::daemon::start_daemon(
+                &runtime.state_dir, "<skill-name>",
+                std::time::Duration::from_secs(30),
+            ).map_err(AppExit::from)?;
+        }
+        return <crate_name>::daemon::execute_via_daemon(
+            &["run".to_string()],
+            &input,
+            effective_context.effective_values.clone(),
+            None,
+            format,
+            &runtime.state_dir,
+            env!("CARGO_PKG_VERSION"),
+        ).map_err(AppExit::from);
+    }
+```
+
+### `lib.rs` Patch Snippet
+
+```diff
++pub mod daemon;
++
+ pub mod context;
+ pub mod help;
+```
+
+### `help.rs` Patch Snippet
+
+Update every `FeatureAvailability` block so daemon is marked as enabled:
+
+```diff
+ feature_availability: FeatureAvailability {
+     streaming: "optional add-on".to_string(),
+     repl: "optional add-on".to_string(),
++    daemon: "enabled".to_string(),
+ }
+```
+
+Add daemon subcommands and routing flags to the global options rendered for
+the top-level and leaf command paths so man-like human-readable help and
+structured help both stay accurate after the feature is added:
+
+- `daemon run`, `daemon start`, `daemon stop`, `daemon restart`, `daemon status`
+- `--via local|daemon` (global, routing flag)
+- `--ensure-daemon` (global, auto-start flag)
+
+### `Cargo.toml` Patch Snippet
+
+Append `uuid` and `libc` to the `[dependencies]` section. Insert after the
+last existing dependency line (the exact anchor varies by which features are
+already present):
+
+```diff
+ [dependencies]
+ clap = { version = "4", features = ["derive"] }
+ ...
++uuid = { version = "1", features = ["v4"] }
++libc = "0.2"
+```
+
+### `SKILL.md` Patch Snippet
+
+Insert this section immediately after `## Output` (or after `## REPL Mode` if
+present) and before `## Errors`:
+
+```md
+## Daemon Mode
+
+- The daemon is a long-lived background app-server that accepts leaf-command
+  execution requests over a Unix domain socket using JSON-RPC 2.0.
+- Lifecycle commands: `daemon run` (foreground), `daemon start` (background),
+  `daemon stop`, `daemon restart`, `daemon status`.
+- Route leaf commands through the daemon with `--via daemon`.
+- Auto-start the daemon with `--ensure-daemon` (only valid with `--via daemon`).
+- Commands not daemonizable must reject `--via daemon` with a structured error.
+- Daemon transport stays JSON-RPC internally; the client converts to the
+  user's requested `--format` (YAML, JSON, or TOML) at the CLI boundary.
+- Daemon runtime files live under `state/daemon/` (`daemon.pid`, `daemon.sock`,
+  `daemon-state.json`, `daemon.log`).
+```
+
 ## Combining Features
 
-If the project already has one optional feature and you are adding the other:
+If the project already has one or more optional features and you are adding
+another:
 
-- Keep both flags in the same `Cli` struct.
+- Keep all flags in the same `Cli` struct.
 - Keep `--repl` as the early session-mode branch before the normal command
   match, and keep `--stream` scoped to `execute_run`.
+- Keep `--via daemon` routing inside `execute_run`, immediately before the
+  `--stream` branch.
 - Keep exactly one `let output = ...;` immediately before the default one-shot
   serialization path inside `execute_run`.
-- Keep both module declarations in `src/lib.rs`, and leave them in
-  rustfmt-compatible order:
+- Keep all module declarations in `src/lib.rs`, and leave them in
+  rustfmt-compatible alphabetical order:
 
 ```rust
 pub mod context;
+pub mod daemon;
 pub mod help;
 pub mod repl;
 pub mod stream;
@@ -337,19 +604,22 @@ pub mod stream;
 - Keep `src/help.rs` synchronized with the enabled feature set by updating the
   global option list and `FeatureAvailability` values.
 
-- Preserve the `SKILL.md` section order: `Description`, `Prerequisites`, `Invocation`, `Input`, `Output`, optional `REPL Mode`, `Errors`, `Examples`.
+- Preserve the `SKILL.md` section order: `Description`, `Prerequisites`,
+  `Invocation`, `Input`, `Output`, optional `REPL Mode`, optional
+  `Daemon Mode`, `Errors`, `Examples`.
 
 ## Error Conditions
 
 | Condition                                          | Action                                                |
 | -------------------------------------------------- | ----------------------------------------------------- |
-| `feature` is not `stream` or `repl`                | Reject the request and ask for a supported feature.   |
+| `feature` is not `stream`, `repl`, or `daemon`     | Reject the request and ask for a supported feature.   |
 | `project_path` does not exist                      | Stop and report the missing path.                     |
 | `project_path` lacks any baseline receipt | Stop and route the project through Takeover first. |
 | Takeover baseline exists but required scaffold-compatible files are missing | Stop and tell the user normalization or manual feature implementation is required. |
 | Requested feature file already exists              | Stop and tell the user no changes were made.          |
 | Template file is missing from this Skill package   | Stop and report that the Skill package is incomplete. |
 | Build/lint/format fails after applying the feature | Fix the project before reporting success.             |
+| Daemon `uuid` dependency missing from Cargo.toml   | Add `uuid = { version = "1", features = ["v4"] }` before proceeding. |
 
 ## Final Reporting Behavior
 

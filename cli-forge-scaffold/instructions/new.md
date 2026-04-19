@@ -127,10 +127,39 @@ The expanded files must also preserve the invocation contract:
   package wording must keep the same approved description contract and the same
   released version as the repo-native GitHub Release.
 
-If `cli-plan.yml` marks `capabilities.daemon: in_scope`, stop before
-generation and report that scaffold support for the daemon app-server contract
-is not implemented yet. Do not silently emit the old managed-daemon placeholder
-and do not drop daemon from the generated package without telling the user.
+### Capability Deferral
+
+The scaffold baseline generates a working one-shot CLI. Optional capabilities
+(`repl`, `stream`, `daemon`) are added by the **Extend** stage
+(`cli-forge-extend`) after the baseline project is verified.
+
+If `cli-plan.yml` marks any capability (`repl`, `stream`, or `daemon`) as
+`in_scope`, the scaffold must **still generate the complete baseline project**.
+After baseline generation and verification succeed:
+
+1. Read the `capabilities` section from `cli-plan.yml`.
+2. Collect every capability marked `in_scope` into a deferred list.
+3. Include this list in `scaffold-receipt.yml` under `deferred_capabilities`.
+4. Inform the user that the baseline project is ready, then explicitly list
+   which capabilities need to be added via the Extend stage. Provide the
+   exact invocation pattern for each deferred capability:
+
+       /cli-forge-extend --project-path {skill_name} --feature <capability>
+
+   For example, if `cli-plan.yml` marks both `stream` and `daemon` as
+   `in_scope`, tell the user to run:
+
+       /cli-forge-extend --project-path {skill_name} --feature stream
+       /cli-forge-extend --project-path {skill_name} --feature daemon
+
+   Each invocation adds one capability. The Extend stage handles feature
+   ordering, patch conflicts, and combined-feature reconciliation
+   automatically.
+
+Do **not** silently skip capabilities, and do **not** attempt to generate
+capability-specific code during scaffold. The scaffold output must be a clean,
+compiling baseline CLI with no feature-specific modules, flags, or dispatch
+branches beyond the documented baseline command tree.
 
 If `author` was omitted:
 
@@ -195,6 +224,9 @@ Tell the user:
 - The project was created at `{skill_name}/`.
 - List the generated files.
 - Confirm that build, lint, format, tests, and basic runtime-contract checks all pass.
+- If `scaffold-receipt.yml` lists `deferred_capabilities`, enumerate them and
+  provide the exact `/cli-forge-extend` invocation for each (see Capability
+  Deferral above).
 
 ## Error Conditions
 

@@ -7,8 +7,8 @@ description: "Extend stage for the cli-forge skill family: add stream or repl fe
 
 Use this stage when a generated Rust CLI Skill project, or a takeover-adopted
 project that already matches the scaffold-compatible file layout, requires
-optional capabilities like JSON streaming (`stream`) or interactive terminal
-sessions (`repl`).
+optional capabilities like JSON streaming (`stream`), interactive terminal
+sessions (`repl`), or background app-server daemon execution (`daemon`).
 
 ## Purpose
 
@@ -24,6 +24,7 @@ back to the `cli-plan.yml` contract.
 - [`./planning-brief.md`](./planning-brief.md)
 - [`./contracts/extend-receipt.yml.tpl`](./contracts/extend-receipt.yml.tpl)
 - [`./templates/`](./templates/)
+- [`../cli-forge-plan/instructions/daemon-app-server.md`](../cli-forge-plan/instructions/daemon-app-server.md)
 
 ## Entry Gate
 
@@ -31,14 +32,14 @@ back to the `cli-plan.yml` contract.
 | --- | --------------------------------------------------------- | ----------- |
 | 1   | Target project directory exists                           | Filesystem  |
 | 2   | Scaffold baseline exists, or takeover baseline is scaffold-compatible | Filesystem  |
-| 3   | Requested feature is `stream` or `repl`                   | User/Router |
+| 3   | Requested feature is `stream`, `repl`, or `daemon`        | User/Router |
 | 4   | Feature is explicitly marked `in_scope` in `cli-plan.yml` | Plan        |
 | 5   | Feature is not already added (idempotency check)          | Filesystem  |
 
 ## Required Inputs
 
 - `project_path`
-- `feature` (`stream` or `repl`)
+- `feature` (`stream`, `repl`, or `daemon`)
 - Details for updating the `cli-plan.yml`
 
 ## Workflow
@@ -65,7 +66,7 @@ back to the `cli-plan.yml` contract.
    code before the plan allows it.
 4. Follow [`./instructions/add-feature.md`](./instructions/add-feature.md).
 5. Expand exactly the requested templates from `./templates/`
-   (e.g., `stream.rs.tpl` or `repl.rs.tpl`).
+   (e.g., `stream.rs.tpl`, `repl.rs.tpl`, or `daemon.rs.tpl`).
 6. Run integration updates safely:
    - add the relevant flags to the args struct
    - wire the subsystem branch into the `match` loop
@@ -124,10 +125,7 @@ back to the `cli-plan.yml` contract.
   not silently rewrite daemon commands, routing flags, transport choices, or
   recovery semantics.
 - Refuse to add unsupported features through this stage. This stage only
-  handles `stream` and `repl`.
-- The planned daemon app-server capability is documented in
-  [`../cli-forge-plan/instructions/daemon-app-server.md`](../cli-forge-plan/instructions/daemon-app-server.md)
-  but is not yet implemented by this stage.
+  handles `stream`, `repl`, and `daemon`.
 
 ## Next Step
 

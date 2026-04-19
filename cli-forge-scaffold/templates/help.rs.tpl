@@ -50,6 +50,7 @@ pub struct ActiveContextHelp {
 pub struct FeatureAvailability {
     pub streaming: String,
     pub repl: String,
+    pub daemon: String,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -194,6 +195,7 @@ fn top_level_help() -> HelpDocument {
         feature_availability: FeatureAvailability {
             streaming: "optional add-on".to_string(),
             repl: "optional add-on".to_string(),
+            daemon: "optional add-on".to_string(),
         },
         description: vec![
             "{{DESCRIPTION}}".to_string(),
@@ -257,6 +259,7 @@ fn run_help() -> HelpDocument {
         feature_availability: FeatureAvailability {
             streaming: "optional add-on".to_string(),
             repl: "optional add-on".to_string(),
+            daemon: "optional add-on".to_string(),
         },
         description: vec![
             "This is the primary leaf command used for validation.".to_string(),
@@ -302,6 +305,7 @@ fn help_subcommand_help() -> HelpDocument {
         feature_availability: FeatureAvailability {
             streaming: "optional add-on".to_string(),
             repl: "optional add-on".to_string(),
+            daemon: "optional add-on".to_string(),
         },
         description: vec![
             "Use this subcommand when you need machine-readable command metadata.".to_string(),
@@ -342,6 +346,7 @@ fn paths_help() -> HelpDocument {
         feature_availability: FeatureAvailability {
             streaming: "optional add-on".to_string(),
             repl: "optional add-on".to_string(),
+            daemon: "optional add-on".to_string(),
         },
         description: vec![
             "Use this command to inspect config, data, state, cache, and optional log locations."
@@ -393,6 +398,7 @@ fn context_help() -> HelpDocument {
         feature_availability: FeatureAvailability {
             streaming: "optional add-on".to_string(),
             repl: "optional add-on".to_string(),
+            daemon: "optional add-on".to_string(),
         },
         description: vec![
             "Available subcommands: show, use.".to_string(),
@@ -430,6 +436,7 @@ fn context_show_help() -> HelpDocument {
         feature_availability: FeatureAvailability {
             streaming: "optional add-on".to_string(),
             repl: "optional add-on".to_string(),
+            daemon: "optional add-on".to_string(),
         },
         description: vec![
             "Shows the persisted context file location and the effective values in use."
@@ -485,6 +492,7 @@ fn context_use_help() -> HelpDocument {
         feature_availability: FeatureAvailability {
             streaming: "optional add-on".to_string(),
             repl: "optional add-on".to_string(),
+            daemon: "optional add-on".to_string(),
         },
         description: vec![
             "Persists one or more reusable selectors or ambient cues for future invocations."
@@ -580,7 +588,11 @@ pub fn render_plain_text_help(doc: &HelpDocument) -> String {
         "  Streaming: {}\n",
         doc.feature_availability.streaming
     ));
-    out.push_str(&format!("  REPL: {}\n\n", doc.feature_availability.repl));
+    out.push_str(&format!("  REPL: {}\n", doc.feature_availability.repl));
+    out.push_str(&format!(
+        "  Daemon: {}\n\n",
+        doc.feature_availability.daemon
+    ));
 
     out.push_str("EXAMPLES\n");
     for example in &doc.examples {
