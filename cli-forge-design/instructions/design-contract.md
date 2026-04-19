@@ -38,13 +38,15 @@ When creating a brand-new skill contract:
    npm publication when release work is later adopted.
 8. Generate `design-contract.yml` from the template at
    `contracts/design-contract.yml.tpl`.
-9. Present the contract to the user for approval using a dialog-based chooser
-   when dialog tooling is available. If dialogs are unavailable, use a
-   numbered text menu with `1. approve and continue`, `2. request changes`,
-   `3. stop for now`, and `Other: <custom response>`. Accept exact replies
-   `1`, `2`, or `3`, or `Other: ...`. If a numeric reply includes additional
-   text such as `1 - <note>`, ask for clarification before proceeding. Do not
-   require the user to type the full option label before proceeding.
+9. Present the contract to the user for approval by calling the runtime's dialog-based chooser
+   (e.g., `AskUserQuestion`) with the options `approve and continue`, `request
+   changes`, and `stop for now` when it is available. If no dialog-based chooser
+   is available, use a numbered text menu with `1. approve and continue`, `2.
+   request changes`, `3. stop for now`, and `Other: <custom response>`. Accept
+   exact replies `1`, `2`, or `3`, or `Other: ...`. If a numeric reply includes
+   additional text such as `1 - <note>`, ask for clarification before
+   proceeding. Do not require the user to type the full option label before
+   proceeding.
 
 ## For Existing Skills (Refresh)
 
@@ -58,13 +60,14 @@ When refreshing the contract of an existing skill:
    requirement for the four help scenarios and the canonical man-like section
    order.
 6. Generate an updated `design-contract.yml`.
-7. Present the changes to the user for approval using a dialog-based chooser
-   when dialog tooling is available. If dialogs are unavailable, use a
-   numbered text menu with `1. approve and continue`, `2. request changes`,
-   `3. stop for now`, and `Other: <custom response>`. Accept exact replies
-   `1`, `2`, or `3`, or `Other: ...`. If a numeric reply includes additional
-   text such as `1 - <note>`, ask for clarification before proceeding. Do not
-   require the user to type the full option label before proceeding.
+7. Present the changes to the user for approval by calling the runtime's dialog-based chooser
+   (e.g., `AskUserQuestion`) with the options `approve and continue`, `request
+   changes`, and `stop for now` when it is available. If no dialog-based chooser
+   is available, use a numbered text menu with `1. approve and continue`, `2.
+   request changes`, `3. stop for now`, and `Other: <custom response>`. Accept exact replies `1`, `2`, or `3`, or
+   `Other: ...`. If a numeric reply includes additional text such as
+   `1 - <note>`, ask for clarification before proceeding. Do not require the
+   user to type the full option label before proceeding.
 
 ## Contract Format
 

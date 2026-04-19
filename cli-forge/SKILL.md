@@ -76,9 +76,10 @@ Act as the intake layer and traffic controller.
    `.cli-forge/handoff.yml` in the target project directory. This explicitly
    records the classification and inputs for downstream consumption.
 6. Provide a clear handoff response specifying which child skill should be
-   invoked next. Prefer a dialog-based chooser for the next-step handoff
-   (for example, `request_user_input`) when dialog tooling is available and
-   there are 2 or 3 legal next-stage options. If dialogs are unavailable, or
+   invoked next. When there are 2 or 3 legal next-stage options, call
+   the runtime's dialog-based chooser (e.g., `AskUserQuestion`) with those options
+   (recommended path first) when it is available. If no dialog-based chooser is
+   available, or
    if only one legal next stage remains, present a numbered text menu with 1 to
    3 explicit next-stage options drawn only from the stages that remain valid
    under the current filesystem state. Use the smallest valid set, and when
@@ -108,7 +109,7 @@ Act as the intake layer and traffic controller.
 ## Guardrails
 
 - **CRITICAL DIRECTIVE TO THE ASSISTANT**: You MUST NOT bypass the staged pipeline. Do not write, generate, or scaffold code yourself during this stage.
-- **CRITICAL DIRECTIVE TO THE ASSISTANT**: You MUST STOP and yield to the user after generating `handoff.yml` and explaining the next steps. Do not invoke the next stage autonomously. Use a dialog-based selection for the handoff when available and when there are 2 or 3 legal next-stage options. If dialogs are unavailable, or if only one legal next stage remains, use the standardized numbered text fallback with `Other: explain a routing concern`. Never require the user to explicitly type the next skill name, and never let fallback input bypass the valid stage set computed from repository state.
+- **CRITICAL DIRECTIVE TO THE ASSISTANT**: You MUST STOP and yield to the user after generating `handoff.yml` and explaining the next steps. Do not invoke the next stage autonomously. Use the runtime's dialog-based chooser (e.g., `AskUserQuestion`) for the handoff when it is available and there are 2 or 3 legal next-stage options. If no dialog-based chooser is available, or if only one legal next stage remains, use the standardized numbered text fallback with `Other: explain a routing concern`. Never require the user to explicitly type the next skill name, and never let fallback input bypass the valid stage set computed from repository state.
 - The Router must stay thin. Do not execute templates, run compilation steps, or define CLI contracts here.
 - Never force a workflow forward if an earlier stage is incomplete. For
   example, if the user asks to "validate" but the project is a pre-existing

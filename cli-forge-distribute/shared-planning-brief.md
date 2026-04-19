@@ -37,26 +37,27 @@ planning stage.
 
 ## Approval And Handoff UX
 
-- When a stage needs user approval or needs to hand work to the next stage, use
-  a dialog-based chooser (for example, `request_user_input`) whenever the
-  current runtime can render dialogs.
-- When dialog tooling is available and there are 2 or 3 meaningful options,
-  offer those explicit options with the recommended path first, such as approve
-  and continue, request changes, or stop for now.
 - If only one legal continuation remains, do not invent filler dialog choices.
-  Use the numbered text fallback with a single `1.` option instead, even when
-  dialog tooling is available.
-- If dialog tooling is unavailable in the current runtime, use a numbered text
-  fallback instead of blocking the workflow.
-- In numbered fallback mode, display 1 to 3 explicit options. Use the smallest
-  valid set, and when guardrails leave only one legal continuation, a single
-  `1.` option is allowed.
-- In numbered fallback mode, add `Other: <custom response>` as an escape
-  hatch. Do not add an explicit `Other` choice to dialog-based choosers;
-  dialog tooling already provides its own free-form path when supported.
-- In numbered fallback mode, number the visible options contiguously starting
-  at `1.` and accept only the exact digits that correspond to the options
-  actually shown.
+  Use the numbered text fallback with a single `1.` option. Do not call
+  `AskUserQuestion` when there is only one option.
+- When there are 2 or 3 meaningful options and the runtime provides a
+  dialog-based chooser (for example, `AskUserQuestion` or `ask_user`), pass
+  those options as explicit choices with the recommended path first, such as
+  approve and continue, request changes, or stop for now.
+- When there are 2 or 3 meaningful options but no dialog-based chooser is
+  available in the current runtime, use the numbered text fallback instead.
+- In numbered text fallback mode, display 1 to 3 explicit options. Use the
+  smallest valid set, and when guardrails leave only one legal continuation,
+  a single `1.` option is allowed.
+- In numbered text fallback mode, add `Other: <custom response>` as an escape
+  hatch. Do not add an explicit `Other` choice to dialog-based chooser calls;
+  the tool already provides its own free-form text input.
+- In numbered text fallback mode, number the visible options contiguously
+  starting at `1.` and accept only the exact digits that correspond to the
+  options actually shown.
+- If a dialog-based chooser returns free-form text that does not match any
+  offered option, treat it as feedback — it must not authorize a path that
+  violates the current stage guardrails. Ask for clarification instead.
 - Treat `Other: <custom response>` as feedback or a request to revisit the
   offered options. It must not authorize a path that violates the current
   stage guardrails.
@@ -65,8 +66,8 @@ planning stage.
   automatically.
 - Never require the user to type an exact phrase, a skill name, or the literal
   word `approved` just to continue.
-- In numbered fallback mode, do not auto-map plain-language replies such as
-  `approve and continue` or `plan` onto numbered options. Accept only the
+- In numbered text fallback mode, do not auto-map plain-language replies such
+  as `approve and continue` or `plan` onto numbered options. Accept only the
   displayed digits or `Other: ...`.
 - If the user replies with plain language instead of a displayed digit, or if
   an `Other:` reply conflicts with the current stage guardrails, restate the

@@ -82,14 +82,15 @@ and Validate uses as the compliance baseline.
 10. Lock runtime directory and Active Context behavior.
 11. Generate `.cli-forge/cli-plan.yml` using the format defined in
     [`./contracts/cli-plan.yml.tpl`](./contracts/cli-plan.yml.tpl).
-12. Present the CLI plan to the user for approval. Use a dialog-based chooser
-    (for example, `request_user_input`) when dialog tooling is available so the
-    user can select `approve and continue`, `request changes`, or `stop for
-    now`. If dialogs are unavailable, present the same approval paths as a
-    numbered text menu and add `Other: <custom response>` as the fallback
-    escape hatch. Accept exact replies `1`, `2`, or `3`, or `Other: ...`. If a
-    numeric reply includes additional text, ask for clarification before
-    proceeding. Do not require the user to type the full option label.
+12. Present the CLI plan to the user for approval. Call the runtime's
+    dialog-based chooser (e.g., `AskUserQuestion`) with the options `approve
+    and continue`, `request changes`, or `stop for now` when it is available.
+    If no dialog-based chooser is available, use a numbered text menu with the
+    same three options and add `Other:
+    <custom response>` as the fallback escape hatch. Accept exact replies `1`,
+    `2`, or `3`, or `Other: ...`. If a numeric reply includes additional text,
+    ask for clarification before proceeding. Do not require the user to type
+    the full option label.
 
 ## Outputs
 
@@ -111,7 +112,7 @@ and Validate uses as the compliance baseline.
 
 ## Guardrails
 
-- **CRITICAL DIRECTIVE TO THE ASSISTANT**: You MUST STOP execution and ask for the user's explicit approval after generating `cli-plan.yml`. Do NOT proceed to the Scaffold stage autonomously. Use a dialog-based approval prompt when available, or the standardized numbered text fallback with `Other: <custom response>` when dialogs are unavailable. Never require the user to type the literal word `approved`.
+- **CRITICAL DIRECTIVE TO THE ASSISTANT**: You MUST STOP execution and ask for the user's explicit approval after generating `cli-plan.yml`. Do NOT proceed to the Scaffold stage autonomously. Call the runtime's dialog-based chooser (e.g., `AskUserQuestion`) for approval when it is available, or use the standardized numbered text fallback with `1. approve and continue`, `2. request changes`, `3. stop for now`, and `Other: <custom response>`. Never require the user to type the literal word `approved`.
 - Do not change the skill's purpose or positioning here. That work was done in
   the Design stage and is locked in `design-contract.yml`.
 - Do not begin implementing code. This stage produces a plan document, not
