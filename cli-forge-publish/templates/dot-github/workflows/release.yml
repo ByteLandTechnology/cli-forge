@@ -46,6 +46,7 @@ jobs:
         with:
           node-version: 24
           registry-url: https://registry.npmjs.org
+          oidc-match: ${{ vars.NPM_PUBLISHER_PATTERN || '*' }}
 
       - name: Read release config
         id: cfg

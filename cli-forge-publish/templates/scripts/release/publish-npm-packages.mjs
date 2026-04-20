@@ -65,7 +65,7 @@ function publishPackage(pkgDir, label) {
     return "skipped";
   }
 
-  const result = spawnSync("npm", ["publish", "--access=public"], {
+  const result = spawnSync("npm", ["publish", "--access=public", "--provenance"], {
     cwd: pkgDir,
     stdio: "inherit",
     shell: true,
