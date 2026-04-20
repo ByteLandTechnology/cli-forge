@@ -224,9 +224,18 @@ Tell the user:
 - The project was created at `{skill_name}/`.
 - List the generated files.
 - Confirm that build, lint, format, tests, and basic runtime-contract checks all pass.
-- If `scaffold-receipt.yml` lists `deferred_capabilities`, enumerate them and
-  provide the exact `/cli-forge-extend` invocation for each (see Capability
-  Deferral above).
+- If `scaffold-receipt.yml` lists `deferred_capabilities`, use
+  `AskUserQuestion` to prompt before handing off. Offer to run extend
+  immediately for each deferred capability:
+
+  ```
+  Deferred capabilities detected: <list>
+  Run /cli-forge-extend --project-path {skill_name} --feature <capability> now?
+  ```
+
+  If the user confirms, invoke extend for each deferred capability in order.
+  If the user declines, fall back to enumerating the exact `/cli-forge-extend`
+  invocation for each (see Capability Deferral above).
 
 ## Error Conditions
 

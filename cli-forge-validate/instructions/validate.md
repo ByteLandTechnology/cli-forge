@@ -14,9 +14,7 @@ asset pack, validate repo-native release/install surfaces as repository
 automation rather than generated package files, and confirm any npm
 publication surface stays aligned with the same released version and publish
 contract. If the project exposes daemon
-behavior, validate it against the daemon contract declared in `cli-plan.yml`
-rather than against a hard-coded managed-background assumption. Until a
-dedicated `DAEMON-*` ruleset exists, use the shared help/runtime/error checks
+behavior, validate it using the DAEMON-* ruleset (DAEMON-001 through DAEMON-007)
 plus the daemon overlay described below to compare planned daemon behavior with
 the actual documented and implemented surface.
 
@@ -110,6 +108,13 @@ truth and do not omit any of them.
 | `REPL-002`   | repl           | III-C     | error    | REPL supports command history.                                                                                                 |
 | `REPL-003`   | repl           | III-C     | error    | REPL supports tab completion.                                                                                                  |
 | `REPL-004`   | repl           | III-C     | warning  | REPL default output behavior is human-readable.                                                                                |
+| `DAEMON-001` | daemon         | III-C     | error    | `daemon run` starts the foreground server and binds `state/daemon/daemon.sock`.                                              |
+| `DAEMON-002` | daemon         | III-C     | error    | `daemon start` background-starts the daemon and returns without blocking.                                                     |
+| `DAEMON-003` | daemon         | III-C     | error    | `daemon status` reports endpoint, state, pid, and readiness in structured form.                                               |
+| `DAEMON-004` | daemon         | III-C     | error    | `daemon stop` cleanly shuts down the server and removes the socket.                                                           |
+| `DAEMON-005` | daemon         | III-C     | error    | `--via daemon` routes a leaf command through the daemon socket and returns the same payload shape as local execution.        |
+| `DAEMON-006` | daemon         | III-C     | error    | `--ensure-daemon` auto-starts the daemon if not running (only valid with `--via daemon`).                                    |
+| `DAEMON-007` | daemon         | III-C     | warning  | Structured errors are returned for invalid `--via`/`--ensure-daemon` combinations.                                           |
 
 ## Steps
 
@@ -281,7 +286,10 @@ verify:
 
 ### Daemon-Specific Validation Overlay
 
-When the project includes daemon behavior, extend the report narrative with:
+DAEMON-* rules (DAEMON-001 through DAEMON-007) run only when `src/daemon.rs`
+exists, gated on the same `src/daemon.rs` existence check used for REPL-* rules.
+
+When daemon behavior is present, also extend the report narrative with:
 
 1. whether the docs and help surfaces match the daemon lifecycle and routing
    contract declared in `cli-plan.yml`

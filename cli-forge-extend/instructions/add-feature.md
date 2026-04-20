@@ -327,11 +327,9 @@ Insert this section immediately after `## Output` and before `## Errors`:
 1. Expand `templates/daemon.rs.tpl` to `src/daemon.rs`.
 2. Add the daemon subcommand tree and routing flags to `src/main.rs`.
 3. Add `pub mod daemon;` to `src/lib.rs`.
-4. Add `uuid = { version = "1", features = ["v4"] }` to `Cargo.toml` under
-   `[dependencies]`.
-5. Update `src/help.rs` so daemon commands, routing flags, and
+4. Update `src/help.rs` so daemon commands, routing flags, and
    `FeatureAvailability.daemon` are documented.
-6. Update `SKILL.md` with a `Daemon Mode` section between `Output` (or
+5. Update `SKILL.md` with a `Daemon Mode` section between `Output` (or
    `REPL Mode` if present) and `Errors`.
 
 ### `main.rs` Patch Snippet
@@ -545,15 +543,14 @@ structured help both stay accurate after the feature is added:
 
 ### `Cargo.toml` Patch Snippet
 
-Append `uuid` and `libc` to the `[dependencies]` section. Insert after the
-last existing dependency line (the exact anchor varies by which features are
-already present):
+Append `libc` to the `[dependencies]` section. The daemon template uses `libc`
+for Unix socket locking (`flock`) and process signals (`kill`). Insert after the
+last existing dependency line:
 
 ```diff
  [dependencies]
  clap = { version = "4", features = ["derive"] }
  ...
-+uuid = { version = "1", features = ["v4"] }
 +libc = "0.2"
 ```
 
@@ -619,7 +616,6 @@ pub mod stream;
 | Requested feature file already exists              | Stop and tell the user no changes were made.          |
 | Template file is missing from this Skill package   | Stop and report that the Skill package is incomplete. |
 | Build/lint/format fails after applying the feature | Fix the project before reporting success.             |
-| Daemon `uuid` dependency missing from Cargo.toml   | Add `uuid = { version = "1", features = ["v4"] }` before proceeding. |
 
 ## Final Reporting Behavior
 

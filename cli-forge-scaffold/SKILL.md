@@ -96,10 +96,11 @@ provided by the Plan stage.
 
 ## Next Step
 
-If `scaffold-receipt.yml` lists deferred capabilities, inform the user which
-capabilities require the Extend stage and provide the exact invocation
-patterns (see `instructions/new.md` Capability Deferral). The user or
-orchestrating agent decides when to run
-[`../cli-forge-extend/SKILL.md`](../cli-forge-extend/SKILL.md). Otherwise,
-continue with [`../cli-forge-validate/SKILL.md`](../cli-forge-validate/SKILL.md)
+If `scaffold-receipt.yml` lists deferred capabilities, use `AskUserQuestion` to
+prompt before handing off. Offer to run extend immediately for each deferred
+capability. If the user confirms, invoke extend for each deferred capability
+in order. If the user declines, fall back to enumerating the exact
+`/cli-forge-extend` invocation for each (see `instructions/new.md` Capability
+Deferral). Otherwise, continue with
+[`../cli-forge-validate/SKILL.md`](../cli-forge-validate/SKILL.md)
 to run the full compliance rule set.
