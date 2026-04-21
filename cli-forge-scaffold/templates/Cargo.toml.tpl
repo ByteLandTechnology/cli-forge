@@ -18,6 +18,11 @@ anyhow = "1"
 directories = "5"
 rustyline = "14"
 
+[profile.release]
+strip = true
+opt-level = "z"
+lto = true
+
 [dev-dependencies]
 assert_cmd = "2.0"
 predicates = "3.1"
