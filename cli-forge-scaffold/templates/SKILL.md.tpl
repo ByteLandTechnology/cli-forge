@@ -19,6 +19,61 @@ metadata, `SKILL.md`, README, and help text.
 - The optional REPL feature adds interactive history and completion using the
   Rust crate ecosystem only.
 
+## Agent Integration
+
+### Installation
+
+The CLI is distributed as an npm package. Agents should install it globally:
+
+```bash
+npm install -g {{PKG_NAME}}
+```
+
+The matching native binary ships in a per-platform npm package selected
+automatically via `optionalDependencies`. No postinstall download required.
+
+### Supported Platforms
+
+| Platform    | Architecture |
+| ----------- | ------------ |
+| darwin      | arm64, x64   |
+| linux       | arm64, x64   |
+| win32       | arm64, x64   |
+
+### Invocation
+
+Agents invoke the CLI using the `Bash` tool with the bare command name.
+Do not use `cargo run`, `./target/release/{{SKILL_NAME}}`, or other
+developer-local forms in agent workflows.
+
+```bash
+{{SKILL_NAME}} [OPTIONS] <COMMAND>
+```
+
+### Version Alignment
+
+The SKILL version and the CLI version are synchronized. Before invoking,
+verify version compatibility:
+
+```bash
+{{SKILL_NAME}} --version
+```
+
+If the installed CLI version does not match the SKILL version, reinstall:
+
+```bash
+npm install -g {{PKG_NAME}}@{{VERSION}}
+```
+
+### Availability Check
+
+Before the first invocation in a session, agents should verify the CLI is
+on `PATH`:
+
+```bash
+which {{SKILL_NAME}} || npm install -g {{PKG_NAME}}
+```
+
 ## Invocation
 
 ```text

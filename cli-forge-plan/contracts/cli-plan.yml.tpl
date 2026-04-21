@@ -5,10 +5,12 @@
 # Stored at: <target-project>/.cli-forge/cli-plan.yml
 
 skill_name: "{{skill_name}}"
+pkg_name: "{{pkg_name}}"
 design_contract: "./design-contract.yml"
 
 invocation:
   shipped: "{{skill_name}}"
+  agent_install: "npm install -g {{pkg_name}}"
   dev: "cargo run --"
   release_binary: "./target/release/{{skill_name}}"
 

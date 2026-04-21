@@ -33,6 +33,7 @@ help_contract:
 
 publish_contract:
   stage: "publish"
+  pkg_name: "{{npm_package_name}}"
   channels:
     - "repo_native"
     - "npm"

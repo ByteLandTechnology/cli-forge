@@ -21,6 +21,7 @@ capability.
 | Input          | Required | Format                                    | Default                   | Description                                                                         |
 | -------------- | -------- | ----------------------------------------- | ------------------------- | ----------------------------------------------------------------------------------- |
 | `skill_name`   | Yes      | kebab-case: `[a-z][a-z0-9]*(-[a-z0-9]+)*` | —                         | Name of the new Skill. Becomes directory name, Cargo package name, and binary name. |
+| `pkg_name`     | No       | npm package name (e.g. `@scope/name`)     | `skill_name` (no scope)   | npm package name for agent installation. Include `@scope/` prefix if needed.         |
 | `author`       | No       | `Name <email>` or just `Name`             | (omitted from Cargo.toml) | Author for `Cargo.toml` authors field.                                              |
 | `version`      | No       | Semver string                             | `0.1.0`                   | Initial version.                                                                    |
 | `rust_edition` | No       | Year string                               | `2024`                    | Rust edition for `Cargo.toml`.                                                      |
@@ -52,6 +53,7 @@ When expanding templates, replace every `{{TOKEN_NAME}}` with its corresponding 
 | Token                   | Derivation                                     | Example (for `search-web`)                     |
 | ----------------------- | ---------------------------------------------- | ---------------------------------------------- |
 | `{{SKILL_NAME}}`        | Directly from `skill_name` input               | `search-web`                                   |
+| `{{PKG_NAME}}`          | npm package name (may include `@scope/` prefix) | `@acme/search-web`                             |
 | `{{SKILL_NAME_SNAKE}}`  | Replace `-` with `_` in skill_name             | `search_web`                                   |
 | `{{SKILL_NAME_PASCAL}}` | Capitalize first letter of each segment        | `SearchWeb`                                    |
 | `{{SKILL_NAME_UPPER}}`  | Uppercase the entire skill_name (keep hyphens) | `SEARCH-WEB`                                   |

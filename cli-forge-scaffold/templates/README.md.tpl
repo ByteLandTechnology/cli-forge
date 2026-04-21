@@ -13,6 +13,21 @@ cargo build --release
 
 The compiled binary will be at `./target/release/{{SKILL_NAME}}`.
 
+## Agent Installation
+
+For agent use, install the CLI via npm:
+
+```sh
+npm install -g {{PKG_NAME}}
+```
+
+Users on Apple Silicon Macs should ensure Rosetta 2 is installed if using
+darwin-x64 packages:
+
+```sh
+softwareupdate --install-rosetta
+```
+
 ## Invocation Layers
 
 The generated CLI uses three different invocation contexts. Keep them distinct:
