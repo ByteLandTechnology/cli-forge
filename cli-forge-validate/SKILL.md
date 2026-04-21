@@ -56,9 +56,9 @@ This stage acts as the final gatekeeper before release. It consumes the
    - `CTX-*` (Active Context behavior and precedence)
    - `ERR-*` (structured error behavior)
    - `REPL-*` (REPL behavior when present)
-     Daemon expectations are currently validated through plan-aligned help,
-     runtime, and error checks plus a daemon-specific narrative overlay whenever
-     daemon behavior is present. A dedicated `DAEMON-*` ruleset is future work.
+   - `DAEMON-*` (daemon lifecycle, routing, and error behavior when present)
+     Daemon expectations are validated through the `DAEMON-*` ruleset and the
+     daemon-specific narrative overlay whenever daemon behavior is present.
 3. For each check, look at the filesystem, code, and test output.
 4. If the check requires knowledge of expected CLI behaviors (for example,
    flags, optional feature scope, or runtime conventions), source those
