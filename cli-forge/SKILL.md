@@ -138,8 +138,8 @@ Act as the intake layer and traffic controller.
   valid when the current project layout already matches the scaffold-compatible
   files that the feature templates patch directly.
 - Do not route new work to `cli-forge-distribute`. npm publication is part of
-  Publish, and `cli-forge-distribute` is retained only as archived reference
-  material.
+  Publish; the `cli-forge-distribute` module was archived in the daemon
+  implementation commit and no longer exists.
 - If the target project directory is unknown, you MUST ask the user or search
   for `.cli-forge/` folders. When takeover is likely, also search for probable
   Rust CLI project roots. Do not assume the current working directory applies.

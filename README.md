@@ -87,14 +87,6 @@ the repository structure mirrors the expected installed-skill shape so no stage
 depends on root-level `contracts/`, `templates/`, or `planning-brief.md` files
 at runtime.
 
-## Archived Reference
-
-`./cli-forge-distribute/` is retained only as archived reference material from
-the earlier split-stage release design. New workflows should not route there:
-npm publication now belongs to Publish.
-
-## Daemon Design
-
 The Plan stage now models daemon behavior as an optional app-server capability.
 The detailed planning reference lives at
 [`./cli-forge-plan/instructions/daemon-app-server.md`](./cli-forge-plan/instructions/daemon-app-server.md)
