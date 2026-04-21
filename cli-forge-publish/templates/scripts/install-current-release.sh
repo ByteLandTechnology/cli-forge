@@ -58,6 +58,16 @@ INSTALL_DIR="${INSTALL_DIR:-${REPO_ROOT}/.local/bin}"
 ARCHIVE="${CLI_NAME}-${RUST_TARGET}.tar.gz"
 CHECKSUM="${ARCHIVE}.sha256"
 BASE_URL="https://github.com/${OWNER_REPO}/releases/download/v${VERSION}"
+
+# Skip download if the installed binary is already at the target version.
+INSTALLED="${INSTALL_DIR}/${BINARY_NAME}"
+if [[ -x "${INSTALLED}" ]]; then
+  INSTALLED_VERSION="$("${INSTALLED}" --version 2>/dev/null | head -1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || true)"
+  if [[ "${INSTALLED_VERSION}" == "${VERSION}" ]]; then
+    echo "${CLI_NAME} ${VERSION} already installed at ${INSTALLED}, skipping."
+    exit 0
+  fi
+fi
 # Windows targets ship binaries with .exe suffix.
 BINARY_NAME="${CLI_NAME}"
 if echo "${RUST_TARGET}" | grep -q "windows"; then

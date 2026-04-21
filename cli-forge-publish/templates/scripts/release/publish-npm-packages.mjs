@@ -33,6 +33,9 @@ const config = readReleaseConfig(rootDir);
 const platformsDir = path.join(rootDir, "npm/platforms");
 const mainPkgDir = path.join(rootDir, "npm/main");
 
+// Track skipped steps for receipt generation.
+const skippedSteps = [];
+
 function alreadyPublished(pkgName, pkgVersion) {
   const r = spawnSync("npm", ["view", `${pkgName}@${pkgVersion}`, "version"], {
     encoding: "utf8",
@@ -62,6 +65,11 @@ function publishPackage(pkgDir, label) {
 
   if (alreadyPublished(pkgName, version)) {
     console.log(`skip ${label} ${pkgName}@${version} (already on registry)`);
+    skippedSteps.push({
+      step: `publish-npm:${label}`,
+      reason: "already_on_registry",
+      existing_ref: `${pkgName}@${version}`,
+    });
     return "skipped";
   }
 
@@ -98,3 +106,13 @@ const mainOutcome = publishPackage(mainPkgDir, "main");
 console.log(
   `npm publish: main=${buildMainPackageName(config)} => ${mainOutcome}; platform=${platformPublished} published, ${platformSkipped} skipped.`,
 );
+
+// Output skipped_steps as JSON on stdout for receipt generation.
+if (skippedSteps.length > 0) {
+  console.log(`\nskipped_steps:`);
+  for (const s of skippedSteps) {
+    console.log(`  - step: "${s.step}"`);
+    console.log(`    reason: "${s.reason}"`);
+    console.log(`    existing_ref: "${s.existing_ref}"`);
+  }
+}

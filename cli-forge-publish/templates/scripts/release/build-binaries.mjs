@@ -8,6 +8,7 @@ import {
   existsSync,
   mkdirSync,
   readFileSync,
+  rmSync,
   writeFileSync,
 } from "node:fs";
 import { createHash } from "node:crypto";
@@ -35,6 +36,7 @@ const cargoTomlPath = path.join(rootDir, "Cargo.toml");
 const cargoLines = readFileSync(cargoTomlPath, "utf8").split("\n");
 let inPackage = false;
 let bumped = false;
+let alreadyCorrect = false;
 for (let i = 0; i < cargoLines.length; i++) {
   const trimmed = cargoLines[i].trim();
   if (trimmed === "[package]") {
@@ -45,16 +47,26 @@ for (let i = 0; i < cargoLines.length; i++) {
     break;
   }
   if (inPackage && /^version\s*=/.test(trimmed)) {
-    cargoLines[i] = `version = "${version}"`;
-    bumped = true;
+    const currentVersion = trimmed.match(/version\s*=\s*"([^"]+)"/)?.[1];
+    if (currentVersion === version) {
+      alreadyCorrect = true;
+      bumped = true;
+    } else {
+      cargoLines[i] = `version = "${version}"`;
+      bumped = true;
+    }
     break;
   }
 }
 if (!bumped) {
   throw new Error("Could not find [package].version in Cargo.toml.");
 }
-writeFileSync(cargoTomlPath, cargoLines.join("\n"), "utf8");
-console.log(`Bumped Cargo.toml version to ${version}`);
+if (!alreadyCorrect) {
+  writeFileSync(cargoTomlPath, cargoLines.join("\n"), "utf8");
+  console.log(`Bumped Cargo.toml version to ${version}`);
+} else {
+  console.log(`Cargo.toml already at version ${version}, skipping bump`);
+}
 
 // Regenerate Cargo.lock to reflect the new version.
 const lockResult = spawnSync("cargo", ["generate-lockfile"], {
@@ -74,6 +86,8 @@ if (lockResult.status !== 0) {
 
 // --- Build all targets and create archives ---
 const distDir = path.join(rootDir, "dist");
+// Clean dist/ completely to ensure no stale archives from prior runs survive.
+if (existsSync(distDir)) rmSync(distDir, { recursive: true, force: true });
 mkdirSync(distDir, { recursive: true });
 
 for (const target of config.targets) {

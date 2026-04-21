@@ -19,6 +19,9 @@ version: "{{semver|null}}"
 git_tag: "{{v_semver|null}}"
 workflow_run_url: "{{github_actions_run_url|null}}"
 
+# Idempotency tracking: true when this run is a re-run or recovery.
+is_recovery: "{{true|false}}"
+
 npm:
   main_package: "{{main_package_name}}"
   main_scope: "{{null_or_main_scope_string}}"
@@ -31,3 +34,13 @@ npm:
 validation_report_ref: "./validation-report.yml"
 
 outcome: "{{success|prepublished|dry_run_reviewed|report_delivered}}"
+
+# Steps skipped because output already existed from a previous run.
+# Only present when is_recovery is true or when re-running a pipeline.
+# skipped_steps:
+#   - step: "publish-npm:platform-darwin-arm64"
+#     reason: "already_on_registry"
+#     existing_ref: "@scope/cli-darwin-arm64@1.2.3"
+#   - step: "upload-asset:cli-darwin-arm64.tar.gz"
+#     reason: "asset_already_exists"
+#     existing_ref: "cli-darwin-arm64.tar.gz"

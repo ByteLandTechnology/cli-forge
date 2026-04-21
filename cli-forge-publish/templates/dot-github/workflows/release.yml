@@ -128,17 +128,84 @@ jobs:
           EXPECTED_SHA: ${{ steps.checkout-sha.outputs.sha }}
           EXPECTED_REPO: ${{ github.repository }}
 
+      - name: Verify already-complete recovery
+        if: ${{ github.event.inputs.recover-version != '' }}
+        id: already-complete
+        run: |
+          set -euo pipefail
+          version="${{ github.event.inputs.recover-version }}"
+          echo "Checking if v${version} is already fully published..."
+          missing=""
+          # Check GitHub Release exists and has assets
+          if ! gh release view "v${version}" >/dev/null 2>&1; then
+            missing="github_release_missing"
+          else
+            asset_count=$(gh release view "v${version}" --json assets -q '.assets | length' 2>/dev/null || echo "0")
+            if [[ "$asset_count" == "0" ]]; then
+              missing="github_release_no_assets"
+            fi
+          fi
+          # Check all npm packages — distinguish 404 (not found) from transient errors.
+          if [[ -z "$missing" ]]; then
+            while IFS= read -r line; do
+              if [[ -n "$line" ]]; then
+                missing="$line"
+                break
+              fi
+            done < <(node --input-type=module -e "
+              import { spawnSync } from 'node:child_process';
+              import { buildAllPackageNames, readReleaseConfig } from './scripts/release/release-config.mjs';
+              const v = '${version}';
+              const names = buildAllPackageNames(readReleaseConfig(process.cwd()));
+              for (const name of names) {
+                const r = spawnSync('npm', ['view', name + '@' + v, 'version'], { encoding: 'utf8', stdio: 'pipe', shell: true });
+                if (r.status !== 0) {
+                  const stderr = (r.stderr ?? '').toLowerCase();
+                  const notFound = stderr.includes('e404') || stderr.includes('etarget') || stderr.includes('not found');
+                  if (notFound) {
+                    process.stdout.write(name + '@' + v + ' not found on registry');
+                    break;
+                  }
+                  // Transient error — re-throw so the step fails instead of
+                  // incorrectly entering the recovery path.
+                  throw new Error('npm view ' + name + '@' + v + ' failed (transient): ' + (r.stderr ?? '').trim());
+                }
+              }
+            " 2>&1)
+          fi
+          if [[ -z "$missing" ]]; then
+            echo "Version v${version} is already fully published. All npm packages and GitHub Release assets present."
+            echo "is_complete=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Version v${version} is not yet complete (${missing}). Proceeding with recovery."
+            echo "is_complete=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Report already-complete recovery
+        if: ${{ steps.already-complete.outputs.is_complete == 'true' }}
+        run: |
+          version="${{ github.event.inputs.recover-version }}"
+          echo "Recovery verification: v${version} is already complete."
+          echo "is_recovery: true" > .cli-forge/release-receipt.yml
+          echo "All artifacts verified present — no action needed." >> .cli-forge/release-receipt.yml
+          echo "Recovery complete (already-complete, no changes made)."
+
       - name: Build release binaries
-        if: ${{ github.event.inputs.recover-version != '' && github.event.inputs.recover-run-id == '' }}
+        if: ${{ github.event.inputs.recover-version != '' && github.event.inputs.recover-run-id == '' && steps.already-complete.outputs.is_complete != 'true' }}
         run: |
           echo "::warning::Rebuilding from source. Checksums may differ from originally published npm packages. Provide recover-run-id for exact match."
           node scripts/release/build-binaries.mjs "${{ github.event.inputs.recover-version }}"
 
       - name: Recover wedged release
-        if: ${{ github.event.inputs.recover-version != '' }}
+        if: ${{ github.event.inputs.recover-version != '' && steps.already-complete.outputs.is_complete != 'true' }}
         run: |
           set -euo pipefail
           version="${{ github.event.inputs.recover-version }}"
+          # Initialize receipt file so skipped_steps can be appended below.
+          mkdir -p .cli-forge
+          echo "is_recovery: true" > .cli-forge/release-receipt.yml
+          echo "recovery_version: \"${version}\"" >> .cli-forge/release-receipt.yml
+          skipped_yaml=""
           # Block rebuild recovery if any npm packages already exist — prevents
           # mixing binaries from different build attempts under the same version.
           if [[ -z "${{ github.event.inputs.recover-run-id }}" ]]; then
@@ -149,7 +216,9 @@ jobs:
               echo "Provide recover-run-id to reuse the original build artifacts." >&2
               exit 1
             fi
-            # Check all npm packages
+            # Check all npm packages — if status=0, package exists (fail).
+            # If 404, package does not exist (safe to rebuild).
+            # Any other error is transient and should not trigger rebuild.
             node --input-type=module -e "
               import { spawnSync } from 'node:child_process';
               import { buildAllPackageNames, readReleaseConfig } from './scripts/release/release-config.mjs';
@@ -163,22 +232,38 @@ jobs:
                   console.error('Provide recover-run-id to reuse the original build artifacts.');
                   process.exit(1);
                 }
+                const stderr = (r.stderr ?? '').toLowerCase();
+                const notFound = stderr.includes('e404') || stderr.includes('etarget') || stderr.includes('not found');
+                if (!notFound) {
+                  throw new Error('npm view ' + name + '@' + v + ' failed (transient): ' + (r.stderr ?? '').trim());
+                }
               }
               console.log('No existing packages or release assets found — safe to rebuild.');
             "
           fi
           echo "Recovering npm packages for v${version}..."
           node scripts/release/sync-platform-packages.mjs "$version"
-          node scripts/release/publish-npm-packages.mjs "$version"
+          # Capture stdout to extract skipped_steps for the receipt.
+          npm_output="$(node scripts/release/publish-npm-packages.mjs "$version" 2>&1)"
+          echo "$npm_output"
+          # Append any skipped npm publish steps to the receipt.
+          if echo "$npm_output" | grep -q '^skipped_steps:'; then
+            echo "" >> .cli-forge/release-receipt.yml
+            echo "$npm_output" | sed -n '/^skipped_steps:/,$p' >> .cli-forge/release-receipt.yml
+          fi
           echo "Ensuring GitHub Release exists and uploading missing assets..."
           gh release view "v${version}" >/dev/null 2>&1 || gh release create "v${version}" --title "v${version}" --notes "Recovered release v${version}."
           existing=$(gh release view "v${version}" --json assets -q '.assets[].name' 2>/dev/null || true)
           upload_files=""
+          skipped_assets=""
           for f in dist/*.tar.gz dist/*.sha256 dist/provenance.json; do
             [ -f "$f" ] || continue
             bn=$(basename "$f")
             if ! echo "$existing" | grep -qxF "$bn"; then
               upload_files="$upload_files $f"
+            else
+              skipped_assets="${skipped_assets}  - step: \"upload-asset:${bn}\"\n    reason: \"asset_already_exists\"\n    existing_ref: \"${bn}\"\n"
+              echo "skip upload ${bn} (already on release)"
             fi
           done
           if [ -n "$upload_files" ]; then
@@ -186,6 +271,14 @@ jobs:
             gh release upload "v${version}" $upload_files
           else
             echo "All assets already present on release v${version}, skipping upload."
+          fi
+          if [ -n "$skipped_assets" ]; then
+            # Append skipped upload steps to receipt (receipt already initialized above).
+            if echo "$skipped_assets" | grep -q "^  - step:"; then
+              echo "" >> .cli-forge/release-receipt.yml
+              echo "skipped_assets:" >> .cli-forge/release-receipt.yml
+              echo "$skipped_assets" | sed 's/\\n/\n/g' >> .cli-forge/release-receipt.yml
+            fi
           fi
           echo "Recovery complete."
 

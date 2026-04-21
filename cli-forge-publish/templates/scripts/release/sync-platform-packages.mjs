@@ -13,6 +13,7 @@ import {
   existsSync,
   mkdirSync,
   readFileSync,
+  readdirSync,
   rmSync,
   writeFileSync,
 } from "node:fs";
@@ -58,6 +59,17 @@ const mainPkg = JSON.parse(readFileSync(mainPkgPath, "utf8"));
 const platformsDir = path.join(rootDir, "npm/platforms");
 const distDir = path.join(rootDir, "dist");
 mkdirSync(platformsDir, { recursive: true });
+
+// Remove stale platform packages from targets no longer in config.
+const configuredSuffixes = new Set(config.targets.map((t) => t.packageSuffix));
+if (existsSync(platformsDir)) {
+  for (const entry of readdirSync(platformsDir, { withFileTypes: true })) {
+    if (entry.isDirectory() && !configuredSuffixes.has(entry.name)) {
+      rmSync(path.join(platformsDir, entry.name), { recursive: true, force: true });
+      console.log(`Removed stale platform package: ${entry.name}`);
+    }
+  }
+}
 
 const optionalDeps = {};
 

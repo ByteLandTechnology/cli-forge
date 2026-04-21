@@ -78,26 +78,14 @@ function choosePrepublishVersion(packageNames) {
   );
 }
 
-function assertVersionAvailable(packageNames, version) {
-  const conflicts = packageNames.filter((pkgName) =>
-    registryHasVersion(pkgName, version),
-  );
-  if (!conflicts.length) return;
-
-  throw new Error(
-    `Prepublish version ${version} is already present for: ${conflicts.join(", ")}. Choose a new prerelease version and retry.`,
-  );
-}
-
 function publishPackage(pkgDir, label, version) {
   const pkgName = JSON.parse(
     readFileSync(path.join(pkgDir, "package.json"), "utf8"),
   ).name;
 
   if (registryHasVersion(pkgName, version)) {
-    throw new Error(
-      `Refusing to publish prepublish package ${pkgName}@${version} because that version already exists on npm.`,
-    );
+    console.log(`skip ${label} ${pkgName}@${version} (already on registry)`);
+    return "skipped";
   }
 
   const result = spawnSync("npm", ["publish", "--access=public"], {
@@ -110,6 +98,7 @@ function publishPackage(pkgDir, label, version) {
       `npm publish failed for ${label} package ${pkgName}@${version} (exit ${result.status}).`,
     );
   }
+  return "published";
 }
 
 function disableLocalProvenance(pkgDir) {
@@ -135,8 +124,6 @@ const loginResult = spawnSync(
 if (loginResult.status !== 0) {
   throw new Error("npm login is required before prepublish can continue.");
 }
-
-assertVersionAvailable(packageNames, prepublishVersion);
 
 const workspace = createLocalReleaseWorkspace(rootDir);
 try {

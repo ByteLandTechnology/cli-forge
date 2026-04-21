@@ -273,3 +273,33 @@ node scripts/release/build-binaries.mjs <version>
 node scripts/release/sync-platform-packages.mjs <version>
 node scripts/release/publish-npm-packages.mjs <version>
 ```
+
+## Idempotency Guarantees
+
+Every release script and CI step is designed to be safely re-runnable after a
+partial failure. The following table documents the idempotency contract for
+each pipeline component.
+
+| Component | Idempotency Behavior |
+|-----------|---------------------|
+| `build-binaries.mjs` | Cleans `dist/` completely before building, ensuring no stale archives from removed targets survive. Skips `Cargo.toml` version bump if already at the target version. |
+| `sync-platform-packages.mjs` | Removes stale `npm/platforms/` subdirectories for targets no longer in `config.targets`. Each target directory is deleted and recreated. |
+| `publish-npm-packages.mjs` | Checks `npm view <pkg>@<version>` before every publish. Skips already-published packages and records each skip in `skipped_steps`. Fails fast on network/auth errors (does not silently proceed). |
+| `prepublish.mjs` | `choosePrepublishVersion()` auto-increments `N` to find a free version. Individual packages that are already on the registry are skipped (same pattern as `publish-npm-packages.mjs`). Working tree is fully restored via snapshot/restore on both success and failure. |
+| `local-build-utils.mjs` | Snapshots `Cargo.toml`, `Cargo.lock`, `npm/main/package.json`, `npm/main/README.md`, `dist/`, and `npm/platforms/` before any mutation. Restores all from snapshot in `finally` block. Handles SIGINT. Note: SIGKILL cannot be caught and would leave mutations. |
+| `rehearse.mjs` | Side-effect-free: uses `npm publish --dry-run`, never creates tags/releases. Full cleanup in `finally` block. |
+| `release.yml` (normal path) | semantic-release detects "no releasable changes" on re-run and exits cleanly. Concurrency group prevents parallel runs on the same ref. |
+| `release.yml` (recovery path) | Pre-checks for already-complete versions: verifies all npm packages and GitHub Release assets. Exits with success receipt if all present. Rebuild path blocks if any artifacts already exist (prevents mixing binaries from different builds). Asset upload skips files already on the release. |
+| `release.yml` (recovery from run) | Downloads exact build artifacts via `recover-run-id` with provenance verification. Byte-for-byte identical to original build. |
+| `validate-config.mjs` | Pure read-only validation. No side effects, safe to re-run at any time. |
+| `install-current-release.sh` | Checks existing binary version via `--version` flag and skips download if already at target. Verifies SHA-256 checksum before installing. Cleans up temp files on exit via trap. |
+| `CHANGELOG.md` | Managed by semantic-release's `@semantic-release/changelog` plugin. Regenerated for the same version range produces the same content. |
+| `.releaserc.json` exec hooks | `build-binaries.mjs` and `sync-platform-packages.mjs` run during `prepareCmd`, which semantic-release only invokes once per release cycle. Re-running semantic-release for the same version skips the prepare phase entirely. |
+
+### Failure Safe Behavior
+
+When an external service (npm registry, GitHub API) is unavailable during an
+idempotency check, the pipeline **fails safe**: it aborts the current step with
+a clear error message rather than proceeding without verification. This
+prevents silent corruption from stale state. The operator can simply retry
+once the service recovers.
